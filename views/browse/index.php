@@ -709,7 +709,7 @@ if (count($arr_app_user_detail_with_no_share) > 0) {
         $drive_key = $arr_app_user_detail_with_no_share[$j]['drive_key'];
         $username = $arr_app_user_detail_with_no_share[$j]['user_id'];
 
-        if ($username == $logged_username && $drive_key=='') {
+        if ($username == $logged_username && $drive_path=='') {
             echo "I am ".$logged_username." and only I should see rows to pick drive path";
         }
     }
