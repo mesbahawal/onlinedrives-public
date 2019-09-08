@@ -1,0 +1,159 @@
+.main_div_container { margin-bottom: 100px; }
+#table { font-size: 14px; }
+#table tr { height: 49px; }
+
+/* https://www.mediaevent.de/css/position-display.html */
+.shownone { display: none; }
+.showblock { display: block; }
+.showinline { display: inline; }
+
+.rel { position: relative; }
+.abs { position: absolute; }
+
+.bgyellow { background: #ffffe0; }
+
+.fav_brown {
+    color: #ffff06;
+    margin-left: 10px;
+}
+.file-color { color: #4285f4; }
+
+.control-label { display: none; }
+div.required label::after { content: ''; }
+
+.infbox {
+    margin: 25px;
+    border: 2px solid;
+    padding: 8px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+}
+.infbox.blue {
+    border-color: #0000cf;
+    background-color: #dae5ff;
+    color: #0000cf;
+}
+.infbox.green {
+    border-color: #00cf00;
+    background-color: #daffda;
+    color: #00cf00;
+}
+.infbox.red {
+    border-color: #cf0000;
+    background-color: #ffe5be;
+    color: #cf0000;
+}
+
+#login_menu_icon {
+    position: absolute;
+    top: 22px;
+    right: 50px;
+    cursor: pointer;
+    font-size: 17px;
+}
+#login_menu {
+    z-index: 1;
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    box-shadow: 6px 6px 6px 9px grey;
+    padding: 10px 5px;
+    border: 3px solid #bbb;
+    border-radius: 10px;
+    width: 195px;
+    background: #eee;
+}
+#plus_menu_icon {
+    position: absolute;
+    top: 22px;
+    right: 20px;
+    cursor: pointer;
+    font-size: 17px;
+}
+#plus_menu {
+    z-index: 1;
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    box-shadow: 6px 6px 6px 9px grey;
+    padding: 10px 5px;
+    border: 3px solid #bbb;
+    border-radius: 10px;
+    width: 195px;
+    background: #eee;
+}
+.upcr_icon {
+    margin: 10px;
+    margin-left: 22px;
+    padding: 1px;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+}
+.line_icons {
+    position: absolute;
+    top: 80px;
+    width: 78px;
+    height: 1px;
+    background: silver;
+}
+#line_sciebo { left: 13px; }
+#line_gd { right: 13px; }
+#line_sciebo_login { left: 13px; }
+#line_gd_login { right: 13px; }
+#uploadfileform-upload { display: none; }
+#createfileform-create {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.upcr_shaddow { box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); }
+.upcr_btn_div {
+    position: relative;
+    margin: 0 9px;
+    padding: 0;
+}
+.upload_btn_div {
+    position: absolute;
+    top: 75px;
+    left: 14px;
+}
+.upload_btn_div_inside_folder {
+    position: absolute;
+    top: 0;
+    left: 14px;
+}
+.upcr_btn {
+    padding: 5px 11px;
+    cursor: pointer;
+}
+.upcr_btn:hover { background: gray !important; }
+.upcr_btn_active { background: #e86fdb !important; }
+.upcr_btn_active:hover { background: #e86fdb !important; }
+.upcr_label {
+    position: relative;
+    left: 5px;
+    font-size: 12px;
+}
+#create_btn { margin-left: 30px; }
+.type_icon {
+    margin-left: 9px;
+    cursor: pointer;
+}
+
+.more_menu {
+    z-index: 1;
+    position: absolute;
+    top: 5px;
+    right: 25px;
+    box-shadow: 6px 6px 6px 9px grey;
+    padding: 10px 15px;
+    border: 3px solid #bbb;
+    border-radius: 10px;
+    width: 225px;
+    min-height: 50px;
+    background: #eee;
+}

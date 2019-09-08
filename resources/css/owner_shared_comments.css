@@ -1,0 +1,133 @@
+.brown { color: #ffff06; }
+
+#ex4 .p1[data-count]:after {
+    position: absolute;
+    right: 10%;
+    top: 8%;
+    content: attr(data-count);
+    font-size: 40%;
+    padding: .2em;
+    border-radius: 50%;
+    line-height: 1em;
+    color: white;
+    background: blue;
+    text-align: center;
+    min-width: 1em;
+    /* font-weight:bold; */
+}
+
+#ex3 .fa-stack[data-count]:after {
+    position: absolute;
+    right: 0%;
+    top: 1%;
+    content: attr(data-count);
+    font-size: 30%;
+    padding: .6em;
+    border-radius: 50%;
+    line-height: .8em;
+    color: white;
+    background: rgba(255, 0, 0, .85);
+    text-align: center;
+    min-width: 1em;
+    font-weight: bold;
+}
+
+
+/* on ex2 if you include bootstrap v3 css the number is a rounded circle with the .has-badge class */
+#ex2 .fa-stack[data-count]:after {
+    position: absolute;
+    right: %;
+    top: 1%;
+    margin-left: 20px;
+    content: attr(data-count);
+    font-size: 80%;
+    padding: .3em;
+    border-radius: 999px;
+    line-height: .75em;
+    color: white;
+    background: rgba(45, 155, 210, 0.85);
+    text-align: center;
+    min-width: 2em;
+    font-weight: bold;
+}
+
+.row { margin-top: 30px; }
+
+.round {
+    display: inline-block;
+    height: 30px;
+    width: 30px;
+    line-height: 30px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+    background-color: #222;
+    color: #fff;
+    text-align: center;
+}
+.round.hollow {
+    display: inline-block;
+    height: 30px;
+    width: 30px;
+    line-height: 30px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+    background-color: #fff;
+    color: #222;
+    text-align: center;
+    -webkit-box-shadow: 0px 0px 0px 3px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0px 0px 0px 3px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 0px 0px 3px rgba(0, 0, 0, 0.75);
+}
+
+.round.round-sm {
+    height: 20px;
+    width: 20px;
+    line-height: 20px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    font-size: 0.7em;
+}
+
+.round.round-lg {
+    height: 40px;
+    width: 40px;
+    line-height: 40px;
+    -moz-border-radius: 20px;
+    border-radius: 20px;
+    font-size: 1.5em;
+}
+
+.round.silver { background-color: #c0c0c0; }
+
+.round.orange { background-color: #ff6701; }
+
+.round.green { background-color: #42a129; }
+
+.round.hollow.blue {
+    color: #3ea6ce;
+    background-color: #fff;
+    -webkit-box-shadow: 0px 0px 0px 3px #3ea6ce;
+    -moz-box-shadow: 0px 0px 0px 3px #3ea6ce;
+    box-shadow: 0px 0px 0px 3px #3ea6ce;
+}
+
+.round.hollow.orange {
+    color: #ff6701;
+    background-color: #fff;
+    -webkit-box-shadow: 0px 0px 0px 3px #ff6701;
+    -moz-box-shadow: 0px 0px 0px 3px #ff6701;
+    box-shadow: 0px 0px 0px 3px #ff6701;
+}
+
+.round.hollow.green {
+    color: #42a129;
+    background-color: #fff;
+    -webkit-box-shadow: 0px 0px 0px 3px #42a129;
+    -moz-box-shadow: 0px 0px 0px 3px #42a129;
+    box-shadow: 0px 0px 0px 3px #42a129;
+}
+
+.float-left {
+    float: left;
+    width: 50px; /* or 33% for equal width independent of parent width */
+}

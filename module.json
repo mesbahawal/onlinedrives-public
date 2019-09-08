@@ -1,0 +1,12 @@
+{
+    "id": "onlinedrives",
+    "name": "OnlineDrives",
+    "description": "Drive manager for spaces\/users.",
+    "keywords": [
+        "drives"
+    ],
+    "version": "0.8.31",
+    "humhub": {
+        "minVersion": "1.2.2"
+    }
+}
