@@ -47,7 +47,3 @@ protected/runtime/*
 protected/data/*.db
 themes/classic/views/
 models/dbconnect.php
-
-# google token
-token.json
-client_secret.json
