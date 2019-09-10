@@ -34,7 +34,7 @@ return array (
   'Edit' => 'Bearbeiten',
   'Edit directory' => 'Ordner bearbeiten',
   'File' => 'Datei',
-  'Files' => 'OnlineDrives',
+  'OnlineDrives' => 'OnlineDrives',
   'Files from the stream' => 'Dateien aus dem Stream',
   'Folder' => 'Ordner',
   'Folder should not start or end with blank space.' => 'Die Bezeichnung des Ordners darf nicht mit einem Leerzeichen beginnen oder enden.',
