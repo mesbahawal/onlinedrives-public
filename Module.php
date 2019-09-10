@@ -105,7 +105,7 @@ class Module extends ContentContainerModule
      */
     public function getContentContainerName(ContentContainerActiveRecord $container)
     {
-        return Yii::t('OnlinedrivesModule.base', 'Files');
+        return Yii::t('OnlinedrivesModule.base', 'OnlineDrives');
     }
 
     /**

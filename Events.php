@@ -21,7 +21,7 @@ class Events
 
         if ($event->sender->space !== null && $event->sender->space->isModuleEnabled('onlinedrives')) {
             $event->sender->addItem([
-                'label' => Yii::t('OnlinedrivesModule.base', 'Files'),
+                'label' => Yii::t('OnlinedrivesModule.base', 'OnlineDrives'),
                 'group' => 'modules',
                 'url' => $event->sender->space->createUrl('/onlinedrives/browse'),
                 'icon' => '<i class="fa fa-files-o"></i>',
@@ -69,7 +69,7 @@ class Events
     {
         if ($event->sender->user !== null && $event->sender->user->isModuleEnabled('onlinedrives')) {
             $event->sender->addItem([
-                'label' => Yii::t('OnlinedrivesModule.base', 'Files'),
+                'label' => Yii::t('OnlinedrivesModule.base', 'OnlineDrives'),
                 'url' => $event->sender->user->createUrl('/onlinedrives/browse'),
                 'icon' => '<i class="fa fa-files-o"></i>',
                 'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'onlinedrives')
