@@ -10,6 +10,7 @@ namespace humhub\modules\onlinedrives\controllers;
 
 use Yii;
 use humhub\modules\onlinedrives\widgets\FileList;
+use yii\helpers\Url;
 use yii\web\HttpException;
 use yii\web\Controller;
 use humhub\modules\onlinedrives\permissions\ManageFiles;
@@ -24,12 +25,16 @@ use app\models\UploadForm;
 use yii\web\UploadedFile;
 
 
+
 class BrowseController extends BaseController
 {
     public function actionIndex()
     {
         // Sciebo params
         $get_sciebo_path = '';
+        $home_url = Url::base('http');
+        if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
+
         if (!empty($_GET['sciebo_path'])) {
             $get_sciebo_path = $_GET['sciebo_path'];
         }
@@ -170,6 +175,9 @@ class BrowseController extends BaseController
                     $get_dk = $_GET['dk'];
                 }
 
+                $gd_client = getGoogleClient($home_url, $guid);
+                $gd_service = new Google_Service_Drive($gd_client);
+
                 include_once(__DIR__.'/../models/dbconnect.php');
                 $db = dbconnect();
                 $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
@@ -228,6 +236,8 @@ class BrowseController extends BaseController
 
     public function actionDownloader()
     {
+        $home_url = Url::base('http');
+
         // Sciebo params
 
         $currentFolder = $this->getCurrentFolder();
@@ -236,12 +246,23 @@ class BrowseController extends BaseController
             throw new HttpException(403);
         }
 
-        // either the page is initially displayed or there is some validation error
-        return $this->render('downloader', [
+        if(isset(Yii::$app->user->identity->username)) {
+            $username = Yii::$app->user->identity->username;
+            //$email = Yii::$app->user->identity->email;
+
+            return $this->render('downloader', [
                 'contentContainer' => $this->contentContainer,
                 'folder' => $currentFolder,
                 'canWrite' => $this->canWrite(),
-        ]);
+            ]);
+        }
+        else{
+
+            header("Location: http://localhost/humhub-uni/");
+        }
+
+        // either the page is initially displayed or there is some validation error
+
     }
 
     public function actionFileList()

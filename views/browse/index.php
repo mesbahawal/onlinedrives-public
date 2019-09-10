@@ -23,6 +23,11 @@ $db = dbconnect();
 
 $now = time();
 $home_url = Url::base('http');
+$username = '';
+if(isset(Yii::$app->user->identity->username)) {
+    $username = Yii::$app->user->identity->username;
+}
+
 if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
 $all_folders = array();
 $all_files = array();
@@ -243,13 +248,10 @@ $this->registerJsConfig('onlinedrives', [
  */
 
 // DB check
+$space_id = '';
+if (!empty($_GET['cguid'])) {
 $space_id = $_GET['cguid'];
-$sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id=p.onlinedrives_app_detail_id
-                                WHERE d.space_id = :space_id',
-                                [':space_id' => $space_id])->queryAll();
-
+}
 $k = 0;
 $n = 0;
 
@@ -257,32 +259,44 @@ $arr_app_user_detail = array();
 $arr_app_user_detail_with_no_share = array();
 $check = 0;
 
-foreach ($sql as $value) {
-    $drive_path = $value['drive_path'];
-    $app_user_id = $value['app_user_id'];
-    $app_password = $value['app_password'];
-    $drive_key = $value['drive_key'];
-    $uid = $value['uid'];
-    $pid = $value['pid'];
-    $if_shared = $value['if_shared'];
-    $user_id = $value['user_id'];
+if($username<>'') {
+    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                                ON d.id=p.onlinedrives_app_detail_id
+                                WHERE d.space_id = :space_id',
+        [':space_id' => $space_id])->queryAll();
 
-    if ($if_shared == 'Y') {
-        $arr_app_user_detail[$k]['drive_path'] = $drive_path;
-        $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
-        $arr_app_user_detail[$k]['app_password'] = $app_password;
-        $arr_app_user_detail[$k]['drive_key'] = $drive_key;
-        $arr_app_user_detail[$k]['user_id'] = $user_id;
-        $k++;
+
+    foreach ($sql as $value) {
+        $drive_path = $value['drive_path'];
+        $app_user_id = $value['app_user_id'];
+        $app_password = $value['app_password'];
+        $drive_key = $value['drive_key'];
+        $uid = $value['uid'];
+        $pid = $value['pid'];
+        $if_shared = $value['if_shared'];
+        $user_id = $value['user_id'];
+
+        if ($if_shared == 'Y') {
+            $arr_app_user_detail[$k]['drive_path'] = $drive_path;
+            $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
+            $arr_app_user_detail[$k]['app_password'] = $app_password;
+            $arr_app_user_detail[$k]['drive_key'] = $drive_key;
+            $arr_app_user_detail[$k]['user_id'] = $user_id;
+            $k++;
+        } else {
+            $arr_app_user_detail_with_no_share[$n]['drive_path'] = $drive_path;
+            $arr_app_user_detail_with_no_share[$n]['app_user_id'] = $app_user_id;
+            $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
+            $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
+            $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
+            $n++;
+        }
     }
-    else {
-        $arr_app_user_detail_with_no_share[$n]['drive_path'] = $drive_path;
-        $arr_app_user_detail_with_no_share[$n]['app_user_id'] = $app_user_id;
-        $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
-        $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
-        $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
-        $n++;
-    }
+}
+else{
+
+    header("Location: http://localhost/humhub-uni/");
 }
 
 
@@ -1232,9 +1246,10 @@ $form_u = ActiveForm::begin([
         '.$form_u->field($model_u, 'upload')->fileInput(['onchange' => 'this.form.submit()']).'
         <label for="uploadfileform-upload">
             <span id="upload_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg" title="'.Yii::t('OnlinedrivesModule.new', 'Create file').'"
-                onclick="
-                    $(\'#uploadfileform-upload\').trigger(\'click\');
-                    this.className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg upcr_btn_active\';
+                onclick="'.
+                    // outcommented because of double opening of select windows
+                    //$(\'#uploadfileform-upload\').trigger(\'click\');
+                    'this.className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg upcr_btn_active\';
                     getElementById(\'create_folder\').className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-folder-open fa-lg\';
                     getElementById(\'create_file\').className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-file fa-lg\';
                     getElementById(\'create_folder_name\').className = \'shownone\';
