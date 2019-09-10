@@ -861,7 +861,7 @@ $form_login = ActiveForm::begin([
 ?>
 
 <!-- Cross icon (login menu) -->
-<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="Close"
+<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="<?php echo Yii::t('OnlinedrivesModule.new', 'Close'); ?>"
     style="position:absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
     onclick="
         getElementById('login_menu').style.display = 'none';
@@ -959,7 +959,7 @@ $form = ActiveForm::begin([
 ?>
 
 <!-- Cross icon (plus menu) -->
-<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="Close"
+<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="<?php echo Yii::t('OnlinedrivesModule.new', 'Close'); ?>"
     style="position:absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
     onclick="
     	getElementById('plus_menu').style.display = 'none';
@@ -1736,7 +1736,7 @@ else {
                             '<div id="more'.$no.'" class="shownone more_menu">'.
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="Close"
+                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t(\'OnlinedrivesModule.new\', \'Close\').'"
                                     style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
                                     onclick="
                                         getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
@@ -2087,7 +2087,7 @@ else {
                             '<div id="more'.$no.'" class="shownone more_menu">'.
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="Close"
+                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t(\'OnlinedrivesModule.new\', \'Close\').'"
                                     style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
                                     onclick="
                                         getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
