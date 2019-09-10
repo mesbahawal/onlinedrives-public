@@ -1785,7 +1785,7 @@ else {
                                             echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
 
                                             echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11" style="margin-left: 120px;">';
+                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
                                                     echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
                                                 echo '</div>
                                             </div>';
@@ -1804,7 +1804,7 @@ else {
                                             echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
 
                                             echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11" style="margin-left: 9px;">';
+                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
                                                     echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
                                                 echo '</div>
                                             </div>';
@@ -2136,7 +2136,7 @@ else {
                                             echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
 
                                             echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11" style="margin-left: 9px;">';
+                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
                                                     echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
                                                 echo '</div>
                                             </div>';
@@ -2155,7 +2155,7 @@ else {
                                             echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
 
                                             echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11" style="margin-left: 9px;">';
+                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
                                                     echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
                                                 echo '</div>
                                             </div>';
