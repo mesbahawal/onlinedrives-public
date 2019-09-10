@@ -44,7 +44,7 @@ return [
     'Edit' => '',
     'Edit directory' => '',
     'File' => '',
-    'Files' => '',
+    'Files' => 'OnlineDrives',
     'Files from the stream' => '',
     'Folder' => '',
     'Folder options' => '',
