@@ -60,23 +60,49 @@ if (!empty($username) && !empty($email))
             $app_password = $value['app_password'];
         }
 
-        // Read real space ID from space
-        $sql = $db->createCommand('SELECT id FROM space WHERE guid = :space_id', [':space_id' => $space_id])->queryAll();
+        /// Read real space ID from space
+        /*$sql = $db->createCommand('SELECT id FROM space WHERE guid = :space_id', [':space_id' => $space_id])->queryAll();
         foreach ($sql as $value) {
             $real_space_id = $value['id'];
-        }
+        }*/
 
         // Read real user ID from user
-        $sql = $db->createCommand('SELECT id FROM user WHERE username = :username', [':username' => $user_id])->queryAll();
+        /*$sql = $db->createCommand('SELECT id FROM user WHERE username = :username', [':username' => $user_id])->queryAll();
         foreach ($sql as $value) {
             $real_user_id = $value['id'];
-        }
+        }*/
 
         // Check if user has a membership
-        $sql = $db->createCommand('SELECT * FROM space_membership WHERE space_id = :real_space_id and user_id = :real_user_id', [
+        /*$sql = $db->createCommand('SELECT * FROM space_membership WHERE space_id = :real_space_id and user_id = :real_user_id', [
             ':real_space_id' => $real_space_id,
             ':real_user_id' => $real_user_id,
         ])->queryAll();
+        */
+        $sql = $db->createCommand('SELECT c.`guid`
+                                        FROM `user` u,
+                                        `contentcontainer` c,
+                                        `contentcontainer_module` cm
+                                        WHERE u.`contentcontainer_id`=c.`id`
+                                        AND c.`id`=cm.`contentcontainer_id`
+                                        AND u.`username`= :username_login
+                                        AND cm.`module_id`= :onlinedrives
+                                        AND c.`guid`=:guid
+    
+                                        UNION
+    
+                                        SELECT s.`guid`
+                                        FROM `user` u,
+                                        `space` s,
+                                        `space_membership` sm
+                                        WHERE s.id=sm.`space_id`
+                                        AND u.id=sm.`user_id`
+                                        AND u.`username`= :username_login
+                                        AND s.`guid`=:guid',
+                                        [
+                                            ':username_login' => $username,
+                                            ':guid' => $space_id,
+                                            ':onlinedrives' => 'onlinedrives',
+                                        ])->queryAll();
 
         if (count($sql) == 1)
         {
