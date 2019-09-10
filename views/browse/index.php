@@ -296,7 +296,7 @@ if($username<>'') {
 }
 else{
 
-    header("Location: http://localhost/humhub-uni/");
+    \yii\web\Controller::redirect($home_url);
 }
 
 

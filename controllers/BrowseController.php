@@ -264,7 +264,7 @@ class BrowseController extends BaseController
         }
         else{
 
-            header("Location: http://localhost/humhub-uni/");
+            return $this ->redirect($home_url);
         }
 
         // either the page is initially displayed or there is some validation error

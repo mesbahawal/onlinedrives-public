@@ -40,8 +40,10 @@ $content_length='';
 $content_type='';
 
 // Checked if user is logged in HumHub
-$username = Yii::$app->user->identity->username;
-$email = Yii::$app->user->identity->email;
+$username = '';
+if(isset(Yii::$app->user->identity->username)) {
+    $username = Yii::$app->user->identity->username;
+}
 if (!empty($username) && !empty($email))
 {
 //    if (!empty($_GET['dk'])) {
