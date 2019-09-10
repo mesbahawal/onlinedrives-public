@@ -86,8 +86,7 @@ div.required label::after { content: ''; }
     background: #eee;
 }
 .upcr_icon {
-    margin: 10px;
-    margin-left: 22px;
+    margin: 10px 0 0 36px;
     padding: 1px;
     width: 50px;
     height: 50px;
@@ -113,12 +112,12 @@ div.required label::after { content: ''; }
 .upcr_shaddow { box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); }
 .upcr_btn_div {
     position: relative;
-    margin: 0 9px;
+    margin: 15px 9px;
     padding: 0;
 }
 .upload_btn_div {
     position: absolute;
-    top: 75px;
+    top: 90px;
     left: 14px;
 }
 .upload_btn_div_inside_folder {
