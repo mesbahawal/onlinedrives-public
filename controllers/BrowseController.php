@@ -126,6 +126,9 @@ class BrowseController extends BaseController
 
                 if (!empty($app_user_id)) {
                     if ($cloud == 'sciebo') {
+                        // Rework
+                        $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
+
                         // Check if access for drive path is given
                         if (strpos($get_sciebo_path, $drive_path) !== false) {
                             if ($image->saveAs($path)) {
@@ -202,6 +205,9 @@ class BrowseController extends BaseController
                     $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$delete_file_id;
 
                     $client = $model_gd_delete->getScieboClient();
+
+                    // Rework
+                    $path_to_dir = str_replace(' ', '%20', $path_to_dir);
 
                     if ($client->request('DELETE', $path_to_dir, null)) {
                         // Success msg
