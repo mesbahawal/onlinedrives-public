@@ -114,9 +114,9 @@ class Module extends ContentContainerModule
     public function getContentContainerDescription(ContentContainerActiveRecord $container)
     {
         if ($container instanceof Space) {
-            return Yii::t('OnlinedrivesModule.base', 'Adds drives module to this space.');
+            return Yii::t('OnlinedrivesModule.base', 'Adds OnlineDrives module to this space.');
         } elseif ($container instanceof User) {
-            return Yii::t('OnlinedrivesModule.base', 'Adds drives module to your profile.');
+            return Yii::t('OnlinedrivesModule.base', 'Adds OnlineDrives module to your profile.');
         }
     }
 
