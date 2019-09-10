@@ -1745,32 +1745,32 @@ else {
                                 " />'.
 
                                 // Rename function
-                                '<a href="" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Rename').'" title="'.Yii::t('OnlinedrivesModule.new', 'Rename').'">
+                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Rename').'" title="'.Yii::t('OnlinedrivesModule.new', 'Rename').'">
                                     <span class="glyphicon glyphicon-pencil" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 10px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Rename').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Rename').'</span>
                                 </a>'.
 
                                 // Move function
-                                '<a href="" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Move').'" title="'.Yii::t('OnlinedrivesModule.new', 'Move').'">
+                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Move').'" title="'.Yii::t('OnlinedrivesModule.new', 'Move').'">
                                     <span class="glyphicon glyphicon-move" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 63px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Move').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Move').'</span>
                                 </a>'.
 
                                 // Copy function
-                                '<a href="" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
+                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
                                     <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 112px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
                                 </a>'.
 
                                 // Delete function
-                                '<a href="#" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Delete').'" title="'.Yii::t('OnlinedrivesModule.new', 'Delete').'"
+                                '<a href="#" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Delete').'" title="'.Yii::t('OnlinedrivesModule.new', 'Delete').'"
                                     onclick="
                                         getElementById(\'delete'.$no.'\').classList.toggle(\'showblock\');
                                         return false;
                                     "
                                 >
                                     <span class="glyphicon glyphicon-floppy-remove" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 157px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Delete').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Delete').'</span>
                                 </a>
                                 <div id="delete'.$no.'" class="shownone">';
                                     // Sciebo delete function
@@ -2096,32 +2096,32 @@ else {
                                 " />'.
 
                                 // Rename function
-                                '<a href="" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Rename').'" title="'.Yii::t('OnlinedrivesModule.new', 'Rename').'">
+                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Rename').'" title="'.Yii::t('OnlinedrivesModule.new', 'Rename').'">
                                     <span class="glyphicon glyphicon-pencil" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 10px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Rename').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Rename').'</span>
                                 </a>'.
 
                                 // Move function
-                                '<a href="" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Move').'" title="'.Yii::t('OnlinedrivesModule.new', 'Move').'">
+                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Move').'" title="'.Yii::t('OnlinedrivesModule.new', 'Move').'">
                                     <span class="glyphicon glyphicon-move" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 63px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Move').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Move').'</span>
                                 </a>'.
 
                                 // Copy function
-                                '<a href="" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
+                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
                                     <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 112px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
                                 </a>'.
 
                                 // Delete function
-                                '<a href="#" style="margin-right: 20px;" alt="'.Yii::t('OnlinedrivesModule.new', 'Delete').'" title="'.Yii::t('OnlinedrivesModule.new', 'Delete').'"
+                                '<a href="#" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Delete').'" title="'.Yii::t('OnlinedrivesModule.new', 'Delete').'"
                                     onclick="
                                         getElementById(\'delete'.$no.'\').classList.toggle(\'showblock\');
                                         return false;
                                     "
                                 >
                                     <span class="glyphicon glyphicon-floppy-remove" style="font-size: 25px;"></span>
-                                    <span style="position: absolute; top: 40px; left: 157px; font-size: 10px;">'.Yii::t('OnlinedrivesModule.new', 'Delete').'</span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Delete').'</span>
                                 </a>
                                 <div id="delete'.$no.'" class="shownone">';
                                     // Sciebo delete function

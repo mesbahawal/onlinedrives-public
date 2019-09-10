@@ -149,10 +149,25 @@ div.required label::after { content: ''; }
     top: 5px;
     right: 25px;
     box-shadow: 6px 6px 6px 9px grey;
-    padding: 10px 15px;
+    padding: 10px 25px;
     border: 3px solid #bbb;
     border-radius: 10px;
-    width: 225px;
-    min-height: 50px;
+    width: 300px;
+    min-height: 75px;
     background: #eee;
+}
+.more_a {
+    position: relative;
+    margin-right: 40px;
+}
+.more_txt {
+    position: absolute;
+    top: 30px;
+    left: -10px;
+    margin-right: 40px;
+    font-size: 10px;
+}
+.more_del_confirm {
+    margin-top: 30px;
+    margin-left: 170px;
 }
