@@ -30,7 +30,10 @@ class BrowseController extends BaseController
     {
         // Sciebo params
         $get_sciebo_path = '';
-        if (!empty($_POST['sciebo_path'])) {
+        if (!empty($_GET['sciebo_path'])) {
+            $get_sciebo_path = $_GET['sciebo_path'];
+        }
+        elseif (!empty($_POST['sciebo_path'])) {
             $get_sciebo_path = $_POST['sciebo_path'];
         }
 
@@ -159,8 +162,53 @@ class BrowseController extends BaseController
                     'canWrite' => $this->canWrite(),
                     'model' => $model]);
         }
+        // Delete file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate())
         {
+                $get_dk = '';
+                if (!empty($_GET['dk'])) {
+                    $get_dk = $_GET['dk'];
+                }
+
+                include_once(__DIR__.'/../models/dbconnect.php');
+                $db = dbconnect();
+                $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                                ON d.id=p.onlinedrives_app_detail_id
+                                WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
+                foreach ($sql as $value) {
+                    $drive_path = $value['drive_path'];
+                    $app_user_id = $value['app_user_id'];
+                }
+
+            if (!empty($model_gd_delete->delete_file_id)) {
+                $cloud = $model_gd_delete->cloud;
+                $delete_file_id = $model_gd_delete->delete_file_id;
+
+                // Sciebo delete function
+                if ($cloud == 'sciebo') {
+                    $delete_file_id = str_replace(' ', '%20', $delete_file_id);
+
+                    // http://sabre.io/dav/davclient
+                    // Will do a DELETE request with a condition
+                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$delete_file_id;
+
+                    $client = $model_gd_delete->getScieboClient();
+
+                    if ($client->request('DELETE', $path_to_dir, null)) {
+                        // Success msg
+                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Sciebo war erfolgreich.');
+                    }
+                }
+                // GD delete function
+                elseif ($cloud == 'gd') {
+                    $gd_service->files->delete($delete_file_id);
+
+                    // Success msg
+                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');
+                }
+            }
+
             // valid data received in $model_gd_delete
             return $this->render('index', [
                     'contentContainer' => $this->contentContainer,

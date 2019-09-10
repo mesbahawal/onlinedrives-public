@@ -483,7 +483,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
     }
 }
 
-$model_gd_delete = array();
+/*
 // Delete file
 if (!empty($model_gd_delete->delete_file_id)) {
     $cloud = $model_gd_delete->cloud;
@@ -496,6 +496,7 @@ if (!empty($model_gd_delete->delete_file_id)) {
         // http://sabre.io/dav/davclient
         // Will do a DELETE request with a condition
         $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$delete_file_id;
+
         $response = $sciebo_client->request('DELETE', $path_to_dir, null);
 
         // Success msg
@@ -509,6 +510,7 @@ if (!empty($model_gd_delete->delete_file_id)) {
         $success_msg = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');
     }
 }
+*/
 
 
 /**
@@ -754,7 +756,18 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         <a href="'.$ref.'" target="_blank">
             <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
         </a>';
-
+/*
+        // Test%201A/ins/
+        // Check breadcrumb for shared location
+        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+                        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                        ON d.id=p.onlinedrives_app_detail_id
+                        WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
+        foreach ($sql as $value) {
+            $drive_path = $value['drive_path'];
+            $app_user_id = $value['app_user_id'];
+        }
+*/
         // Build rest of Sciebo navigation
         $navi = '';
         $path = '';
