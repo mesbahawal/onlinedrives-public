@@ -73,7 +73,7 @@ if (!empty($username) && !empty($email))
         }
 
         // Check if user has a membership
-        $sql = $db->createCommand('SELECT * FROM space_membership WHERE space_id = :real_space_id && user_id = :real_user_id', [
+        $sql = $db->createCommand('SELECT * FROM space_membership WHERE space_id = :real_space_id and user_id = :real_user_id', [
             ':real_space_id' => $real_space_id,
             ':real_user_id' => $real_user_id,
         ])->queryAll();
