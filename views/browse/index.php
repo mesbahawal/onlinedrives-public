@@ -1736,7 +1736,7 @@ else {
                             '<div id="more'.$no.'" class="shownone more_menu">'.
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t(\'OnlinedrivesModule.new\', \'Close\').'"
+                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
                                     style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
                                     onclick="
                                         getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
@@ -2087,7 +2087,7 @@ else {
                             '<div id="more'.$no.'" class="shownone more_menu">'.
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t(\'OnlinedrivesModule.new\', \'Close\').'"
+                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
                                     style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
                                     onclick="
                                         getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
