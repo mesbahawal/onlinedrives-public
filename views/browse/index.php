@@ -1858,7 +1858,7 @@ else {
                 // Modified time (files)
                 $diff = $now - $modified_time;
                 if ($diff < 2) {
-                    $modified_time_txt = 'just now / gerade eben';
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunde', ['diff' => $diff]);
