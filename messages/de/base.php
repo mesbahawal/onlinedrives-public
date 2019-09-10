@@ -21,7 +21,7 @@ return array (
   'An error occurred while creating folder {folder}.' => 'Beim Erstellen des Ordners {folder} ist ein Fehler aufgetreten.',
   'An error occurred while unpacking {filename}.' => 'Beim Entpacken von {filename} ist ein Fehler aufgetreten.',
   'Archive %filename% could not be extracted.' => 'Archiv %filename% konnte nicht entpackt werden.',
-  'Cannot edit non existing file.' => 'EIne nicht vorhandene Datei kann nicht editiert werden.',
+  'Cannot edit non existing file.' => 'Eine nicht vorhandene Datei kann nicht editiert werden.',
   'Could not find folder with id: %id%' => 'Der Ordner mit der ID %id% wurde nicht gefunden',
   'Creator' => 'Ersteller',
   'Delete' => 'Löschen',
