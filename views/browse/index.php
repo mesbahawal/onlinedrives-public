@@ -483,35 +483,6 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
     }
 }
 
-/*
-// Delete file
-if (!empty($model_gd_delete->delete_file_id)) {
-    $cloud = $model_gd_delete->cloud;
-    $delete_file_id = $model_gd_delete->delete_file_id;
-
-    // Sciebo delete function
-    if ($cloud == 'sciebo') {
-    	$delete_file_id = str_replace(' ', '%20', $delete_file_id);
-
-        // http://sabre.io/dav/davclient
-        // Will do a DELETE request with a condition
-        $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$delete_file_id;
-
-        $response = $sciebo_client->request('DELETE', $path_to_dir, null);
-
-        // Success msg
-        $success_msg = Yii::t('OnlinedrivesModule.new', 'Löschung aus Sciebo war erfolgreich.');
-    }
-    // GD delete function
-    elseif ($cloud == 'gd') {
-        $gd_service->files->delete($delete_file_id);
-
-        // Success msg
-        $success_msg = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');
-    }
-}
-*/
-
 
 /**
  * Get Sciebo files
