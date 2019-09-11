@@ -259,6 +259,7 @@ $arr_app_user_detail = array();
 $arr_app_user_detail_with_no_share = array();
 $check = 0;
 
+
 if($username<>'') {
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
                                 FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p

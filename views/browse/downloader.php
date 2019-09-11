@@ -40,10 +40,13 @@ $content_length='';
 $content_type='';
 
 // Checked if user is logged in HumHub
-$username = '';
+$username = ''; $email='';
 if(isset(Yii::$app->user->identity->username)) {
     $username = Yii::$app->user->identity->username;
+    $email = Yii::$app->user->identity->email;
 }
+
+
 if (!empty($username) && !empty($email))
 {
 //    if (!empty($_GET['dk'])) {
@@ -106,13 +109,20 @@ if (!empty($username) && !empty($email))
                                             ':onlinedrives' => 'onlinedrives',
                                         ])->queryAll();
 
-        if (count($sql) == 1)
+    /*echo "-$space_id----------".count($sql)."-<br>";
+    var_dump($sql);
+    die();*/
+
+        if (count($sql) > 0)
         {
 
 
             $client = getScieboClient($app_user_id, $app_password);
 
             $path = str_replace(' ', '%20', $_GET['file']);
+
+
+
 
             $download = $client->request('GET', 'https://uni-siegen.sciebo.de/remote.php/webdav/'.$path); // For downloading files
 

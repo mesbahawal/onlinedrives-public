@@ -122,6 +122,7 @@ class BrowseController extends BaseController
                 foreach ($sql as $value) {
                     $drive_path = $value['drive_path'];
                     $app_user_id = $value['app_user_id'];
+                    $app_password = $value['app_password'];
                 }
 
                 if (!empty($app_user_id)) {
@@ -135,7 +136,7 @@ class BrowseController extends BaseController
                                 $content = file_get_contents($path);
                                 $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$realname;
 
-                                $client = $model_u->getScieboClient();
+                                $client = $model_u->getScieboClient($app_user_id,$app_password);
 
                                 if ($client->request('PUT', $path_to_dir, $content)) {
                                     unlink($path);
@@ -178,8 +179,9 @@ class BrowseController extends BaseController
                     $get_dk = $_GET['dk'];
                 }
 
-                $gd_client = getGoogleClient($home_url, $guid);
-                $gd_service = new Google_Service_Drive($gd_client);
+                //$gd_client = getGoogleClient($home_url, $guid);
+                //$gd_client = array();
+                //$gd_service = new Google_Service_Drive($gd_client);
 
                 include_once(__DIR__.'/../models/dbconnect.php');
                 $db = dbconnect();
@@ -190,6 +192,7 @@ class BrowseController extends BaseController
                 foreach ($sql as $value) {
                     $drive_path = $value['drive_path'];
                     $app_user_id = $value['app_user_id'];
+                    $app_password = $value['app_password'];
                 }
 
             if (!empty($model_gd_delete->delete_file_id)) {
@@ -204,7 +207,9 @@ class BrowseController extends BaseController
                     // Will do a DELETE request with a condition
                     $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$delete_file_id;
 
-                    $client = $model_gd_delete->getScieboClient();
+                    //echo $path_to_dir."delete file path"; die();
+
+                    $client = $model_gd_delete->getScieboClient($app_user_id,$app_password);
 
                     // Rework
                     $path_to_dir = str_replace(' ', '%20', $path_to_dir);
@@ -216,7 +221,8 @@ class BrowseController extends BaseController
                 }
                 // GD delete function
                 elseif ($cloud == 'gd') {
-                    $gd_service->files->delete($delete_file_id);
+                    //implement google drive delete here
+                    //$gd_service->files->delete($delete_file_id);
 
                     // Success msg
                     $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');

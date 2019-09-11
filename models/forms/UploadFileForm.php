@@ -34,16 +34,16 @@ class UploadFileForm extends \yii\base\Model
         ];
     }
 
-    public function getScieboClient() {
-    	
-	    $settings = array(
-	        'baseUri' => 'https://uni-siegen.sciebo.de/remote.php/dav/',
-	        'userName' => 'g043502@uni-siegen.de',
-	        'password' => 'TUXNV-ELUDA-WCQPF-ZFAYO'
-	    );
-	    $client = new Client($settings);
+    public function getScieboClient($userid,$password) {
 
-	    return $client;
-	}
+        $settings = array(
+            'baseUri' => 'https://uni-siegen.sciebo.de/remote.php/dav/',
+            'userName' => $userid,
+            'password' => $password,
+        );
+        $client = new \Sabre\DAV\Client($settings);
+
+        return $client;
+    }
 }
 ?>

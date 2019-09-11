@@ -10,7 +10,7 @@ namespace humhub\modules\onlinedrives\models\forms;
 
 use Yii;
 use yii\base\Model;
-use Sabre\DAV\Client;
+use Sabre\DAV;
 
 include __DIR__."/../../vendor/autoload.php";
 
@@ -27,14 +27,16 @@ class DeleteFileForm extends \yii\base\Model
         ];
     }
 
-    public function getScieboClient() {
+    public function getScieboClient($userid,$password) {
     	
 	    $settings = array(
 	        'baseUri' => 'https://uni-siegen.sciebo.de/remote.php/dav/',
-	        'userName' => 'g043502@uni-siegen.de',
-	        'password' => 'TUXNV-ELUDA-WCQPF-ZFAYO'
+	        'userName' => $userid,
+	        'password' => $password,
 	    );
-	    $client = new Client($settings);
+	    $client = new \Sabre\DAV\Client($settings);
+
+
 
 	    return $client;
 	}
