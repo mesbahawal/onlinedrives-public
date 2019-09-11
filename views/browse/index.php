@@ -4,7 +4,6 @@ use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 
 use Sabre\DAV;
-
 use humhub\modules\onlinedrives\widgets\FileListContextMenu;
 use humhub\modules\onlinedrives\widgets\FolderView;
 
@@ -297,7 +296,7 @@ if($username<>'') {
 }
 else{
 
-    \yii\web\Controller::redirect($home_url);
+    (new yii\web\Controller)->redirect($home_url);
 }
 
 

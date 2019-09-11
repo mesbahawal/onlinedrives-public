@@ -8,6 +8,7 @@
 
 namespace humhub\modules\onlinedrives\controllers;
 
+use Google_Service_Drive;
 use Yii;
 use humhub\modules\onlinedrives\widgets\FileList;
 use yii\helpers\Url;
@@ -179,9 +180,9 @@ class BrowseController extends BaseController
                     $get_dk = $_GET['dk'];
                 }
 
-                //$gd_client = getGoogleClient($home_url, $guid);
-                //$gd_client = array();
-                //$gd_service = new Google_Service_Drive($gd_client);
+                $gd_client = $model_gd_delete->getGoogleClient($home_url, $guid);
+
+                $gd_service = new Google_Service_Drive($gd_client);
 
                 include_once(__DIR__.'/../models/dbconnect.php');
                 $db = dbconnect();
@@ -207,8 +208,6 @@ class BrowseController extends BaseController
                     // Will do a DELETE request with a condition
                     $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$delete_file_id;
 
-                    //echo $path_to_dir."delete file path"; die();
-
                     $client = $model_gd_delete->getScieboClient($app_user_id,$app_password);
 
                     // Rework
@@ -222,7 +221,7 @@ class BrowseController extends BaseController
                 // GD delete function
                 elseif ($cloud == 'gd') {
                     //implement google drive delete here
-                    //$gd_service->files->delete($delete_file_id);
+                    $gd_service->files->delete($delete_file_id);
 
                     // Success msg
                     $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');
