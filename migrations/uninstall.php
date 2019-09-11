@@ -8,6 +8,8 @@ class uninstall extends Migration
     {
         $this->dropTable('onlinedrives_app_detail');
         $this->dropTable('onlinedrives_app_drive_path_detail');
+        $this->dropTable('onlinedrives_file');
+        $this->dropTable('onlinedrives_folder');
     }
 
     public function down()

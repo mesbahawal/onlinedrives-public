@@ -2,7 +2,7 @@
 use yii\db\Schema;
 use yii\db\Migration;
 
-class install_DB extends Migration
+class install_custom_DB extends Migration
 {
 
     public function up()
@@ -17,7 +17,7 @@ class install_DB extends Migration
             'app_password' => 'varchar(255) NOT NULL',
             'create_date' => 'int(11) NOT NULL',
             'if_shared' => 'varchar(1) NOT NULL DEFAULT \'N\''
-        ), 'PRIMARY KEY (`app_user_id`), KEY `id` (`id`)');
+        ), '');
         
         $this->createTable('onlinedrives_app_drive_path_detail', array(
             'id' => 'int(11) NOT NULL AUTO_INCREMENT',
@@ -25,7 +25,7 @@ class install_DB extends Migration
             'permission' => 'varchar(255) DEFAULT NULL',
             'onlinedrives_app_detail_id' => 'int(11) NOT NULL',
             'drive_key' => 'varchar(255) NOT NULL'
-        ), 'PRIMARY KEY (`drive_key`), KEY `id` (`id`)');
+        ), '');
     }
 
     public function down()
