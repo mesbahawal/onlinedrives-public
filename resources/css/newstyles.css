@@ -14,7 +14,11 @@
 
 .fav_brown {
     color: #ffff06;
-    margin-left: 10px;
+    margin-right: 10px;
+}
+.fav_default {
+    color: rgba(171, 171, 171, 0.24);
+    margin-right: 10px;
 }
 .file-color { color: #4285f4; }
 

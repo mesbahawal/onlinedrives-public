@@ -21,7 +21,11 @@ $db = dbconnect();
  */
 
 $now = time();
+
+GLOBAL $home_url;
+
 $home_url = Url::base('http');
+
 $username = '';
 if(isset(Yii::$app->user->identity->username)) {
     $username = Yii::$app->user->identity->username;
@@ -681,26 +685,6 @@ if ($count_sciebo_files > 0) {
 }
 
 
-/**
- * Sciebo data who didn't share
- */
-if (count($arr_app_user_detail_with_no_share) > 0) {
-    //echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
-    $logged_username =  Yii::$app->user->identity->username;
-    $email = Yii::$app->user->identity->email;
-
-    for ($j = 0; $j < count($arr_app_user_detail_with_no_share); $j++) { // start of for loop (j)
-        $drive_path = $arr_app_user_detail_with_no_share[$j]['drive_path'];
-        $app_user_id = $arr_app_user_detail_with_no_share[$j]['app_user_id'];
-        $app_password = $arr_app_user_detail_with_no_share[$j]['app_password'];
-        $drive_key = $arr_app_user_detail_with_no_share[$j]['drive_key'];
-        $username = $arr_app_user_detail_with_no_share[$j]['user_id'];
-
-        if ($username == $logged_username && $drive_path=='') {
-            echo "I am ".$logged_username." and only I should see rows to pick drive path";
-        }
-    }
-}
 
 
 /**
@@ -843,6 +827,67 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
 <br />
 
+<?php
+    /**
+ * Sciebo data who didn't share
+ */
+
+
+if (count($arr_app_user_detail_with_no_share) > 0) {
+    //echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
+    $logged_username =  Yii::$app->user->identity->username;
+    $email = Yii::$app->user->identity->email;
+
+    ?>
+    <div style="
+                border: 1px solid #f0f0f0;
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #f5f5f5;
+            ">
+    <table id="table" class="table table-responsive">
+    <thead>
+    <?php
+
+    for ($j = 0; $j < count($arr_app_user_detail_with_no_share); $j++) { // start of for loop (j)
+        $drive_path = $arr_app_user_detail_with_no_share[$j]['drive_path'];
+        $app_user_id = $arr_app_user_detail_with_no_share[$j]['app_user_id'];
+        $app_password = $arr_app_user_detail_with_no_share[$j]['app_password'];
+        $drive_key = $arr_app_user_detail_with_no_share[$j]['drive_key'];
+        $username = $arr_app_user_detail_with_no_share[$j]['user_id'];
+
+        if ($username == $logged_username && $drive_path=='') {
+            echo "I am ".$logged_username." and only I should see rows to pick drive path";
+
+            ?>
+            <!--Table for selecting path-->
+
+                    <tr>
+                        <td><?php
+                            // Output Sciebo icon in navigation
+                            $ref = 'https://uni-siegen.sciebo.de/login';
+                            $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
+                            echo '<a href="'.$ref.'" target="_blank">
+                            <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
+                        </a>';
+                            ?>
+                            <b>G id here</b>
+                        </td>
+                        <td><a class="btn btn-success" href='http://localhost/humhub-uni/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&cguid=fafecccc-4b3d-4c0a-a30d-51f7bdb88bc4&app_detail_id=1'">Add</a> </td>
+                    </tr>
+
+
+            <?php
+        }
+    }
+    ?>
+    </thead>
+    </table>
+    </div>
+    <?php
+}
+?>
+
 
 <!-- Login menu -->
 <div id="login_menu">
@@ -898,7 +943,7 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
 
 // Lines
 echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
-'<div id="line_gd_login" class="line_icons shownone"></div>';
+'<div id="line_gd_login" class="line_icons shownone"></div><br/><span style="color: red" id="err_msg"></span>';
 ?>
 
 <div id="app_id" style="
@@ -924,7 +969,14 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
 <!-- Send button -->
 <div id="create_btn_login" class="form-group">
     <div class="col-lg-offset-1 col-lg-11">
-        <?php echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary']); ?>
+        <?php echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
+            'onclick' =>
+                'var app_id = document.getElementById("loginform-app_id").value;
+                if(app_id==""){
+                document.getElementById("err_msg").innerHTML = "App Id Required!";
+                document.getElementById("loginform-app_id").focus();
+                return false;}
+                ']); ?>
     </div>
 </div>
 
@@ -1485,7 +1537,31 @@ else {
     }
 }
 ?>
-
+            <!--Table for selecting path-->
+            <div style="
+                border: 1px solid #f0f0f0;
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #f5f5f5;
+            ">
+            <table id="table" class="table table-responsive">
+                <thead>
+                <tr>
+                    <td><?php
+                        // Output Sciebo icon in navigation
+                        $ref = 'https://uni-siegen.sciebo.de/login';
+                        $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
+                        echo '<a href="'.$ref.'" target="_blank">
+                            <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
+                        </a>';
+                        ?>
+                        <b>G id here</b>
+                    </td>
+                    <td><a class="btn btn-success" href='http://localhost/humhub-uni/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&cguid=fafecccc-4b3d-4c0a-a30d-51f7bdb88bc4&app_detail_id=1'">Add</a> </td>
+                </tr>
+                </thead>
+            </table>
+            </div>
 
 <table id="table" class="table table-responsive">
     <thead>

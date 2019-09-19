@@ -21,6 +21,7 @@ use humhub\modules\onlinedrives\models\forms\LoginForm;
 use humhub\modules\onlinedrives\models\forms\CreateFileForm;
 use humhub\modules\onlinedrives\models\forms\UploadFileForm;
 use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
+use humhub\modules\onlinedrives\models\forms\AddFilesForm;
 
 use app\models\UploadForm;
 use yii\web\UploadedFile;
@@ -33,6 +34,9 @@ class BrowseController extends BaseController
     {
         // Sciebo params
         $get_sciebo_path = '';
+
+        GLOBAL $home_url;
+
         $home_url = Url::base('http');
         if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
 
@@ -56,34 +60,45 @@ class BrowseController extends BaseController
 
         if ($model_login->load(Yii::$app->request->post()))
         {
-            include_once(__DIR__.'/../models/dbconnect.php');
-            $db = dbconnect();
 
-            $space_id = $_GET['cguid'];
-            $drive_name = $model_login->selected_cloud_login;
-            $app_user_id = $model_login->app_id;
-            $app_password = $model_login->password;
+            if( $model_login->validate()) {
 
-            $username = Yii::$app->user->identity->username;
-            $email = Yii::$app->user->identity->email;
+                include_once(__DIR__.'/../models/dbconnect.php');
+                $db = dbconnect();
 
-            // DB connection
-            // https://www.yiiframework.com/doc/guide/2.0/en/db-active-record
-            // https://www.yiiframework.com/doc/guide/2.0/en/db-dao
-            // https://www.yiiframework.com/doc/api/2.0/yii-db-connection
-            // https://www.yiiframework.com/doc/guide/2.0/en/security-passwords
-            $db->open();
+                $space_id = $_GET['cguid'];
+                $drive_name = $model_login->selected_cloud_login;
+                $app_user_id = $model_login->app_id;
+                $app_password = $model_login->password;
 
-            $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, drive_key, create_date) VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :drive_key, :create_date)', [
-                ':space_id' => $space_id,
-                ':user_id' => $username,
-                ':email' => $email,
-                ':drive_name' => $drive_name,
-                ':app_user_id' => $app_user_id,
-                ':app_password' => $app_password,
-                ':drive_key' => md5(time()),
-                ':create_date' => time(),
-            ])->execute();
+                $username = Yii::$app->user->identity->username;
+                $email = Yii::$app->user->identity->email;
+
+                // DB connection
+                // https://www.yiiframework.com/doc/guide/2.0/en/db-active-record
+                // https://www.yiiframework.com/doc/guide/2.0/en/db-dao
+                // https://www.yiiframework.com/doc/api/2.0/yii-db-connection
+                // https://www.yiiframework.com/doc/guide/2.0/en/security-passwords
+                $db->open();
+
+                $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date) VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
+                    ':space_id' => $space_id,
+                    ':user_id' => $username,
+                    ':email' => $email,
+                    ':drive_name' => $drive_name,
+                    ':app_user_id' => $app_user_id,
+                    ':app_password' => $app_password,
+                    ':create_date' => time(),
+                ])->execute();
+            }
+            else {
+                $error = '';
+                $errors = $model_login->errors;
+                foreach($errors as $error) {
+                    $error = $error[0];
+                }
+
+            }
 
             // valid data received in $model_login
             return $this->render('index', [
@@ -92,6 +107,7 @@ class BrowseController extends BaseController
                     'canWrite' => $this->canWrite(),
                     'model' => $model_login]);
         }
+
 
         if ($model_u->load(Yii::$app->request->post()))
         {
@@ -247,6 +263,8 @@ class BrowseController extends BaseController
 
     public function actionDownloader()
     {
+        GLOBAL $home_url;
+
         $home_url = Url::base('http');
 
         // Sciebo params
@@ -262,6 +280,119 @@ class BrowseController extends BaseController
             //$email = Yii::$app->user->identity->email;
 
             return $this->render('downloader', [
+                'contentContainer' => $this->contentContainer,
+                'folder' => $currentFolder,
+                'canWrite' => $this->canWrite(),
+            ]);
+        }
+        else{
+
+            return $this ->redirect($home_url);
+        }
+
+        // either the page is initially displayed or there is some validation error
+
+    }
+
+    public function actionAddfiles()
+    {
+        $home_url = Url::base('http');
+
+        // Sciebo params
+        $get_sciebo_path = '';
+        $app_detail_id = '';
+
+        $home_url = Url::base('http');
+
+        if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
+
+        if (!empty($_GET['app_detail_id'])) { $app_detail_id =  $_GET['app_detail_id'];
+        }
+        else{ return $this ->redirect($home_url);
+        }
+
+        if (!empty($_GET['sciebo_path'])) {
+            $get_sciebo_path = $_GET['sciebo_path'];
+        }
+        elseif (!empty($_POST['sciebo_path'])) {
+            $get_sciebo_path = $_POST['sciebo_path'];
+        }
+
+        $currentFolder = $this->getCurrentFolder();
+        if (!$currentFolder->content->canView())
+        {
+            throw new HttpException(403);
+        }
+
+
+
+        if(isset(Yii::$app->user->identity->username)) {
+            $username = Yii::$app->user->identity->username;
+            //$email = Yii::$app->user->identity->email;
+
+            $model_addfiles = new AddFilesForm();
+
+            if ($model_addfiles->load(Yii::$app->request->post())) {
+
+                //var_dump($model_addfiles);
+
+                if ($model_addfiles->validate()) {
+
+                    $i=0;
+
+                    $arr_drive_path = $model_addfiles->drive_path;
+                    $app_detail_id =  $model_addfiles->app_detail_id;
+
+                    /////////////////// RnD Array
+                    ///
+                    ///
+                    /*echo $arr_drive_path[0][0];
+                    echo $arr_drive_path[1][0];*/
+
+                    /*for ($i=0;$i<count($arr_drive_path);$i++)
+                    {
+
+                            echo $arr_drive_path[$i][0]."<br>";
+
+
+                    }*/
+
+                    /*foreach($key as $value)
+                    {
+                        echo '<br> key - '.$value;
+                    }*/
+                    //var_dump(array_keys($model_addfiles->drive_path));
+
+                    // Do table onlinedrives_app_drive_path_detail insert here;
+                    /*foreach($model_addfiles->drive_path as $key=>$value_ck) {
+                        //$drive_path = $model_addfiles->drive_path;
+                        //$permission = $model_addfiles->permission;
+                        print_r($value_ck);
+
+
+
+                        $i++;
+                    }*/
+                    ///
+                    /// /////////////////////////////////
+
+                     for ($i = 0; $i <  count($arr_drive_path); $i++) {
+                        $key=key($arr_drive_path);
+                        $val=$arr_drive_path[$key];
+                        if ($val<> '') {
+                            //echo $key ." = ".  $val ." <br> ";
+                            //print_r($val);
+                            echo "Here insert values in table drive_path for app_detail_id=".$app_detail_id."-->";
+                            echo $val[0]." <br> ";
+
+                        }
+                        next($arr_drive_path);
+                    }
+
+                }
+            }
+
+            return $this->render('addfiles', [
                 'contentContainer' => $this->contentContainer,
                 'folder' => $currentFolder,
                 'canWrite' => $this->canWrite(),
