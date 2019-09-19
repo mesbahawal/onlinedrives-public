@@ -38,6 +38,7 @@ class m150720_174011_initial extends Migration
             'permission' => 'varchar(255) DEFAULT NULL',
             'onlinedrives_app_detail_id' => 'int(11) NOT NULL',
             'drive_key' => 'varchar(255) NOT NULL',
+            'if_shared' => 'varchar(10) NOT NULL DEFAULT \'Y\'',
             'PRIMARY KEY (`drive_key`),  KEY `id` (`id`)'
         ), '');
     }

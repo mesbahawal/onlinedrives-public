@@ -127,6 +127,7 @@ if (!empty($_GET['app_detail_id'])) {
 }
 
 echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onlinedrives-form']);
+
 ?>
 
 <div id="onlinedrives-container" class="panel panel-default onlinedrives-content main_div_container">
@@ -139,7 +140,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             <?php
             $ref = $home_url . '/index.php?r=onlinedrives%2Fbrowse%2faddfiles&fid=1' . $guid ;
             if($cloud=='sciebo') {
-                $ref = $home_url . '/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&' . $guid . '&app_detail_id=' . $app_detail_id . '&sciebo_path=/';
+                $ref = $home_url . '/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&' . $guid . '&app_detail_id=' . $app_detail_id . '&sciebo_path=';
             }
             echo '<a href="'.$ref.'">'.Yii::t('OnlinedrivesModule.new', 'Location:').'</a>';
 
@@ -246,7 +247,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 <?php
 
 
-if($app_user_id<>'' and $if_shared<>'Y') {
+if($app_user_id<>'') {
     // Set Sciebo path to replace with user ID
     $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
 
@@ -399,6 +400,7 @@ if($app_user_id<>'' and $if_shared<>'Y') {
         $count_all = $count_all_folders + $count_all_files;
 
     }
+
     $model_addfiles = new AddFilesForm();
     $form_addfiles = ActiveForm::begin([
         'id' => 'addfiles_form',
@@ -416,7 +418,7 @@ if($app_user_id<>'' and $if_shared<>'Y') {
                 Name
             </td>
             <td>
-                Permissions
+                Action
             </td>
             <td>
                 <div id="create_btn_login" class="form-group">
@@ -429,7 +431,6 @@ if($app_user_id<>'' and $if_shared<>'Y') {
         </tr>
         <?php
         $no = 0;
-        echo $count_all.'---all'.$count_all_folders.'---fol'.$count_all_files.'---fil';
 
         // Rework of folders array
         for ($i = 0; $i < $count_all_folders; $i++) {
@@ -539,7 +540,7 @@ if($app_user_id<>'' and $if_shared<>'Y') {
 
                 $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
 
-                echo $i.'--'.$form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
+                echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
                     urlencode($path_chunk)=>''
                 ]);
 
@@ -758,7 +759,7 @@ if($app_user_id<>'' and $if_shared<>'Y') {
                     <td class="shownone" >'.$type.'</td>
                     <td>';
                 $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
-                echo $checkbox_index.'--'.$form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
+                echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
                     urlencode($path_chunk) => ''
                 ]);
                 echo '</td>
@@ -794,9 +795,9 @@ if($app_user_id<>'' and $if_shared<>'Y') {
         </div>
     </div>
     <?php
-
+    $form_addfiles = ActiveForm::end();
 }
-ActiveForm::end();
+
 
     ?>
     </div>

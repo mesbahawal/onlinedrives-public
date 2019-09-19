@@ -279,9 +279,10 @@ if($username<>'') {
         $uid = $value['uid'];
         $pid = $value['pid'];
         $if_shared = $value['if_shared'];
+        $share_status = $value['share_status'];
         $user_id = $value['user_id'];
 
-        if ($if_shared == 'Y') {
+        if ($if_shared == 'Y' && $share_status=='Y') {
             $arr_app_user_detail[$k]['drive_path'] = $drive_path;
             $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
             $arr_app_user_detail[$k]['app_password'] = $app_password;
@@ -294,6 +295,8 @@ if($username<>'') {
             $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
             $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
             $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
+            $arr_app_user_detail_with_no_share[$n]['if_shared'] = $if_shared;
+            $arr_app_user_detail_with_no_share[$n]['share_status'] = $share_status;
             $n++;
         }
     }
@@ -831,61 +834,120 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     /**
  * Sciebo data who didn't share
  */
+    $arr_app_user_admin = array(); $adm=0;
 
+    if($username<>'') {
+        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                                ON d.id=p.onlinedrives_app_detail_id
+                                WHERE d.space_id = :space_id
+                                AND d.user_id = :user_id
+                                GROUP BY d.app_user_id;',
+        [':space_id' => $space_id,':user_id'=>$username ])->queryAll();
 
-if (count($arr_app_user_detail_with_no_share) > 0) {
-    //echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
-    $logged_username =  Yii::$app->user->identity->username;
-    $email = Yii::$app->user->identity->email;
+        foreach ($sql as $value) {
+            $drive_path = $value['drive_path'];
+            $app_user_id = $value['app_user_id'];
+            $app_password = $value['app_password'];
+            $drive_key = $value['drive_key'];
+            $uid = $value['uid'];
+            $pid = $value['pid'];
+            $if_shared = $value['if_shared'];
+            $share_status = $value['share_status'];
+            $user_id = $value['user_id'];
 
-    ?>
-    <div style="
-                border: 1px solid #f0f0f0;
-                border-radius: 10px;
-                padding: 5px;
-                background-color: #f5f5f5;
-            ">
-    <table id="table" class="table table-responsive">
-    <thead>
-    <?php
-
-    for ($j = 0; $j < count($arr_app_user_detail_with_no_share); $j++) { // start of for loop (j)
-        $drive_path = $arr_app_user_detail_with_no_share[$j]['drive_path'];
-        $app_user_id = $arr_app_user_detail_with_no_share[$j]['app_user_id'];
-        $app_password = $arr_app_user_detail_with_no_share[$j]['app_password'];
-        $drive_key = $arr_app_user_detail_with_no_share[$j]['drive_key'];
-        $username = $arr_app_user_detail_with_no_share[$j]['user_id'];
-
-        if ($username == $logged_username && $drive_path=='') {
-            echo "I am ".$logged_username." and only I should see rows to pick drive path";
-
-            ?>
-            <!--Table for selecting path-->
-
-                    <tr>
-                        <td><?php
-                            // Output Sciebo icon in navigation
-                            $ref = 'https://uni-siegen.sciebo.de/login';
-                            $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
-                            echo '<a href="'.$ref.'" target="_blank">
-                            <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-                        </a>';
-                            ?>
-                            <b>G id here</b>
-                        </td>
-                        <td><a class="btn btn-success" href='http://localhost/humhub-uni/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&cguid=fafecccc-4b3d-4c0a-a30d-51f7bdb88bc4&app_detail_id=1'">Add</a> </td>
-                    </tr>
-
-
-            <?php
+            $arr_app_user_admin[$adm]['drive_path'] = $drive_path;
+            $arr_app_user_admin[$adm]['app_user_id'] = $app_user_id;
+            $arr_app_user_admin[$adm]['app_password'] = $app_password;
+            $arr_app_user_admin[$adm]['drive_key'] = $drive_key;
+            $arr_app_user_admin[$adm]['user_id'] = $user_id;
+            $arr_app_user_admin[$adm]['if_shared'] = $if_shared;
+            $arr_app_user_admin[$adm]['share_status'] = $share_status;
+            $arr_app_user_admin[$adm]['uid'] = $uid;
+            $arr_app_user_admin[$adm]['pid'] = $pid;
+            $adm++;
         }
+
     }
-    ?>
-    </thead>
-    </table>
-    </div>
-    <?php
-}
+
+    if (count($arr_app_user_admin) > 0) {
+        //echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
+        $logged_username =  Yii::$app->user->identity->username;
+        $email = Yii::$app->user->identity->email;
+
+        ?>
+        <div style="
+                    border: 1px solid #f0f0f0;
+                    border-radius: 10px;
+                    padding: 5px;
+                    background-color: #f5f5f5;
+                ">
+        <table id="table" class="table table-responsive">
+        <thead>
+        <?php
+
+        for ($j = 0; $j < count($arr_app_user_admin); $j++) { // start of for loop (j)
+            $drive_path = $arr_app_user_admin[$j]['drive_path'];
+            $app_user_id = $arr_app_user_admin[$j]['app_user_id'];
+            $app_password = $arr_app_user_admin[$j]['app_password'];
+            $drive_key = $arr_app_user_admin[$j]['drive_key'];
+            $username = $arr_app_user_admin[$j]['user_id'];
+            $if_shared = $arr_app_user_admin[$j]['if_shared'];
+            $share_status = $arr_app_user_admin[$j]['share_status'];
+            $uid = $arr_app_user_admin[$j]['uid'];
+            $pid = $arr_app_user_admin[$j]['pid'];
+
+            if ($username == $logged_username && $if_shared<>'D') {
+                echo "I am ".$logged_username." and only I should see rows to pick drive path";
+
+                ?>
+                <!--Table for selecting path-->
+
+                        <tr>
+                            <td><?php
+                                // Output Sciebo icon in navigation
+                                $ref = 'https://uni-siegen.sciebo.de/login';
+                                $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
+                                echo '<a href="'.$ref.'" target="_blank">
+                                <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
+                            </a>';
+                                ?>
+                                <b>G id here</b>
+                            </td>
+                            <td>
+                                <a class="btn btn-success" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>'">Add</a>
+                            </td>
+                            <td>
+                                <?php
+                                    if($if_shared='Y') {
+                                        ?>
+                                        <a class="btn btn-default"
+                                           href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>'">Update</a>
+                                        <?php
+                                    }
+                                    ?>
+                            </td>
+                            <td>
+                             <?php
+                                if($if_shared='Y') {
+                                    ?>
+                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>'">Disable</a>
+                                    <?php
+                                }
+                                ?>
+                            </td>
+                        </tr>
+
+
+                <?php
+            }
+        }
+        ?>
+        </thead>
+        </table>
+        </div>
+        <?php
+    }
 ?>
 
 
@@ -1537,31 +1599,6 @@ else {
     }
 }
 ?>
-            <!--Table for selecting path-->
-            <div style="
-                border: 1px solid #f0f0f0;
-                border-radius: 10px;
-                padding: 5px;
-                background-color: #f5f5f5;
-            ">
-            <table id="table" class="table table-responsive">
-                <thead>
-                <tr>
-                    <td><?php
-                        // Output Sciebo icon in navigation
-                        $ref = 'https://uni-siegen.sciebo.de/login';
-                        $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
-                        echo '<a href="'.$ref.'" target="_blank">
-                            <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-                        </a>';
-                        ?>
-                        <b>G id here</b>
-                    </td>
-                    <td><a class="btn btn-success" href='http://localhost/humhub-uni/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&cguid=fafecccc-4b3d-4c0a-a30d-51f7bdb88bc4&app_detail_id=1'">Add</a> </td>
-                </tr>
-                </thead>
-            </table>
-            </div>
 
 <table id="table" class="table table-responsive">
     <thead>

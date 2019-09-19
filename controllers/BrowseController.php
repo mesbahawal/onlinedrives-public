@@ -301,8 +301,12 @@ class BrowseController extends BaseController
         // Sciebo params
         $get_sciebo_path = '';
         $app_detail_id = '';
+        $space_id = '';
 
         $home_url = Url::base('http');
+
+
+        if (!empty($_GET['cguid'])) {$space_id = $_GET['cguid']; }
 
         if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
 
@@ -334,7 +338,8 @@ class BrowseController extends BaseController
 
             if ($model_addfiles->load(Yii::$app->request->post())) {
 
-                //var_dump($model_addfiles);
+                include_once(__DIR__.'/../models/dbconnect.php');
+                $db = dbconnect();
 
                 if ($model_addfiles->validate()) {
 
@@ -376,30 +381,77 @@ class BrowseController extends BaseController
                     ///
                     /// /////////////////////////////////
 
+                    $db->open();
+
                      for ($i = 0; $i <  count($arr_drive_path); $i++) {
                         $key=key($arr_drive_path);
                         $val=$arr_drive_path[$key];
                         if ($val<> '') {
                             //echo $key ." = ".  $val ." <br> ";
                             //print_r($val);
-                            echo "Here insert values in table drive_path for app_detail_id=".$app_detail_id."-->";
-                            echo $val[0]." <br> ";
 
+                            $drive_path = urldecode($val[0]);
+
+                            ////// check path is already exist in share
+
+                            $sql = $db->createCommand('SELECT * FROM 
+                                onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                                WHERE d.`id`=p.`onlinedrives_app_detail_id`
+                                AND d.`space_id`=:space_id
+                                AND d.`user_id`=:username
+                                AND p.`drive_path`=:drive_path
+                                AND d.`id`=:app_detail_id',
+                                [':space_id' => $space_id,
+                                    ':username' => $username,
+                                    ':drive_path' => $drive_path,
+                                    ':app_detail_id' => $app_detail_id])->queryAll();
+
+                            if(count($sql)==0)
+                            {
+                                $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail` 
+                                                            (`drive_path`,`permission`,`onlinedrives_app_detail_id`,`drive_key`) 
+                                                    VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
+                                    ':drive_path' => $drive_path,
+                                    ':permission' => 'Rd',
+                                    ':onlinedrives_app_detail_id' => $app_detail_id,
+                                    ':drive_key' => md5(rand(3,9))
+                                ])->execute();
+                            }
                         }
                         next($arr_drive_path);
-                    }
+                    } // DB insert done
+
+                    $sql = $db->createCommand('SELECT * FROM `onlinedrives_app_drive_path_detail` 
+                                                    WHERE onlinedrives_app_detail_id= :onlinedrives_app_detail_id
+                                                    AND share_status="Y"',
+                                                    [':onlinedrives_app_detail_id' => $app_detail_id])->queryAll();
+
+                     if(count($sql)>0)
+                     {
+                         //Update app_detail table and set status = Y for id=$app_detail_id
+
+                         $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared="Y" WHERE id = :onlinedrives_app_detail_id', [
+                             ':onlinedrives_app_detail_id' => $app_detail_id
+                         ])->execute();
+                     }
+
+                    return $this->render('index', [
+                        'contentContainer' => $this->contentContainer,
+                        'folder' => $currentFolder,
+                        'canWrite' => $this->canWrite(),
+                    ]);
 
                 }
             }
-
-            return $this->render('addfiles', [
-                'contentContainer' => $this->contentContainer,
-                'folder' => $currentFolder,
-                'canWrite' => $this->canWrite(),
-            ]);
+            else{
+                return $this->render('addfiles', [
+                    'contentContainer' => $this->contentContainer,
+                    'folder' => $currentFolder,
+                    'canWrite' => $this->canWrite(),
+                ]);
+            }
         }
         else{
-
             return $this ->redirect($home_url);
         }
 
