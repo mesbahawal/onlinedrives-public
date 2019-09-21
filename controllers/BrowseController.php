@@ -414,7 +414,7 @@ class BrowseController extends BaseController
                                     ':drive_path' => $drive_path,
                                     ':permission' => 'Rd',
                                     ':onlinedrives_app_detail_id' => $app_detail_id,
-                                    ':drive_key' => md5(rand(3,9))
+                                    ':drive_key' => md5(microtime())
                                 ])->execute();
                             }
                         }

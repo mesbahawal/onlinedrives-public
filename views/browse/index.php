@@ -915,14 +915,14 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                                 <b>G id here</b>
                             </td>
                             <td>
-                                <a class="btn btn-success" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>'">Add</a>
+                                <a class="btn btn-success" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Add</a>
                             </td>
                             <td>
                                 <?php
                                     if($if_shared='Y') {
                                         ?>
                                         <a class="btn btn-default"
-                                           href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>'">Update</a>
+                                           href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Update</a>
                                         <?php
                                     }
                                     ?>
@@ -931,7 +931,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                              <?php
                                 if($if_shared='Y') {
                                     ?>
-                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>'">Disable</a>
+                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Disable</a>
                                     <?php
                                 }
                                 ?>
