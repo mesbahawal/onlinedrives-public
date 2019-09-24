@@ -1033,10 +1033,23 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
     <div class="col-lg-offset-1 col-lg-11">
         <?php echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
             'onclick' =>
-                'var app_id = document.getElementById("loginform-app_id").value;
+                'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
+                var select_gd_login_src = getElementById(\'select_gd_login\').src;
+                if (select_sciebo_login_src != "\'protected/modules/onlinedrives/resources/sciebo50.png\'" &&
+                select_gd_login_src != \'protected/modules/onlinedrives/resources/gd50.png\') {
+                document.getElementById("err_msg").innerHTML = "Please select a cloud service";
+                return false;}
+
+				var app_id = document.getElementById("loginform-app_id").value;
                 if(app_id==""){
                 document.getElementById("err_msg").innerHTML = "App Id Required!";
                 document.getElementById("loginform-app_id").focus();
+                return false;}
+
+                var password = document.getElementById("loginform-password").value;
+                if(password==""){
+                document.getElementById("err_msg").innerHTML = "Password Required!";
+                document.getElementById("loginform-password").focus();
                 return false;}
                 ']); ?>
     </div>
