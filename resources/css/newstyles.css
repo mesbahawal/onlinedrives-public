@@ -1,14 +1,25 @@
+/* Display properties */
+.shownone { display: none !important; }
+.showblock { display: block !important; }
+.showinline { display: inline !important; }
+
+/* Position properties */
+.rel { position: relative !important; }
+.abs { position: absolute !important; }
+
+/* Alignment properties */
+.align_l { text-align: left !important; }
+.align_r { text-align: right !important; }
+.align_c { text-align: center !important; }
+.align_j { text-align: justify !important; }
+/* Vertical alignment properties */
+.valign_t { vertical-align: top !important; }
+.valign_m { vertical-align: middle !important; }
+.valign_b { vertical-align: bottom !important; }
+
 .main_div_container { margin-bottom: 100px; }
 #table { font-size: 14px; }
 #table tr { height: 49px; }
-
-/* https://www.mediaevent.de/css/position-display.html */
-.shownone { display: none; }
-.showblock { display: block; }
-.showinline { display: inline; }
-
-.rel { position: relative; }
-.abs { position: absolute; }
 
 .bgyellow { background: #ffffe0; }
 

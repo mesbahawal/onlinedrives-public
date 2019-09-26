@@ -898,13 +898,11 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             $pid = $arr_app_user_admin[$j]['pid'];
 
             if ($username == $logged_username && $if_shared<>'D') {
-                echo "I am ".$logged_username." and only I should see rows to pick drive path";
-
                 ?>
                 <!--Table for selecting path-->
 
                         <tr>
-                            <td><?php
+                            <td class="valign_m"><?php
                                 // Output Sciebo icon in navigation
                                 $ref = 'https://uni-siegen.sciebo.de/login';
                                 $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
@@ -912,7 +910,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                                 <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
                             </a>';
                                 ?>
-                                <b>G id here</b>
+                                <b><?php echo $app_user_id; ?></b>
                             </td>
                             <td>
                                 <a class="btn btn-success" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Add</a>
@@ -1027,7 +1025,7 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
     <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'Password'); ?></div>
     <?php echo $form_login->field($model_login, 'password')->passwordInput(); ?>
 </div>
-
+<?php echo $home_url; ?>
 <!-- Send button -->
 <div id="create_btn_login" class="form-group">
     <div class="col-lg-offset-1 col-lg-11">
@@ -1035,8 +1033,8 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
             'onclick' =>
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
-                if (select_sciebo_login_src != "\'protected/modules/onlinedrives/resources/sciebo50.png\'" &&
-                select_gd_login_src != \'protected/modules/onlinedrives/resources/gd50.png\') {
+                if (select_sciebo_login_src != "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo50.png" &&
+                select_gd_login_src != "'.$home_url.'/protected/modules/onlinedrives/resources/gd50.png") {
                 document.getElementById("err_msg").innerHTML = "Please select a cloud service";
                 return false;}
 
