@@ -324,7 +324,6 @@ $gd_service = new Google_Service_Drive($gd_client);
  * Sciebo client
  */
 
-
 if (count($arr_app_user_detail) > 0) { // start of sciebo according to the DB table rows
 
 for ($j = 0; $j < count($arr_app_user_detail); $j++) { // start of for loop (j)
@@ -708,12 +707,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             ])*/?>
 
 <!-- Breadcrumb navigation -->
-<div style="
-    border: 1px solid #f0f0f0;
-    border-radius: 10px;
-    padding: 10px;
-    background-color: #f5f5f5;
-">
+<div class="box">
 
     <?php
     // Output start of navigation
@@ -829,10 +823,8 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     ?>
 </div>
 
-<br />
-
 <?php
-    /**
+/**
  * Sciebo data who didn't share
  */
     $arr_app_user_admin = array(); $adm=0;
@@ -877,12 +869,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         $email = Yii::$app->user->identity->email;
 
         ?>
-        <div style="
-                    border: 1px solid #f0f0f0;
-                    border-radius: 10px;
-                    padding: 5px;
-                    background-color: #f5f5f5;
-                ">
+        <div class="box">
         <table id="table" class="table table-responsive">
         <thead>
         <?php
@@ -1026,7 +1013,7 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
     <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'Password'); ?></div>
     <?php echo $form_login->field($model_login, 'password')->passwordInput(); ?>
 </div>
-<?php echo $home_url; ?>
+
 <!-- Send button -->
 <div id="create_btn_login" class="form-group">
     <div class="col-lg-offset-1 col-lg-11">
@@ -2303,6 +2290,101 @@ else {
 /**
  * Check (4) end
  */
+}
+
+
+/**
+ * Sciebo and GD guide
+ */
+if (1==1) {
+    $guide_h = '<span style="font-size: 20px; font-weight: bold;">Access configuration guide</span>';
+
+    $sciebo_guide_link = '<a href="#sciebo_guide">How to connect with your Sciebo account</a>';
+    $gd_guide_link = '<a href="#gd_guide">How to connect with your Google Drive account</a>';
+
+    $sciebo_guide_a = '<a name="sciebo_guide"></a>';
+    $gd_guide_a = '<a name="gd_guide"></a>';
+
+	$sciebo_guide_h = '<h1><b>How to connect with your Sciebo account</b></h1>';
+	$gd_guide_h = '<h1><b>How to connect with your Google Drive account</b></h1>';
+
+	$sciebo_guide_txt1 = 'Go in Sciebo, click on your name, click on "Settings" / "Einstellungen" (orange circle):';
+    $sciebo_guide_pic1 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/1.png" />';
+    $sciebo_guide_txt2 = 'Click on "Security" / "Sicherheit" (orange box):';
+    $sciebo_guide_pic2 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/2.png" />';
+    $sciebo_guide_txt3 = 'Scroll down to "App passwords / tokens" / "App-Passwörter / Token" (orange circle). Here you can insert an app name. Please confirm after that:';
+    $sciebo_guide_pic3 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/3.png" />';
+    $sciebo_guide_txt4 = 'Now new access data will be created and displayed. Copy them just now in the form above (which you\'ll see if you click on the burger menu in this module) because after refreshing the Sciebo page they won\t be longer visible:';
+    $sciebo_guide_pic4 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/4.png" />';
+    $sciebo_guide_txt5 = 'Here you see the opened burger menu with fulfilled Sciebo login form:';
+    $sciebo_guide_pic5 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/5.png" />';
+    $sciebo_guide_txt6 = 'After that you have a new box on your module homepage which makes it possible to share an existing folder or file of your Sciebo account with all the members in this space. Click on "Add":';
+    $sciebo_guide_pic6 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/6.png" />';
+
+    $gd_guide_txt1 = '';
+    $gd_guide_pic1 = '';
+
+    // Output box opening
+    echo '<div class="box">'.
+
+    // Outout guide heading
+    '<p>'.
+        $guide_h;
+
+        $temp_class = '';
+        if ($check == 1) {
+            $temp_class = ' class="shownone"';
+            echo '<span class="glyphicon glyphicon-chevron-down" style="margin-left: 10px; font-size: 15px; cursor: pointer;"
+                onclick="
+                    getElementById(\'guide\').classList.toggle(\'showblock\');
+
+                    if (this.className == \'glyphicon glyphicon-chevron-down\') {
+                        this.className = \'glyphicon glyphicon-chevron-up\';
+                    }
+                    else {
+                        this.className = \'glyphicon glyphicon-chevron-down\';
+                    }
+            "></span>';
+        }
+    echo '</p>'.
+
+    // Output hidden-able wrapper opening
+    '<div id="guide"'.$temp_class.'>'.
+
+    // Output guide anchors
+    $sciebo_guide_a.
+    '<p><ul>'.
+        '<li>'.$sciebo_guide_link.'</li>'.
+        '<li>'.$gd_guide_link.'</li>'.
+    '</ul></p><br />'.
+
+    // Output Sciebo guide
+    '<p>'.$sciebo_guide_h.'</p><br />'.
+    '<p>'.$sciebo_guide_txt1.'<p>'.
+    '<p>'.$sciebo_guide_pic1.'<p><br />'.
+    '<p>'.$sciebo_guide_txt2.'<p>'.
+    '<p>'.$sciebo_guide_pic2.'<p><br />'.
+    '<p>'.$sciebo_guide_txt3.'<p>'.
+    '<p>'.$sciebo_guide_pic3.'<p><br />'.
+    '<p>'.$sciebo_guide_txt4.'<p>'.
+    '<p>'.$sciebo_guide_pic4.'<p><br />'.
+    '<p>'.$sciebo_guide_txt5.'<p>'.
+    '<p>'.$sciebo_guide_pic5.'<p><br />'.
+    '<p>'.$sciebo_guide_txt6.'<p>'.
+    '<p>'.$sciebo_guide_pic6.'<p><br />'.
+
+    // Output GD output
+    '<br />'.
+    $gd_guide_a.
+	'<p>'.$gd_guide_h.'</p><br />'.
+    '<p>'.$gd_guide_txt1.'</p>'.
+    '<p>'.$gd_guide_pic1.'</p>'.
+
+    // Output hidden-able wrapper ending
+    '</div>'.
+
+    // Output box ending
+    '</div>';
 }
 ?>
 
