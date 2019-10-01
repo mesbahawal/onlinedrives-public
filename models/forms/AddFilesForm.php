@@ -17,7 +17,6 @@ class AddFilesForm extends \yii\base\Model
     public $permission;
     public $app_detail_id;
 
-
     public function rules()
     {
         return [

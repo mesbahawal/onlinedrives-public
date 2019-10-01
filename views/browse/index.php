@@ -827,9 +827,9 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 /**
  * Sciebo data who didn't share
  */
-    $arr_app_user_admin = array(); $adm=0;
+    $arr_app_user_admin = array(); $adm = 0;
 
-    if($username<>'') {
+    if ($username <> '') {
         $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
                                 FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
                                 ON d.id=p.onlinedrives_app_detail_id
@@ -885,7 +885,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             $uid = $arr_app_user_admin[$j]['uid'];
             $pid = $arr_app_user_admin[$j]['pid'];
 
-            if ($username == $logged_username && $if_shared<>'D') {
+            if ($username == $logged_username && $if_shared <> 'D') {
                 ?>
                 <!--Table for selecting path-->
 
@@ -1421,6 +1421,8 @@ $form_u = ActiveForm::begin([
 
 // Print the data for up to all files
 
+if (1==0) { // Only for temporary undisplaying GD folders/files
+
 if ($get_gd_folder_id != '') {
     $optParams = array(
         //'pageSize' => 10,
@@ -1528,6 +1530,7 @@ if ($count_gd_files != 0) {
     }
 }
 
+} // Only for temporary undisplaying GD folders/files
 
 /**
  * Check (3) end

@@ -7,7 +7,7 @@ use yii\widgets\ActiveForm;
 
 use Sabre\DAV;
 
-include_once(__DIR__.'/../../models/dbconnect.php');
+include_once __DIR__.'/../../models/dbconnect.php';
 include __DIR__.'/../../vendor/autoload.php';
 
 $bundle = \humhub\modules\onlinedrives\assets\Assets::register($this);
@@ -18,20 +18,22 @@ $now = time();
 
 $home_url = Url::base('http');
 
+if (!empty($_GET['app_detail_id'])) { $app_detail_id =  $_GET['app_detail_id']; }
 
-if (!empty($_GET['app_detail_id'])) { $app_detail_id =  $_GET['app_detail_id'];}
+if (!empty($_GET['cguid'])) { $guid = 'cguid=' . $_GET['cguid']; } // Get param, important for paths
 
-if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
-
-$app_user_id=''; $get_sciebo_path = ''; $if_shared=''; $app_password = ''; $drive_path=''; $get_gd_folder_id = ''; $get_gd_folder_name = '';
+$app_user_id = '';
+$get_sciebo_path = '';
+$if_shared = '';
+$app_password = '';
+$drive_path = '';
+$get_gd_folder_id = '';
+$get_gd_folder_name = '';
 
 // Sciebo params
-if (!empty($_GET['sciebo_path'])) {
-    $get_sciebo_path = $_GET['sciebo_path'];
-}
-elseif (!empty($_POST['sciebo_path'])) {
-    $get_sciebo_path = $_POST['sciebo_path'];
-}
+if (!empty($_GET['sciebo_path'])) { $get_sciebo_path = $_GET['sciebo_path']; }
+elseif (!empty($_POST['sciebo_path'])) { $get_sciebo_path = $_POST['sciebo_path']; }
+
 // Rework
 $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
 
@@ -56,7 +58,11 @@ else {
     $error_msg = '';
 }
 
-//Functions
+
+/**
+ * Functions
+ */
+
 function month_name_to_number($number) {
     switch ($number) {
         case 'Jan': return 1; break;
@@ -109,12 +115,10 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
 
 
 if (!empty($_GET['app_detail_id'])) {
-
     $sql = $db->createCommand('SELECT * 
                                 FROM onlinedrives_app_detail 
                                 WHERE id = :id',
         [':id' => $app_detail_id])->queryAll();
-
 
     foreach ($sql as $value) {
         $app_user_id = $value['app_user_id'];
@@ -127,7 +131,6 @@ if (!empty($_GET['app_detail_id'])) {
 }
 
 echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onlinedrives-form']);
-
 ?>
 
 <div id="onlinedrives-container" class="panel panel-default onlinedrives-content main_div_container">
@@ -135,14 +138,14 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     <div class="panel-body">
 
         <!-- Breadcrumb navigation -->
-        <div style="border: 1px solid #f0f0f0;border-radius: 10px;padding: 10px;background-color: #f5f5f5;">
+        <div style="border: 1px solid #f0f0f0; border-radius: 10px; padding: 10px; background-color: #f5f5f5;">
 
             <?php
-            $ref = $home_url . '/index.php?r=onlinedrives%2Fbrowse%2faddfiles&fid=1' . $guid ;
-            if($cloud=='sciebo') {
-                $ref = $home_url . '/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&' . $guid . '&app_detail_id=' . $app_detail_id . '&sciebo_path=';
+            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&fid=1'.$guid ;
+            if ($cloud == 'sciebo') {
+                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=';
             }
-            echo '<a href="'.$ref.'">'.Yii::t('OnlinedrivesModule.new', 'Location:').'</a>';
+            echo '<a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'Location:') . '</a>';
 
             // Output Sciebo navigation
             if ($get_sciebo_path != '') {
@@ -170,7 +173,6 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 $path = '';
                 $temp = $get_sciebo_path;
 
-
                 do {
                     // Read out Sciebo folder name
                     $pos = strpos($temp, '/');
@@ -185,7 +187,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                     $name = urldecode($name);
 
                     // Build output
-                    $ref = $home_url. '/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&' . $guid . '&app_detail_id=' . $app_detail_id . '&sciebo_path=' . urlencode($path) ;
+                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path) ;
                     $navi .= ' / <a href="'.$ref.'">'.$name.'</a>';
                 } while ($temp != '');
 
@@ -247,14 +249,13 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 <?php
 
 
-if($app_user_id<>'') {
+if ($app_user_id <> '') {
     // Set Sciebo path to replace with user ID
     $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
 
     if (!empty($get_sciebo_path)) { $drive_path = $get_sciebo_path; }
 
     if ($drive_path != '' || $drive_path != '/') {
-
         $check = 1;
 
         if ($drive_path == '/') { $drive_path = ''; }
@@ -267,7 +268,7 @@ if($app_user_id<>'') {
 
     $count_sciebo_files = count($sciebo_content);
 
-    if($count_sciebo_files > 0) {
+    if ($count_sciebo_files > 0) {
         $keys = array_keys($sciebo_content);
         foreach ($keys as $values) {
             /*
@@ -284,7 +285,6 @@ if($app_user_id<>'') {
 
                 // Path
                 $path = str_replace($sciebo_path_to_replace, '', $values);
-
 
                 // Mime type
                 // Type (folder or file)
@@ -317,7 +317,6 @@ if($app_user_id<>'') {
                     $open_link = 'https://uni-siegen.sciebo.de/apps/onlyoffice/'.$id.'?filePath=%2F'.$path;
                 }
 
-
                 // Output check beause of ". entry" of current folder
                 if ($path != $get_sciebo_path) {
                     // Modified time
@@ -329,7 +328,7 @@ if($app_user_id<>'') {
                     $temp_min = substr($temp, 20, 2);
                     $temp_s = substr($temp, 23, 2);
                     $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
-                    $modified_time += 60*60*2; // European time zone
+                    $modified_time += 7200; // European time zone (60s * 60m * 2h)
 
                     // Favorite
                     $fav = $sciebo_content[$values]['{http://owncloud.org/ns}favorite'];
@@ -394,7 +393,6 @@ if($app_user_id<>'') {
     }
 
     if ($check == 1) {
-
         $count_all_folders = count($all_folders);
         $count_all_files = count($all_files);
         $count_all = $count_all_folders + $count_all_files;
@@ -407,8 +405,8 @@ if($app_user_id<>'') {
         'method' => 'post',
         'options' => ['class' => 'form-horizontal'],
     ]);
-
     ?>
+
     <table id="table" class="table table-responsive">
         <thead>
         <tr>
@@ -423,12 +421,13 @@ if($app_user_id<>'') {
             <td>
                 <div id="create_btn_login" class="form-group">
                     <div class="col-lg-offset-1 col-lg-11">
-                        <?php echo "";?>
+                        <?php echo ''; ?>
                     </div>
                 </div>
 
             </td>
         </tr>
+
         <?php
         $no = 0;
 
@@ -452,7 +451,6 @@ if($app_user_id<>'') {
             $file_owner = $all_folders[$i]['file_owner'];
             $file_shared = $all_folders[$i]['file_shared'];
             $file_comment = $all_folders[$i]['file_comment'];
-
 
             $created_time_txt = $created_time;
             $modified_time_txt = $modified_time;
@@ -478,8 +476,7 @@ if($app_user_id<>'') {
                 ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of GD
                     $parents[0] == '' ||                     // Shared files of GD
                     $get_gd_folder_id != '')                 // Folder ID of GD
-            )
-            {
+            ) {
                 $no++;
 
                 // Modified time (folders)
@@ -490,24 +487,24 @@ if($app_user_id<>'') {
                 elseif ($diff < 60) {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunden', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60) {
+                elseif ($diff < 3600) { // 60s * 60m
                     $diff = floor($diff / 60);
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60 * 24) {
-                    $diff = floor($diff / (60 * 60));
+                elseif ($diff < 86400) { // 60s * 60m * 24h
+                    $diff = floor($diff / 3600); // 60s * 60m
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60 * 24 * 7) {
-                    $diff = floor($diff / (60 * 60 * 24));
+                elseif ($diff < 604800) { // 60s * 60m * 24h * 7d
+                    $diff = floor($diff / 86400); // 60s * 60m * 24h
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60 * 24 * 31) {
-                    $diff = floor($diff / (60 * 60 * 24 * 7));
+                elseif ($diff < 2678400) { // 60s * 60m * 24h * 31d
+                    $diff = floor($diff / 604800); // 60s * 60m * 24h * 7d
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
                 }
                 else {
-                    $diff = floor($diff / (60 * 60 * 24 * 31));
+                    $diff = floor($diff / 2678400); // 60s * 60m * 24h * 31d
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
                 }
 
@@ -541,36 +538,36 @@ if($app_user_id<>'') {
                 $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
 
                 echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
-                    urlencode($path_chunk)=>''
+                    urlencode($path_chunk) => ''
                 ]);
 
                 echo '</td>
                     <td>';
                 $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
                 if ($fav <> 0) { $span_fav_icon = '<span class="glyphicon glyphicon-star fav_brown"></span>'; }
-                else{$span_fav_icon = '<span class="glyphicon glyphicon-star fav_default"></span>';}
-
+                else { $span_fav_icon = '<span class="glyphicon glyphicon-star fav_default"></span>'; }
 
                 if ($cloud == 'sciebo') {
                     $path = urlencode($path);
-                    $url = $home_url . '/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&' . $guid . '&app_detail_id=' . $app_detail_id . '&sciebo_path=' . $path ;
-                    echo $span_fav_icon.'<a href="' . $url . '">' . $span_folder_icon.' '.$name . '</a>';
+                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
+                    echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                 } elseif ($cloud == 'gd') {
-                    $url = $home_url . '/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&' . $guid . '&gd_folder_id=' . $id . '&gd_folder_name=' . $name ;
-                    echo $span_fav_icon.'<a href="' . $url . '">' . $span_folder_icon.' '.$name . '</a>';
+                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                    echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                 }
                 echo '</td>
                     <td>';
 
                     echo $form_addfiles->field($model_addfiles, 'permission')->checkboxList([
-                        'U' => 'Upload',
-                        'D' => 'Delete',
-                        'Mv' => 'Move',
                         'Rn' => 'Rename',
+                        'Mv' => 'Move',
+//                        'C' => 'Copy',
+                        'D' => 'Delete',
+                        'U' => 'Upload',
                 ]);
                 echo '</td>
                         <td>
-                                               
+
                         </td>
                 </tr>';
             }
@@ -625,8 +622,7 @@ if($app_user_id<>'') {
                 ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of GD
                     $parents[0] == '' ||                     // Shared files of GD
                     $get_gd_folder_id != '')                 // Folder ID of GD
-            )
-            {
+            ) {
                 $no++;
 
                 // Modified time (files)
@@ -637,24 +633,24 @@ if($app_user_id<>'') {
                 elseif ($diff < 60) {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunde', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60) {
+                elseif ($diff < 3600) { // 60s * 60m
                     $diff = floor($diff / 60);
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60 * 24) {
-                    $diff = floor($diff / (60 * 60));
+                elseif ($diff < 86400) { // 60s * 60m * 24h
+                    $diff = floor($diff / 3600); // 60s * 60m
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60 * 24 * 7) {
-                    $diff = floor($diff / (60 * 60 * 24));
+                elseif ($diff < 604800) { // 60s * 60m * 24h * 7d
+                    $diff = floor($diff / 86400); // 60s * 60m * 24h
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
                 }
-                elseif ($diff < 60 * 60 * 24 * 31) {
-                    $diff = floor($diff / (60 * 60 * 24 * 7));
+                elseif ($diff < 2678400) { // 60s * 60m * 24h * 31d
+                    $diff = floor($diff / 604800); // 60s * 60m * 24h * 7d
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
                 }
                 else {
-                    $diff = floor($diff / (60 * 60 * 24 * 31));
+                    $diff = floor($diff / 2678400); // 60s * 60m * 24h * 31d
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
                 }
 
@@ -684,6 +680,7 @@ if($app_user_id<>'') {
                 /**
                  * Icon
                  */
+
                 /*
                                 // Standard icon
                                 $img = '<span class="glyphicon glyphicon-file file-color"></span>';
@@ -691,6 +688,7 @@ if($app_user_id<>'') {
                                 // Requested GD icon
                                 $img = '<img src="'.$icon_link.'" alt="" title="" />';
                 */
+
                 // Read type
                 if ($mime_type != '') {
                     if (strpos($mime_type, '.') == false) {
@@ -706,6 +704,7 @@ if($app_user_id<>'') {
                     $pos = strrpos($name, '.');
                     $mime_type_icon = substr($name, $pos + 1);
                 }
+
                 switch ($mime_type_icon) {
                     case 'txt':
                         $icon = 'txt'; break;
@@ -751,8 +750,8 @@ if($app_user_id<>'') {
                     default:
                         $icon = ''; break;
                 } //echo $mime_type_icon;
-                $img = '<img src="protected/modules/onlinedrives/resources/type/'.$icon.'.png" alt="'.'" title="'.'" style="margin-right: 10px;" />';
 
+                $img = '<img src="protected/modules/onlinedrives/resources/type/'.$icon.'.png" alt="'.'" title="'.'" style="margin-right: 10px;" />';
 
                 // Output all files
                 echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
@@ -765,17 +764,17 @@ if($app_user_id<>'') {
                 echo '</td>
                     <td>';
                 if ($fav <> 0) { echo '<span class="glyphicon glyphicon-star fav_brown"></span>'; }
-                else{echo '<span class="glyphicon glyphicon-star fav_default"></span>';}
+                else { echo '<span class="glyphicon glyphicon-star fav_default"></span>'; }
                 echo '<a href="'.$web_view_link.'" target="_blank">'.$img.' '.$name.'</a>';
                 echo '
                     </td>
                     <td>';
 
                     echo $form_addfiles->field($model_addfiles, 'permission')->checkboxList([
-                        'U' => 'Upload',
-                        'D' => 'Delete',
-                        'Mv' => 'Move',
                         'Rn' => 'Rename',
+                        'Mv' => 'Move',
+//                        'C' => 'Copy',
+                        'D' => 'Delete',
                 ]);
 
                 echo '</td>
@@ -789,19 +788,16 @@ if($app_user_id<>'') {
     <div id="create_btn_login" class="form-group">
         <div class="col-lg-offset-1 col-lg-11">
             <?php
-
             echo Html::ActiveHiddenInput($model_addfiles, 'app_detail_id', array('value' => $app_detail_id));
-            echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Share'), ['class' => 'btn btn-primary']);?>
+            echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Share'), ['class' => 'btn btn-primary']);
+            ?>
         </div>
     </div>
+
     <?php
     $form_addfiles = ActiveForm::end();
 }
-
-
-    ?>
+?>
     </div>
 </div>
-<?php
-    echo Html::endForm();
-    ?>
+<?php echo Html::endForm(); ?>

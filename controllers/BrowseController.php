@@ -38,14 +38,10 @@ class BrowseController extends BaseController
         GLOBAL $home_url;
 
         $home_url = Url::base('http');
-        if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
+        if (!empty($_GET['cguid'])) { $guid = 'cguid=' . $_GET['cguid']; } // Get param, important for paths
 
-        if (!empty($_GET['sciebo_path'])) {
-            $get_sciebo_path = $_GET['sciebo_path'];
-        }
-        elseif (!empty($_POST['sciebo_path'])) {
-            $get_sciebo_path = $_POST['sciebo_path'];
-        }
+        if (!empty($_GET['sciebo_path'])) { $get_sciebo_path = $_GET['sciebo_path']; }
+        elseif (!empty($_POST['sciebo_path'])) { $get_sciebo_path = $_POST['sciebo_path']; }
 
         $currentFolder = $this->getCurrentFolder();
         if (!$currentFolder->content->canView())
@@ -58,12 +54,9 @@ class BrowseController extends BaseController
         $model_u = new UploadFileForm();
         $model_gd_delete = new DeleteFileForm();
 
-        if ($model_login->load(Yii::$app->request->post()))
-        {
-
-            if( $model_login->validate()) {
-
-                include_once(__DIR__.'/../models/dbconnect.php');
+        if ($model_login->load(Yii::$app->request->post())) {
+            if ( $model_login->validate()) {
+                include_once __DIR__.'/../models/dbconnect.php';
                 $db = dbconnect();
 
                 $space_id = $_GET['cguid'];
@@ -109,8 +102,7 @@ class BrowseController extends BaseController
         }
 
 
-        if ($model_u->load(Yii::$app->request->post()))
-        {
+        if ($model_u->load(Yii::$app->request->post())) {
             $image = \yii\web\UploadedFile::getInstance($model_u, 'upload');
             if (!is_null($image)) {
                 $model_u->image_src_filename = $image->name;
@@ -126,15 +118,13 @@ class BrowseController extends BaseController
                 $path = Yii::$app->params['uploadPath'] . $model_u->image_web_filename;
 
                 $get_dk = '';
-                if (!empty($_GET['dk'])) {
-                    $get_dk = $_GET['dk'];
-                }
+                if (!empty($_GET['dk'])) { $get_dk = $_GET['dk']; }
 
-                include_once(__DIR__.'/../models/dbconnect.php');
+                include_once __DIR__.'/../models/dbconnect.php';
                 $db = dbconnect();
                 $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
                                 FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id=p.onlinedrives_app_detail_id
+                                ON d.id = p.onlinedrives_app_detail_id
                                 WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
                 foreach ($sql as $value) {
                     $drive_path = $value['drive_path'];
@@ -179,8 +169,7 @@ class BrowseController extends BaseController
             }
         }
 
-        if ($model->load(Yii::$app->request->post()) && $model->validate())
-        {
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
             // valid data received in $model_gd_create
             return $this->render('index', [
                     'contentContainer' => $this->contentContainer,
@@ -189,22 +178,19 @@ class BrowseController extends BaseController
                     'model' => $model]);
         }
         // Delete file
-        elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate())
-        {
+        elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
                 $get_dk = '';
-                if (!empty($_GET['dk'])) {
-                    $get_dk = $_GET['dk'];
-                }
+                if (!empty($_GET['dk'])) { $get_dk = $_GET['dk']; }
 
                 $gd_client = $model_gd_delete->getGoogleClient($home_url, $guid);
 
                 $gd_service = new Google_Service_Drive($gd_client);
 
-                include_once(__DIR__.'/../models/dbconnect.php');
+                include_once __DIR__.'/../models/dbconnect.php';
                 $db = dbconnect();
                 $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
                                 FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id=p.onlinedrives_app_detail_id
+                                ON d.id = p.onlinedrives_app_detail_id
                                 WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
                 foreach ($sql as $value) {
                     $drive_path = $value['drive_path'];
@@ -251,8 +237,7 @@ class BrowseController extends BaseController
                     'canWrite' => $this->canWrite(),
                     'model_gd_delete' => $model_gd_delete]);
         }
-        else
-        {
+        else {
             // either the page is initially displayed or there is some validation error
             return $this->render('index', [
                     'contentContainer' => $this->contentContainer,
@@ -270,12 +255,11 @@ class BrowseController extends BaseController
         // Sciebo params
 
         $currentFolder = $this->getCurrentFolder();
-        if (!$currentFolder->content->canView())
-        {
+        if (!$currentFolder->content->canView()) {
             throw new HttpException(403);
         }
 
-        if(isset(Yii::$app->user->identity->username)) {
+        if (isset(Yii::$app->user->identity->username)) {
             $username = Yii::$app->user->identity->username;
             //$email = Yii::$app->user->identity->email;
 
@@ -285,13 +269,11 @@ class BrowseController extends BaseController
                 'canWrite' => $this->canWrite(),
             ]);
         }
-        else{
-
-            return $this ->redirect($home_url);
+        else {
+            return $this->redirect($home_url);
         }
 
         // either the page is initially displayed or there is some validation error
-
     }
 
     public function actionAddfiles()
@@ -305,32 +287,24 @@ class BrowseController extends BaseController
 
         $home_url = Url::base('http');
 
+        if (!empty($_GET['cguid'])) { $space_id = $_GET['cguid']; }
 
-        if (!empty($_GET['cguid'])) {$space_id = $_GET['cguid']; }
+        if (!empty($_GET['cguid'])) { $guid = 'cguid=' . $_GET['cguid']; } // Get param, important for paths
 
-        if (!empty($_GET['cguid'])) { $guid = "cguid=".$_GET['cguid']; } // Get param, important for paths
-
-        if (!empty($_GET['app_detail_id'])) { $app_detail_id =  $_GET['app_detail_id'];
-        }
-        else{ return $this ->redirect($home_url);
+        if (!empty($_GET['app_detail_id'])) { $app_detail_id =  $_GET['app_detail_id']; }
+        else {
+            return $this->redirect($home_url);
         }
 
-        if (!empty($_GET['sciebo_path'])) {
-            $get_sciebo_path = $_GET['sciebo_path'];
-        }
-        elseif (!empty($_POST['sciebo_path'])) {
-            $get_sciebo_path = $_POST['sciebo_path'];
-        }
+        if (!empty($_GET['sciebo_path'])) { $get_sciebo_path = $_GET['sciebo_path']; }
+        elseif (!empty($_POST['sciebo_path'])) { $get_sciebo_path = $_POST['sciebo_path']; }
 
         $currentFolder = $this->getCurrentFolder();
-        if (!$currentFolder->content->canView())
-        {
+        if (!$currentFolder->content->canView()) {
             throw new HttpException(403);
         }
 
-
-
-        if(isset(Yii::$app->user->identity->username)) {
+        if (isset(Yii::$app->user->identity->username)) {
             $username = Yii::$app->user->identity->username;
             //$email = Yii::$app->user->identity->email;
 
@@ -338,15 +312,15 @@ class BrowseController extends BaseController
 
             if ($model_addfiles->load(Yii::$app->request->post())) {
 
-                include_once(__DIR__.'/../models/dbconnect.php');
+                include_once __DIR__.'/../models/dbconnect.php';
                 $db = dbconnect();
 
                 if ($model_addfiles->validate()) {
-
-                    $i=0;
+                    $i = 0;
 
                     $arr_drive_path = $model_addfiles->drive_path;
                     $app_detail_id =  $model_addfiles->app_detail_id;
+                    $permission =  $model_addfiles->permission;
 
                     /////////////////// RnD Array
                     ///
@@ -383,10 +357,10 @@ class BrowseController extends BaseController
 
                     $db->open();
 
-                     for ($i = 0; $i <  count($arr_drive_path); $i++) {
-                        $key=key($arr_drive_path);
-                        $val=$arr_drive_path[$key];
-                        if ($val<> '') {
+                     for ($i = 0; $i < count($arr_drive_path); $i++) {
+                        $key = key($arr_drive_path);
+                        $val = $arr_drive_path[$key];
+                        if ($val <> '') {
                             //echo $key ." = ".  $val ." <br> ";
                             //print_r($val);
 
@@ -396,25 +370,24 @@ class BrowseController extends BaseController
 
                             $sql = $db->createCommand('SELECT * FROM 
                                 onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
-                                WHERE d.`id`=p.`onlinedrives_app_detail_id`
-                                AND d.`space_id`=:space_id
-                                AND d.`user_id`=:username
-                                AND p.`drive_path`=:drive_path
-                                AND d.`id`=:app_detail_id',
+                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
+                                AND d.`space_id` = :space_id
+                                AND d.`user_id` = :username
+                                AND p.`drive_path` = :drive_path
+                                AND d.`id` = :app_detail_id',
                                 [':space_id' => $space_id,
                                     ':username' => $username,
                                     ':drive_path' => $drive_path,
                                     ':app_detail_id' => $app_detail_id])->queryAll();
 
-                            if(count($sql)==0)
-                            {
+                            if (count($sql) == 0) {
                                 $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail` 
                                                             (`drive_path`,`permission`,`onlinedrives_app_detail_id`,`drive_key`) 
                                                     VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
                                     ':drive_path' => $drive_path,
                                     ':permission' => 'Rd',
                                     ':onlinedrives_app_detail_id' => $app_detail_id,
-                                    ':drive_key' => md5(microtime())
+                                    ':drive_key' => md5(microtime()),
                                 ])->execute();
                             }
                         }
@@ -422,15 +395,14 @@ class BrowseController extends BaseController
                     } // DB insert done
 
                     $sql = $db->createCommand('SELECT * FROM `onlinedrives_app_drive_path_detail` 
-                                                    WHERE onlinedrives_app_detail_id= :onlinedrives_app_detail_id
-                                                    AND share_status="Y"',
+                                                    WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                                    AND share_status = "Y"',
                                                     [':onlinedrives_app_detail_id' => $app_detail_id])->queryAll();
 
-                     if(count($sql)>0)
-                     {
+                     if (count($sql) > 0) {
                          //Update app_detail table and set status = Y for id=$app_detail_id
 
-                         $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared="Y" WHERE id = :onlinedrives_app_detail_id', [
+                         $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = "Y" WHERE id = :onlinedrives_app_detail_id', [
                              ':onlinedrives_app_detail_id' => $app_detail_id
                          ])->execute();
                      }
@@ -443,7 +415,7 @@ class BrowseController extends BaseController
 
                 }
             }
-            else{
+            else {
                 return $this->render('addfiles', [
                     'contentContainer' => $this->contentContainer,
                     'folder' => $currentFolder,
@@ -451,12 +423,11 @@ class BrowseController extends BaseController
                 ]);
             }
         }
-        else{
-            return $this ->redirect($home_url);
+        else {
+            return $this->redirect($home_url);
         }
 
         // either the page is initially displayed or there is some validation error
-
     }
 
     public function actionFileList()
@@ -483,3 +454,4 @@ class BrowseController extends BaseController
     }
 
 }
+?>
