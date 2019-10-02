@@ -1,5 +1,4 @@
 <?php
-
 use humhub\modules\onlinedrives\models\forms\AddFilesForm;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -7,20 +6,24 @@ use yii\widgets\ActiveForm;
 
 use Sabre\DAV;
 
-include_once __DIR__.'/../../models/dbconnect.php';
-include __DIR__.'/../../vendor/autoload.php';
+include_once __DIR__ . '/../../models/dbconnect.php';
+include __DIR__ . '/../../vendor/autoload.php';
+
+// General vars
+$now = time();
+$home_url = Url::base(true);
 
 $bundle = \humhub\modules\onlinedrives\assets\Assets::register($this);
 
 $db = dbconnect();
 
-$now = time();
+if (!empty($_GET['app_detail_id'])) {
+    $app_detail_id =  $_GET['app_detail_id'];
+}
 
-$home_url = Url::base(true);
-
-if (!empty($_GET['app_detail_id'])) { $app_detail_id =  $_GET['app_detail_id']; }
-
-if (!empty($_GET['cguid'])) { $guid = 'cguid=' . $_GET['cguid']; } // Get param, important for paths
+if (!empty($_GET['cguid'])) {
+    $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
+}
 
 $app_user_id = '';
 $get_sciebo_path = '';
@@ -31,8 +34,12 @@ $get_gd_folder_id = '';
 $get_gd_folder_name = '';
 
 // Sciebo params
-if (!empty($_GET['sciebo_path'])) { $get_sciebo_path = $_GET['sciebo_path']; }
-elseif (!empty($_POST['sciebo_path'])) { $get_sciebo_path = $_POST['sciebo_path']; }
+if (!empty($_GET['sciebo_path'])) {
+    $get_sciebo_path = $_GET['sciebo_path'];
+}
+elseif (!empty($_POST['sciebo_path'])) {
+    $get_sciebo_path = $_POST['sciebo_path'];
+}
 
 // Rework
 $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
@@ -62,7 +69,6 @@ else {
 /**
  * Functions
  */
-
 function month_name_to_number($number) {
     switch ($number) {
         case 'Jan': return 1; break;

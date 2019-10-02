@@ -12,12 +12,12 @@ use humhub\modules\onlinedrives\models\forms\CreateFileForm;
 use humhub\modules\onlinedrives\models\forms\UploadFileForm;
 use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
 
-include_once(__DIR__.'/../../models/dbconnect.php');
+include_once __DIR__ . '/../../models/dbconnect.php';
 $db = dbconnect();
 
 
 /**
- * Standard vars
+ * General vars
  */
 
 $now = time();
@@ -25,11 +25,13 @@ $now = time();
 $home_url = Url::base(true);
 
 $username = '';
-if(isset(Yii::$app->user->identity->username)) {
+if (isset(Yii::$app->user->identity->username)) {
     $username = Yii::$app->user->identity->username;
 }
 
-if (!empty($_GET['cguid'])) { $guid = 'cguid=' . $_GET['cguid']; } // Get param, important for paths
+if (!empty($_GET['cguid'])) {
+    $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
+}
 $all_folders = array();
 $all_files = array();
 $all = 0; // Counter of all folders and files
@@ -59,7 +61,6 @@ else {
 /**
  * Functions
  */
-
 function month_name_to_number($number) {
     switch ($number) {
         case 'Jan': return 1; break;
@@ -187,9 +188,9 @@ function getGoogleClient($home_url, $guid) {
 
 // Declare vars
 $get_drive_key = '';
-    $get_sciebo_path = '';
-    $get_gd_folder_id = '';
-    $get_gd_folder_name = '';
+$get_sciebo_path = '';
+$get_gd_folder_id = '';
+$get_gd_folder_name = '';
 
 // Both
 if (!empty($_GET['dk'])) {
@@ -310,7 +311,7 @@ else {
 /**
  * GDrive client
  */
-require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $session = Yii::$app->session;
 
@@ -322,7 +323,6 @@ $gd_service = new Google_Service_Drive($gd_client);
 /**
  * Sciebo client
  */
-
 if (count($arr_app_user_detail) > 0) { // start of sciebo according to the DB table rows
 
 for ($j = 0; $j < count($arr_app_user_detail); $j++) { // start of for loop (j)

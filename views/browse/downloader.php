@@ -5,11 +5,10 @@ use yii\widgets\ActiveForm;
 
 use Sabre\DAV;
 
-include_once(__DIR__.'/../../models/dbconnect.php');
-include __DIR__.'/../../vendor/autoload.php';
+include_once __DIR__ . '/../../models/dbconnect.php';
+include __DIR__ . '/../../vendor/autoload.php';
 
-function getScieboClient($app_user_id, $app_password)
-{
+function getScieboClient($app_user_id, $app_password) {
     $settings = array(
         'baseUri' => 'https://uni-siegen.sciebo.de/remote.php/dav',
         'userName' => $app_user_id,
@@ -21,34 +20,33 @@ function getScieboClient($app_user_id, $app_password)
     return $client;
 }
 
-
 function array_to_xml( $data, &$xml_data ) {
     foreach( $data as $key => $value ) {
-        if( is_numeric($key) ){
-            $key = 'item'.$key; //dealing with <0/>..<n/> issues
+        if ( is_numeric($key) ) {
+            $key = 'item'.$key; // Dealing with <0/>..<n/> issues
         }
-        if( is_array($value) ) {
+        if (is_array($value)) {
             $subnode = $xml_data->addChild($key);
             array_to_xml($value, $subnode);
-        } else {
-            $xml_data->addChild("$key",htmlspecialchars("$value"));
+        }
+        else {
+            $xml_data->addChild($key, htmlspecialchars($value));
         }
      }
 }
-//variable initialization
-$content_length='';
-$content_type='';
+// Variable initialization
+$content_length = '';
+$content_type = '';
 
 // Checked if user is logged in HumHub
-$username = ''; $email='';
-if(isset(Yii::$app->user->identity->username)) {
+$username = '';
+$email = '';
+if (isset(Yii::$app->user->identity->username)) {
     $username = Yii::$app->user->identity->username;
     $email = Yii::$app->user->identity->email;
 }
 
-
-if (!empty($username) && !empty($email))
-{
+if (!empty($username) && !empty($email)) {
 //    if (!empty($_GET['dk'])) {
         $drive_key = $_GET['dk'];
         $db = dbconnect();
@@ -113,35 +111,26 @@ if (!empty($username) && !empty($email))
     var_dump($sql);
     die();*/
 
-        if (count($sql) > 0)
-        {
-
-
+        if (count($sql) > 0) {
             $client = getScieboClient($app_user_id, $app_password);
 
             $path = str_replace(' ', '%20', $_GET['file']);
 
-
-
-
             $download = $client->request('GET', 'https://uni-siegen.sciebo.de/remote.php/webdav/'.$path); // For downloading files
 
-
-            // initializing or creating array
+            // Initializing or creating array
             $data = $download;
 
-            // creating object of SimpleXMLElement
+            // Creating object of SimpleXMLElement
             $xml_data = new SimpleXMLElement('<?xml version="1.0"?><data></data>');
 
-            // function call to convert array to xml
+            // Function call to convert array to xml
             array_to_xml($data,$xml_data);
 
             //saving generated xml file; 
             //print $xml_data->asXML(Yii::$app->basePath . '\modules\onlinedrives\upload_dir\new.xml');
 
             //print $xml_data->headers->{"content-type"}->item0;
-
-             
 
             $temp = substr($path, 0);
             $pos = strrpos($temp, '/');
@@ -152,12 +141,12 @@ if (!empty($username) && !empty($email))
                 $file_name = substr($file_name, 1);
             }
 			
-			if(!empty($xml_data->headers->{"content-type"}) && !empty($xml_data)) {
-			$content_type= $xml_data->headers->{"content-type"}->item0;
+			if (!empty($xml_data->headers->{"content-type"}) && !empty($xml_data)) {
+                $content_type= $xml_data->headers->{"content-type"}->item0;
 			}
 			
-			if(!empty($xml_data->headers->{"content-length"}) && !empty($xml_data)) {
-			$content_length= $xml_data->headers->{"content-length"}->item0;
+			if (!empty($xml_data->headers->{"content-length"}) && !empty($xml_data)) {
+                $content_length= $xml_data->headers->{"content-length"}->item0;
 			}
 
             //$file_name = urldecode($file_name); //TODO 
@@ -174,7 +163,7 @@ if (!empty($username) && !empty($email))
             echo $download["body"];
 			die();
         }
-    //}
+    //} //TODO ??
 }
 
 ?>
