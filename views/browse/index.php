@@ -1021,7 +1021,6 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
                 var src_sciebo_gray50 = "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png";
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
-                alert("sciebo="+select_sciebo_login_src+"src of sciebo gray="+src_sciebo_gray50);
                 if (select_sciebo_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png" &&
                 select_gd_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png") {
                 document.getElementById("err_msg").innerHTML = "Please select a cloud service";
