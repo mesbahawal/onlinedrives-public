@@ -20,7 +20,7 @@ class AddFilesForm extends \yii\base\Model
     public function rules()
     {
         return [
-            [['drive_path'], 'required'],
+            [['drive_path'], 'required', 'message' => 'Please choose a drive path.'],
             ['permission', 'string'],
             ['app_detail_id', 'string'],
         ];

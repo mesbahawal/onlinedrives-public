@@ -35,9 +35,8 @@ class BrowseController extends BaseController
         // Sciebo params
         $get_sciebo_path = '';
 
-        GLOBAL $home_url;
 
-        $home_url = Url::base('http');
+        $home_url = Url::base(true);
         if (!empty($_GET['cguid'])) { $guid = 'cguid=' . $_GET['cguid']; } // Get param, important for paths
 
         if (!empty($_GET['sciebo_path'])) { $get_sciebo_path = $_GET['sciebo_path']; }
@@ -248,9 +247,8 @@ class BrowseController extends BaseController
 
     public function actionDownloader()
     {
-        GLOBAL $home_url;
 
-        $home_url = Url::base('http');
+        $home_url = Url::base(true);
 
         // Sciebo params
 
@@ -278,14 +276,12 @@ class BrowseController extends BaseController
 
     public function actionAddfiles()
     {
-        $home_url = Url::base('http');
+        $home_url = Url::base(true);
 
         // Sciebo params
         $get_sciebo_path = '';
         $app_detail_id = '';
         $space_id = '';
-
-        $home_url = Url::base('http');
 
         if (!empty($_GET['cguid'])) { $space_id = $_GET['cguid']; }
 

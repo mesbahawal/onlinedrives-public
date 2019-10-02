@@ -16,7 +16,7 @@ $db = dbconnect();
 
 $now = time();
 
-$home_url = Url::base('http');
+$home_url = Url::base(true);
 
 if (!empty($_GET['app_detail_id'])) { $app_detail_id =  $_GET['app_detail_id']; }
 
@@ -141,9 +141,9 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         <div style="border: 1px solid #f0f0f0; border-radius: 10px; padding: 10px; background-color: #f5f5f5;">
 
             <?php
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&fid=1'.$guid ;
+            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&'.$guid ;
             if ($cloud == 'sciebo') {
-                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=';
+                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=';
             }
             echo '<a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'Location:') . '</a>';
 
@@ -187,7 +187,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                     $name = urldecode($name);
 
                     // Build output
-                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path) ;
+                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path) ;
                     $navi .= ' / <a href="'.$ref.'">'.$name.'</a>';
                 } while ($temp != '');
 
@@ -549,10 +549,10 @@ if ($app_user_id <> '') {
 
                 if ($cloud == 'sciebo') {
                     $path = urlencode($path);
-                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
+                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
                     echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                 } elseif ($cloud == 'gd') {
-                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                     echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                 }
                 echo '</td>

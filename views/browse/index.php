@@ -22,8 +22,7 @@ $db = dbconnect();
 
 $now = time();
 
-GLOBAL $home_url;
-$home_url = Url::base('http');
+$home_url = Url::base(true);
 
 $username = '';
 if(isset(Yii::$app->user->identity->username)) {
@@ -901,14 +900,14 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                                 <b><?php echo $app_user_id; ?></b>
                             </td>
                             <td>
-                                <a class="btn btn-success" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Add</a>
+                                <a class="btn btn-success" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Add</a>
                             </td>
                             <td>
                                 <?php
                                     if($if_shared='Y') {
                                         ?>
                                         <a class="btn btn-default"
-                                           href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Update</a>
+                                           href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Update</a>
                                         <?php
                                     }
                                     ?>
@@ -917,7 +916,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                              <?php
                                 if($if_shared='Y') {
                                     ?>
-                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&fid=1&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Disable</a>
+                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Disable</a>
                                     <?php
                                 }
                                 ?>
@@ -1020,9 +1019,11 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
         <?php echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
             'onclick' =>
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
+                var src_sciebo_gray50 = "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png";
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
-                if (select_sciebo_login_src != "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo50.png" &&
-                select_gd_login_src != "'.$home_url.'/protected/modules/onlinedrives/resources/gd50.png") {
+                alert("sciebo="+select_sciebo_login_src+"src of sciebo gray="+src_sciebo_gray50);
+                if (select_sciebo_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png" &&
+                select_gd_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png") {
                 document.getElementById("err_msg").innerHTML = "Please select a cloud service";
                 return false;}
 
@@ -1763,11 +1764,11 @@ else {
                     <td style="padding: 5px;">';
                         if ($cloud == 'sciebo') {
                             $path = urlencode($path);
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&fid=1&'.$guid.'&sciebo_path='.$path.'&dk='.$drive_key;
+                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&sciebo_path='.$path.'&dk='.$drive_key;
                             echo '<a href="'.$url.'">'.$name.'</a>';
                         }
                         elseif ($cloud == 'gd') {
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&fid=1&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
                             echo '<a href="'.$url.'">'.$name.'</a>';
                         }
                     echo '</td>
