@@ -159,9 +159,10 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 $ref = 'https://uni-siegen.sciebo.de/login';
                 $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
                 echo ' /
-        <a href="'.$ref.'" target="_blank">
-            <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-        </a>';
+                <a href="'.$ref.'" target="_blank">
+                    <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
+                </a>';
+
                 /*
                         // Test%201A/ins/
                         // Check breadcrumb for shared location
@@ -174,6 +175,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                             $app_user_id = $value['app_user_id'];
                         }
                 */
+
                 // Build rest of Sciebo navigation
                 $navi = '';
                 $path = '';
@@ -193,7 +195,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                     $name = urldecode($name);
 
                     // Build output
-                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path) ;
+                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path);
                     $navi .= ' / <a href="'.$ref.'">'.$name.'</a>';
                 } while ($temp != '');
 
@@ -208,9 +210,9 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
                 // Output GD icon in navigation
                 echo ' /
-        <a href="'.$ref.'" target="_blank">
-            <img src="'.$src.'" style="position: relative; top: -2px;" title="Google Drive" />
-        </a>';
+                <a href="'.$ref.'" target="_blank">
+                    <img src="'.$src.'" style="position: relative; top: -2px;" title="Google Drive" />
+                </a>';
 
                 // Build rest of GD navigation
                 $navi = '';
@@ -252,9 +254,8 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             }
             ?>
         </div>
+
 <?php
-
-
 if ($app_user_id <> '') {
     // Set Sciebo path to replace with user ID
     $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
@@ -415,22 +416,46 @@ if ($app_user_id <> '') {
 
     <table id="table" class="table table-responsive">
         <thead>
-        <tr>
-            <td>
-            </td>
-            <td style="padding: 10px;" colspan="1">
-                Name
-            </td>
-            <td>
-                Action
-            </td>
-            <td>
-                <div id="create_btn_login" class="form-group">
-                    <div class="col-lg-offset-1 col-lg-11">
-                        <?php echo ''; ?>
+            <tr>
+                <td>
+                </td>
+                <td style="padding: 10px;" colspan="1">
+                    Name
+                </td>
+                <td>
+                    Action
+                </td>
+                <td>
+                    <div id="create_btn_login" class="form-group">
+                        <div class="col-lg-offset-1 col-lg-11">
+                            <?php echo ''; ?>
+                        </div>
                     </div>
-                </div>
+                </td>
+            </tr>
+        </thead>
 
+        <tr>
+            <td colspan="4">
+                <label>
+                    <input type="checkbox"
+                        onchange="
+                            var checked = this.checked;
+                            <?php
+                            for ($i = 0; $i < $count_all_folders; $i++) {
+                            ?>
+                                if (checked == true) {
+                                    <?php echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;'; ?>
+                                }
+                                else {
+                                    <?php echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;'; ?>
+                                }
+                            <?php
+                            }
+                            ?>
+                    " />
+                    Select all
+                </label>
             </td>
         </tr>
 
