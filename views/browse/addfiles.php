@@ -2,6 +2,8 @@
 use humhub\modules\onlinedrives\models\forms\AddFilesForm;
 use yii\helpers\Html;
 use yii\helpers\Url;
+use yii\web\ErrorHandler;
+use yii\web\HttpException;
 use yii\widgets\ActiveForm;
 
 use Sabre\DAV;
@@ -98,25 +100,36 @@ function getScieboClient($user_id, $pw) {
 }
 
 function getScieboFiles($client, $app_user_id, $drive_path) {
-    if (!$client) {
-        echo 'Sciebo connection not successful.<br />';
+
+    $folder_content = false;
+
+    $home_url = Url::base(true);
+
+    if (!empty($_GET['cguid'])) {
+        $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
     }
 
-    $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
-        '{http://owncloud.org/ns}fileid', // ID
-        '{DAV:}getetag', //TODO doesn't work
-        '{DAV:}creationdate', //TODO doesn't work
-        '{DAV:}getlastmodified',
-        '{DAV:}getcontenttype',
-        '{DAV:}getcontentlength',
-        '{DAV:}getcontentname', //TODO doesn't work
-        '{http://owncloud.org/ns}favorite',
-        '{http://owncloud.org/ns}share-types',
-        '{http://owncloud.org/ns}owner-display-name',
-        '{http://owncloud.org/ns}comments-count',
-    ), 1);
+    try{
+        $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
+            '{http://owncloud.org/ns}fileid', // ID
+            '{DAV:}getetag', //TODO doesn't work
+            '{DAV:}creationdate', //TODO doesn't work
+            '{DAV:}getlastmodified',
+            '{DAV:}getcontenttype',
+            '{DAV:}getcontentlength',
+            '{DAV:}getcontentname', //TODO doesn't work
+            '{http://owncloud.org/ns}favorite',
+            '{http://owncloud.org/ns}share-types',
+            '{http://owncloud.org/ns}owner-display-name',
+            '{http://owncloud.org/ns}comments-count',
+        ), 1);
 
-    return $folder_content;
+        return $folder_content;
+    }
+    catch ( Sabre\HTTP\ClientHttpException $e) {
+        Yii::warning("Sciebo Connection Unseccessful");
+    }
+
 }
 
 
@@ -269,6 +282,7 @@ if ($app_user_id <> '') {
 
         // Get the API client and construct the service object
         $sciebo_client = getScieboClient($app_user_id, $app_password);
+
     }
 
     $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
@@ -423,7 +437,7 @@ if ($app_user_id <> '') {
                     Name
                 </td>
                 <td>
-                    Action
+                    User permissions
                 </td>
                 <td>
                     <div id="create_btn_login" class="form-group">
@@ -819,8 +833,10 @@ if ($app_user_id <> '') {
     <div id="create_btn_login" class="form-group">
         <div class="col-lg-offset-1 col-lg-11">
             <?php
-            echo Html::ActiveHiddenInput($model_addfiles, 'app_detail_id', array('value' => $app_detail_id));
-            echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Share'), ['class' => 'btn btn-primary']);
+                if ($count_sciebo_files > 0) {
+                    echo Html::ActiveHiddenInput($model_addfiles, 'app_detail_id', array('value' => $app_detail_id));
+                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Share'), ['class' => 'btn btn-primary']);
+                }
             ?>
         </div>
     </div>

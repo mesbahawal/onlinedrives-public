@@ -111,25 +111,36 @@ function getScieboClient($user_id, $pw) {
 }
 
 function getScieboFiles($client, $app_user_id, $drive_path) {
-    if (!$client) {
-        echo 'Sciebo connection not successful.<br />';
+
+    $folder_content = false;
+
+    $home_url = Url::base(true);
+
+    if (!empty($_GET['cguid'])) {
+        $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
     }
 
-    $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
-        '{http://owncloud.org/ns}fileid', // ID
-        '{DAV:}getetag', //TODO doesn't work
-        '{DAV:}creationdate', //TODO doesn't work
-        '{DAV:}getlastmodified',
-        '{DAV:}getcontenttype',
-        '{DAV:}getcontentlength',
-        '{DAV:}getcontentname', //TODO doesn't work
-        '{http://owncloud.org/ns}favorite',
-        '{http://owncloud.org/ns}share-types',
-        '{http://owncloud.org/ns}owner-display-name',
-        '{http://owncloud.org/ns}comments-count',
-    ), 1);
+    try{
+        $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
+            '{http://owncloud.org/ns}fileid', // ID
+            '{DAV:}getetag', //TODO doesn't work
+            '{DAV:}creationdate', //TODO doesn't work
+            '{DAV:}getlastmodified',
+            '{DAV:}getcontenttype',
+            '{DAV:}getcontentlength',
+            '{DAV:}getcontentname', //TODO doesn't work
+            '{http://owncloud.org/ns}favorite',
+            '{http://owncloud.org/ns}share-types',
+            '{http://owncloud.org/ns}owner-display-name',
+            '{http://owncloud.org/ns}comments-count',
+        ), 1);
 
-    return $folder_content;
+        return $folder_content;
+    }
+    catch ( Sabre\HTTP\ClientHttpException $e) {
+        Yii::warning("Sciebo Connection Unseccessful");
+    }
+
 }
 
 function getGoogleClient($home_url, $guid) {
