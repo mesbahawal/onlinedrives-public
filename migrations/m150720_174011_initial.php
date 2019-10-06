@@ -28,8 +28,8 @@ class m150720_174011_initial extends Migration
             'app_password' => 'varchar(255) NOT NULL',
             'create_date' => 'int(11) NOT NULL',
             'if_shared' => 'varchar(1) NOT NULL DEFAULT \'N\'',
-            'PRIMARY KEY (`app_user_id`),
-  KEY `id` (`id`)'
+            'PRIMARY KEY (`id`),
+             KEY `id` (`id`)'
         ), '');
 
         $this->createTable('onlinedrives_app_drive_path_detail', array(
