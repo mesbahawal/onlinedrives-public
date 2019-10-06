@@ -74,15 +74,29 @@ class BrowseController extends BaseController
                 // https://www.yiiframework.com/doc/guide/2.0/en/security-passwords
                 $db->open();
 
-                $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date) VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
-                    ':space_id' => $space_id,
-                    ':user_id' => $username,
-                    ':email' => $email,
-                    ':drive_name' => $drive_name,
-                    ':app_user_id' => $app_user_id,
-                    ':app_password' => $app_password,
-                    ':create_date' => time(),
-                ])->execute();
+                ////// check path is already exist in share
+
+                $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE app_user_id=:app_user_id AND if_shared<>\'D\'',
+                    [':app_user_id' => $app_user_id,
+                    ])->queryAll();
+
+                if (count($sql) > 0) {
+                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Already App User Exit!');
+                }
+                else{
+                    $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date) VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
+                        ':space_id' => $space_id,
+                        ':user_id' => $username,
+                        ':email' => $email,
+                        ':drive_name' => $drive_name,
+                        ':app_user_id' => $app_user_id,
+                        ':app_password' => $app_password,
+                        ':create_date' => time(),
+                    ])->execute();
+                }
+
+
+
             }
             else {
                 $error = '';

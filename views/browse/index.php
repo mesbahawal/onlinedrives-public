@@ -265,7 +265,8 @@ $arr_app_user_detail = array();
 $arr_app_user_detail_with_no_share = array();
 $check = 0;
 
-if ($username <> '') {
+
+if ($username <> '' && !isset($_GET['op'])) {
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
                                 FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
                                 ON d.id=p.onlinedrives_app_detail_id
@@ -303,9 +304,41 @@ if ($username <> '') {
         }
     }
 }
-else {
-    (new yii\web\Controller)->redirect($home_url);
+// Disable App Detail ID
+elseif ($username <> '' && isset($_GET['op']) && isset($_GET['app_detail_id'])) {
+
+        if($_GET['op']=='disable' && $_GET['app_detail_id']!=''){
+
+            $app_detail_id = $_GET['app_detail_id'];
+
+            //before update check user id and authority;
+
+            $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE id=:app_detail_id AND user_id=:user_id AND if_shared<>\'D\'',
+                [':app_detail_id' => $app_detail_id,
+                    ':user_id'=>$username])->queryAll();
+
+            if(count($sql)>0){
+                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared=\'D\' WHERE id= :app_detail_id',
+                    [':app_detail_id' => $app_detail_id])->execute();
+
+                $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+
+                (new yii\web\Controller('1','onlinedrives'))->redirect($redirect_url);
+            }
+            else{
+                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Un-authorized Action!');
+            }
+
+
+        }
 }
+else {
+     (new yii\web\Controller('1','onlinedrives'))->redirect($home_url);
+    //return $this->redirect($home_url);
+}
+
+
+
 
 
 /**
@@ -916,7 +949,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                              <?php
                                 if($if_shared='Y') {
                                     ?>
-                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Disable</a>
+                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Findex&<?=$guid.'&op=disable'?>&app_detail_id=<?=$uid?>">Disable</a>
                                     <?php
                                 }
                                 ?>
