@@ -15,14 +15,17 @@ class LoginForm extends \yii\base\Model
     public $selected_cloud_login;
     public $app_id;
     public $password;
+    public $upload_gd_client_secret_file;
 
     public function rules()
     {
         return [
-            [['app_id', 'password'], 'required'],
-            //['selected_cloud_login', 'validateInput'],
-            //['app_id', 'validateInput'],
-            //['password', 'validateInput'],
+            ['selected_cloud_login', 'required'],
+            [['app_id', 'password'], 'string'],
+            ['upload_gd_client_secret_file', 'file', 'extensions' => 'json'],
+            // ['selected_cloud_login', 'validateInput'],
+            // ['app_id', 'validateInput'],
+            // ['password', 'validateInput'],
         ];
     }
 
@@ -36,11 +39,11 @@ class LoginForm extends \yii\base\Model
             $this->addError('selected_cloud_login', 'Incorrect selected_cloud_login.');
         }
 
-        if ( empty($val_app_id)) {
+        if (empty($val_app_id)) {
             $this->addError('app_id', 'Incorrect app_id.');
         }
 
-        if ( empty($val_password) ) {
+        if (empty($val_password) ) {
             $this->addError('password', 'Incorrect password.');
         }
     }

@@ -55,7 +55,8 @@ class BrowseController extends BaseController
         $model_gd_delete = new DeleteFileForm();
 
         if ($model_login->load(Yii::$app->request->post())) {
-            if ( $model_login->validate()) {
+            if ($model_login->validate()) {
+                // DB connection
                 include_once __DIR__ . '/../models/dbconnect.php';
                 $db = dbconnect();
 
@@ -76,14 +77,13 @@ class BrowseController extends BaseController
 
                 ////// check path is already exist in share
 
-                $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE app_user_id=:app_user_id AND if_shared<>\'D\'',
-                    [':app_user_id' => $app_user_id,
-                    ])->queryAll();
+                $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE app_user_id = :app_user_id AND if_shared <> \'D\'',
+                    [':app_user_id' => $app_user_id])->queryAll();
 
                 if (count($sql) > 0) {
                     $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Already App User Exit!');
                 }
-                else{
+                else {
                     $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date) VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
                         ':space_id' => $space_id,
                         ':user_id' => $username,
@@ -93,18 +93,32 @@ class BrowseController extends BaseController
                         ':app_password' => $app_password,
                         ':create_date' => time(),
                     ])->execute();
+
+
+                    // Should upload client_secret.json
+                    $image = \yii\web\UploadedFile::getInstance($model_login, 'upload_gd_client_secret_file');
+                    if (!is_null($image)) {
+                        $model->image_src_filename = $image->name;
+                        $tmp = explode('.', $image->name);
+                        $ext = end($tmp);
+                        $realname = $model->image_src_filename;
+                        $realname = str_replace(' ', '%20', $realname);
+
+                        $model->image_web_filename = Yii::$app->security->generateRandomString() . ".{$ext}";
+
+                        Yii::$app->params['uploadPath'] = Yii::$app->basePath . '/modules/onlinedrives/upload_dir/';
+                        $path = Yii::$app->params['uploadPath'] . $model->image_web_filename;
+                    }
+
+
                 }
-
-
-
             }
             else {
                 $error = '';
                 $errors = $model_login->errors;
-                foreach($errors as $error) {
+                foreach ($errors as $error) {
                     $error = $error[0];
                 }
-
             }
 
             // valid data received in $model_login
@@ -135,12 +149,15 @@ class BrowseController extends BaseController
                     $get_dk = $_GET['dk'];
                 }
 
+                // DB connection
                 include_once __DIR__ . '/../models/dbconnect.php';
                 $db = dbconnect();
-                $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id = p.onlinedrives_app_detail_id
-                                WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
+
+                $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                    FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                    ON d.id = p.onlinedrives_app_detail_id
+                    WHERE drive_key = :drive_key',
+                    [':drive_key' => $get_dk])->queryAll();
                 foreach ($sql as $value) {
                     $drive_path = $value['drive_path'];
                     $app_user_id = $value['app_user_id'];
@@ -169,7 +186,7 @@ class BrowseController extends BaseController
                             }
                         }
                         else {
-                            // Error msg
+                            // Error message
                             $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Die Berechtigung für diesen Ordner fehlt.');
                         }
                     }
@@ -200,15 +217,17 @@ class BrowseController extends BaseController
                 }
 
                 $gd_client = $model_gd_delete->getGoogleClient($home_url, $guid);
-
                 $gd_service = new Google_Service_Drive($gd_client);
 
+                // DB connection
                 include_once __DIR__ . '/../models/dbconnect.php';
                 $db = dbconnect();
+
                 $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id = p.onlinedrives_app_detail_id
-                                WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
+                        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                        ON d.id = p.onlinedrives_app_detail_id
+                        WHERE drive_key = :drive_key',
+                    [':drive_key' => $get_dk])->queryAll();
                 foreach ($sql as $value) {
                     $drive_path = $value['drive_path'];
                     $app_user_id = $value['app_user_id'];
@@ -233,7 +252,7 @@ class BrowseController extends BaseController
                     $path_to_dir = str_replace(' ', '%20', $path_to_dir);
 
                     if ($client->request('DELETE', $path_to_dir, null)) {
-                        // Success msg
+                        // Success message
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Sciebo war erfolgreich.');
                     }
                 }
@@ -265,7 +284,6 @@ class BrowseController extends BaseController
 
     public function actionDownloader()
     {
-
         $home_url = Url::base(true);
 
         // Sciebo params
@@ -335,7 +353,7 @@ class BrowseController extends BaseController
             $model_addfiles = new AddFilesForm();
 
             if ($model_addfiles->load(Yii::$app->request->post())) {
-
+                // DB connection
                 include_once __DIR__ . '/../models/dbconnect.php';
                 $db = dbconnect();
 
@@ -372,8 +390,6 @@ class BrowseController extends BaseController
                         //$permission = $model_addfiles->permission;
                         print_r($value_ck);
 
-
-
                         $i++;
                     }*/
                     ///
@@ -381,9 +397,10 @@ class BrowseController extends BaseController
 
                     $db->open();
 
-                     for ($i = 0; $i < count($arr_drive_path); $i++) {
+                    for ($i = 0; $i < count($arr_drive_path); $i++) {
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
+
                         if ($val <> '') {
                             //echo $key ." = ".  $val ." <br> ";
                             //print_r($val);
@@ -392,8 +409,7 @@ class BrowseController extends BaseController
 
                             ////// check path is already exist in share
 
-                            $sql = $db->createCommand('SELECT * FROM 
-                                onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                            $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
                                 WHERE d.`id` = p.`onlinedrives_app_detail_id`
                                 AND d.`space_id` = :space_id
                                 AND d.`user_id` = :username
@@ -407,12 +423,13 @@ class BrowseController extends BaseController
                             if (count($sql) == 0) {
                                 $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail` 
                                                             (`drive_path`,`permission`,`onlinedrives_app_detail_id`,`drive_key`) 
-                                                    VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
-                                    ':drive_path' => $drive_path,
-                                    ':permission' => 'Rd',
-                                    ':onlinedrives_app_detail_id' => $app_detail_id,
-                                    ':drive_key' => md5(microtime()),
-                                ])->execute();
+                                                    VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)',
+                                    [
+                                        ':drive_path' => $drive_path,
+                                        ':permission' => 'Rd',
+                                        ':onlinedrives_app_detail_id' => $app_detail_id,
+                                        ':drive_key' => md5(microtime()),
+                                    ])->execute();
                             }
                         }
                         next($arr_drive_path);
@@ -436,7 +453,6 @@ class BrowseController extends BaseController
                         'folder' => $currentFolder,
                         'canWrite' => $this->canWrite(),
                     ]);
-
                 }
             }
             else {
@@ -470,12 +486,11 @@ class BrowseController extends BaseController
     public function renderFileList($filesOrder = null, $foldersOrder = null)
     {
         return FileList::widget([
-                    'folder' => $this->getCurrentFolder(),
-                    'contentContainer' => $this->contentContainer,
-                    'filesOrder' => $filesOrder,
-                    'foldersOrder' => $foldersOrder
+            'folder' => $this->getCurrentFolder(),
+            'contentContainer' => $this->contentContainer,
+            'filesOrder' => $filesOrder,
+            'foldersOrder' => $foldersOrder
         ]);
     }
-
 }
 ?>

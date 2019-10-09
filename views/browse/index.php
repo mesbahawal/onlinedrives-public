@@ -12,48 +12,40 @@ use humhub\modules\onlinedrives\models\forms\CreateFileForm;
 use humhub\modules\onlinedrives\models\forms\UploadFileForm;
 use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
 
+// DB connection
 include_once __DIR__ . '/../../models/dbconnect.php';
 $db = dbconnect();
 
-
-/**
- * General vars
- */
-
+// General vars
 $now = time();
 $home_url = Url::base(true);
 
-$username = '';
-if (isset(Yii::$app->user->identity->username)) {
-    $username = Yii::$app->user->identity->username;
-}
-
-if (!empty($_GET['cguid'])) {
-    $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
-}
+// Declare vars
 $all_folders = array();
 $all_files = array();
 $all = 0; // Counter of all folders and files
 $afo = 0; // Counter of all folders
 $afi = 0; // Counter of all files
 
+// Read username
+$username = '';
+if (isset(Yii::$app->user->identity->username)) {
+    $username = Yii::$app->user->identity->username;
+}
 
-/**
- * Success and error message
- */
+// Get GUID
+if (!empty($_GET['cguid'])) {
+    $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
+}
 
+// Read success/error message
+$success_msg = '';
+$error_msg = '';
 if (isset($_REQUEST['success_msg'])) {
     $success_msg = $_REQUEST['success_msg'];
 }
-else {
-    $success_msg = '';
-}
-
-if (isset($_REQUEST['error_msg'])) {
+elseif (isset($_REQUEST['error_msg'])) {
     $error_msg = $_REQUEST['error_msg'];
-}
-else {
-    $error_msg = '';
 }
 
 
@@ -110,9 +102,7 @@ function getScieboClient($user_id, $pw) {
 }
 
 function getScieboFiles($client, $app_user_id, $drive_path) {
-
     $folder_content = false;
-
     $home_url = Url::base(true);
 
     if (!empty($_GET['cguid'])) {
@@ -139,7 +129,6 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
     catch ( Sabre\HTTP\ClientHttpException $e) {
         Yii::warning("Sciebo Connection Unseccessful");
     }
-
 }
 
 function getGoogleClient($db, $space_id, $home_url, $guid) {
@@ -194,6 +183,7 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
                 }
             }
         }
+
         return $client;
     }
     else {
@@ -231,6 +221,7 @@ if ($get_drive_key != '') {
     elseif (!empty($_POST['sciebo_path'])) {
         $get_sciebo_path = $_POST['sciebo_path'];
     }
+
     // Rework
     $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
 
@@ -811,7 +802,6 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
 <!-- Breadcrumb navigation -->
 <div class="box">
-
     <?php
     // Output start of navigation
     $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
@@ -1146,31 +1136,45 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
         <?php echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
             'onclick' =>
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
-                var src_sciebo_gray50 = "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png";
+                var src_sciebo_gray50 = \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png\';
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
-                if (select_sciebo_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png" &&
-                select_gd_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png") {
-                document.getElementById("err_msg").innerHTML = "Please select a cloud service";
-                return false;}
 
-				var app_id = document.getElementById("loginform-app_id").value;
-                if(app_id==""){
-                document.getElementById("err_msg").innerHTML = "App Id Required!";
-                document.getElementById("loginform-app_id").focus();
-                return false;}
+                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png\' &&
+                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
+                ) {
+                    document.getElementById(\'err_msg\').innerHTML = "Please select a cloud service";
 
-                var password = document.getElementById("loginform-password").value;
-                if(password==""){
-                document.getElementById("err_msg").innerHTML = "Password Required!";
-                document.getElementById("loginform-password").focus();
-                return false;}
-                ']); ?>
+                    return false;
+                }
+
+                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo50.png\' &&
+                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
+                ) {
+    				var app_id = document.getElementById(\'loginform-app_id\').value;
+                    if (app_id == \'\') {
+                        document.getElementById(\'err_msg\').innerHTML = \'App Id Required!\';
+                        document.getElementById(\'loginform-app_id\').focus();
+
+                        return false;
+                    }
+
+                    var password = document.getElementById(\'loginform-password\').value;
+                    if (password == \'\') {
+                        document.getElementById(\'err_msg\').innerHTML = \'Password Required!\';
+                        document.getElementById(\'loginform-password\').focus();
+
+                        return false;
+                    }
+                }
+            ']);
+        ?>
     </div>
 </div>
 
 </div>
 
-<?php ActiveForm::end();
+<?php
+ActiveForm::end();
 
 
 /**
