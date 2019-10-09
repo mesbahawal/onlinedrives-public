@@ -287,7 +287,14 @@ if ($app_user_id <> '') {
 
     $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
 
-    $count_sciebo_files = count($sciebo_content);
+    if(isset($sciebo_content)){
+        $count_sciebo_files = count($sciebo_content);
+    }
+    else{
+        $count_sciebo_files = 0;
+    }
+
+
 
     if ($count_sciebo_files > 0) {
         $keys = array_keys($sciebo_content);
@@ -603,7 +610,7 @@ if ($app_user_id <> '') {
                 echo '</td>
                     <td>';
 
-                    echo $form_addfiles->field($model_addfiles, 'permission')->checkboxList([
+                    echo $form_addfiles->field($model_addfiles, 'permission['.$i.']')->checkboxList([
                         'Rn' => 'Rename',
                         'Mv' => 'Move',
 //                        'C' => 'Copy',
@@ -815,7 +822,7 @@ if ($app_user_id <> '') {
                     </td>
                     <td>';
 
-                    echo $form_addfiles->field($model_addfiles, 'permission')->checkboxList([
+                    echo $form_addfiles->field($model_addfiles, 'permission['.$checkbox_index.']')->checkboxList([
                         'Rn' => 'Rename',
                         'Mv' => 'Move',
 //                        'C' => 'Copy',

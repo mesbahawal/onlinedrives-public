@@ -21,7 +21,7 @@ class AddFilesForm extends \yii\base\Model
     {
         return [
             [['drive_path'], 'required', 'message' => 'Please choose a drive path.'],
-            ['permission', 'string'],
+            [['permission'], 'required'],
             ['app_detail_id', 'string'],
         ];
     }
