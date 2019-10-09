@@ -19,13 +19,9 @@ class LoginForm extends \yii\base\Model
     public function rules()
     {
         return [
-            [['app_id', 'password'], 'required'],
-            //['selected_cloud_login', 'validateInput'],
-            //['app_id', 'validateInput'],
-            //['password', 'validateInput'],
+            ['upload_gd_client_secret_file', 'required', 'file', 'extensions' => 'json'],
         ];
     }
-
     public function validateInput()
     {
         $val_selected_cloud_login = $this->selected_cloud_login;

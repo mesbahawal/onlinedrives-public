@@ -3,7 +3,6 @@
  * @link https://www.humhub.org/
  * @copyright Copyright (c) 2017 HumHub GmbH & Co. KG
  * @license https://www.humhub.com/licences
- *
  */
 
 namespace humhub\modules\onlinedrives\models\forms;
@@ -24,9 +23,9 @@ class SelectionForm extends \yii\base\Model
 
     public function init()
     {
-        if(Yii::$app->request->post()) {
+        if (Yii::$app->request->post()) {
             $this->selection = Yii::$app->request->post('selection');
         }
     }
-
 }
+?>

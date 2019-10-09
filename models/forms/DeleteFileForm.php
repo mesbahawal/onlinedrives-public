@@ -3,7 +3,6 @@
  * @link https://www.humhub.org/
  * @copyright Copyright (c) 2017 HumHub GmbH & Co. KG
  * @license https://www.humhub.com/licences
- *
  */
 
 namespace humhub\modules\onlinedrives\models\forms;
@@ -15,7 +14,7 @@ use Yii;
 use yii\base\Model;
 use Sabre\DAV;
 
-include __DIR__."/../../vendor/autoload.php";
+include __DIR__ . '/../../vendor/autoload.php';
 
 class DeleteFileForm extends \yii\base\Model
 {
@@ -30,18 +29,20 @@ class DeleteFileForm extends \yii\base\Model
         ];
     }
 
-    public function getScieboClient($userid,$password) {
-    	
-	    $settings = array(
-	        'baseUri' => 'https://uni-siegen.sciebo.de/remote.php/dav/',
-	        'userName' => $userid,
-	        'password' => $password,
+    public function getScieboClient($userid, $password)
+    {
+        $settings = array(
+            'baseUri' => 'https://uni-siegen.sciebo.de/remote.php/dav/',
+            'userName' => $userid,
+            'password' => $password,
 	    );
 	    $client = new \Sabre\DAV\Client($settings);
+
 	    return $client;
 	}
 
-    function getGoogleClient($home_url, $guid) {
+    function getGoogleClient($home_url, $guid)
+    {
         $client = new Google_Client();
         $client->setApplicationName('HumHub');
         $client->addScope(Google_Service_Drive::DRIVE);
@@ -87,7 +88,8 @@ class DeleteFileForm extends \yii\base\Model
                 }
             }
         }
+
         return $client;
     }
-
 }
+?>

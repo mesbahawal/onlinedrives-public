@@ -1,5 +1,4 @@
 <?php
-
 namespace humhub\modules\onlinedrives\models;
 
 use humhub\modules\file\libs\ImageConverter;
@@ -29,11 +28,9 @@ use yii\web\UploadedFile;
  * @property Folder[] subFolders
  * @property Folder[] specialFolders
  * @property File[] subFiles
- *
  */
 class Folder extends FileSystemItem
 {
-
     const TYPE_FOLDER_ROOT = 'root';
     const TYPE_FOLDER_POSTED = 'posted';
     const ROOT_TITLE = 'Root';
@@ -44,7 +41,7 @@ class Folder extends FileSystemItem
     /**
      * @inheritdoc
      */
-    public $wallEntryClass = "humhub\modules\onlinedrives\widgets\WallEntryFolder";
+    public $wallEntryClass = 'humhub\modules\onlinedrives\widgets\WallEntryFolder';
 
     /**
      * @inheritdoc
@@ -80,7 +77,6 @@ class Folder extends FileSystemItem
      */
     public function rules()
     {
-
         $result = array_merge(parent::rules(), [
             ['parent_folder_id', 'integer'],
             ['parent_folder_id', 'validateParentFolderId'],
@@ -138,6 +134,7 @@ class Folder extends FileSystemItem
         if (!$this->isNewRecord) {
             return ['visibility' => Yii::t('OnlinedrivesModule.models_FileSystemItem', 'Note: Changes of the folders visibility, will be inherited by all contained files and folders.')];
         }
+
         return parent::attributeHints();
     }
 
@@ -148,21 +145,24 @@ class Folder extends FileSystemItem
     {
         if ($this->isAllPostedFiles() || $this->isRoot()) {
             $attributes = [];
-        } else {
+        }
+        else {
             $attributes = [
                 'name' => $this->title,
                 'description' => $this->description
             ];
 
-            if($this->getCreator()) {
+            if ($this->getCreator()) {
                 $attributes['creator'] = $this->getCreator()->getDisplayName();
             }
 
-            if($this->getEditor()) {
+            if ($this->getEditor()) {
                 $attributes['editor'] = $this->getEditor()->getDisplayName();
             }
         }
+
         $this->trigger(self::EVENT_SEARCH_ADD, new SearchAddEvent($attributes));
+
         return $attributes;
     }
 
@@ -173,9 +173,11 @@ class Folder extends FileSystemItem
     {
         if ($insert && $this->visibility !== null) {
             $this->content->visibility = $this->visibility;
-        } else if ($this->visibility !== null && $this->visibility != $this->content->visibility) {
+        }
+        elseif ($this->visibility !== null && $this->visibility != $this->content->visibility) {
             $this->updateVisibility($this->visibility);
         }
+
         return parent::beforeSave($insert);
     }
 
@@ -222,7 +224,8 @@ class Folder extends FileSystemItem
         if (Yii::$app->getModule('friendship')->getIsEnabled() && $this->content->container instanceof User) {
             if ($this->content->container->isCurrentuser()) {
                 $privateText =  Yii::t('OnlinedrivesModule.base', 'This folder is only visible for you and your friends.');
-            } else {
+            }
+            else {
                 $privateText =  Yii::t('OnlinedrivesModule.base', 'This folder is protected.');
             }
 
@@ -315,7 +318,7 @@ class Folder extends FileSystemItem
 
         $postedFilesFolder->content->created_by = self::getContainerOwnerId($contentContainer);
         // v1.2.2 and earlier compatibility check
-        if(property_exists($postedFilesFolder->content, 'muteDefaultSocialActivities')) {
+        if (property_exists($postedFilesFolder->content, 'muteDefaultSocialActivities')) {
             $postedFilesFolder->content->muteDefaultSocialActivities = true;
         }
 
@@ -378,7 +381,8 @@ class Folder extends FileSystemItem
     {
         if ($contentContainer instanceof User) {
             return $contentContainer->id;
-        } else if ($contentContainer instanceof Space) {
+        }
+        elseif ($contentContainer instanceof Space) {
             return $contentContainer->created_by;
         }
 
@@ -449,7 +453,8 @@ class Folder extends FileSystemItem
     {
         if ($this->isRoot()) {
             return  Yii::t('OnlinedrivesModule.base', 'Root');
-        } else if ($this->isAllPostedFiles()) {
+        }
+        elseif ($this->isAllPostedFiles()) {
             return  Yii::t('OnlinedrivesModule.base', 'Files from the stream');
         }
 
@@ -460,7 +465,8 @@ class Folder extends FileSystemItem
     {
         if ($this->isRoot()) {
             return  Yii::t('OnlinedrivesModule.base', 'The root folder is the entry point that contains all available files.');
-        } else if ($this->isAllPostedFiles()) {
+        }
+        elseif ($this->isAllPostedFiles()) {
             return  Yii::t('OnlinedrivesModule.base', 'You can find all files that have been posted to this stream here.');
         }
 
@@ -476,13 +482,14 @@ class Folder extends FileSystemItem
     {
         $params = (is_array($params)) ? $params : [];
         $params['fid'] = $this->id;
+
         return $this->content->container->createUrl($route, $params, $scheme);
     }
 
     public function getUrl()
     {
         if (empty($this->content->container)) {
-            return "";
+            return '';
         }
 
         return $this->content->container->createUrl('/onlinedrives/browse/index', ['fid' => $this->id]);
@@ -491,7 +498,7 @@ class Folder extends FileSystemItem
     public function getFullUrl()
     {
         if (empty($this->content->container)) {
-            return "";
+            return '';
         }
 
         return $this->content->container->createUrl('/onlinedrives/browse/index', ['fid' => $this->id], true);
@@ -519,24 +526,31 @@ class Folder extends FileSystemItem
         if ($id == 0) {
             return $separator;
         }
+
         $item = Folder::findOne([
-                    'id' => $id
+            'id' => $id
         ]);
+
         if (empty($item)) {
             return null;
         }
+
         $tempFolder = $item->parentFolder;
+
         $path = '';
         if (!$parentFolderPath) {
             if ($item->isRoot()) {
                 if ($withRoot) {
                     $path .= $item->title;
                 }
-            } else {
+            }
+            else {
                 $path .= $separator . $item->title;
             }
         }
+
         $counter = 0;
+
         // break at maxdepth to avoid hangs
         while (!empty($tempFolder)) {
             if ($tempFolder->isRoot()) {
@@ -544,9 +558,10 @@ class Folder extends FileSystemItem
                     $path = $tempFolder->title . $path;
                 }
                 break;
-            } else {
+            }
+            else {
                 if (++$counter > 10) {
-                    $path = '...' . $path;
+                    $path = '...'.$path;
                     break;
                 }
                 $path = $separator . $tempFolder->title . $path;
@@ -554,6 +569,7 @@ class Folder extends FileSystemItem
 
             $tempFolder = $tempFolder->parentFolder;
         }
+
         return $path;
     }
 
@@ -564,10 +580,12 @@ class Folder extends FileSystemItem
     public function getCrumb()
     {
         $parent = $this;
+
         do {
             $crumb[] = $parent;
             $parent = $parent->parentFolder;
         } while ($parent != null);
+
         return array_reverse($crumb);
     }
 
@@ -605,6 +623,7 @@ class Folder extends FileSystemItem
                 $this->addError($attribute, Yii::t('OnlinedrivesModule.base', 'Please select a valid destination folder for %title%.', ['%title%' => $this->title]));
                 break;
             }
+
             $parent = static::findOne(['id' => $parent->parent_folder_id]);
         }
 
@@ -628,6 +647,7 @@ class Folder extends FileSystemItem
         $specialFoldersQuery = Folder::find()->contentContainer($this->content->container)->readable();
         $specialFoldersQuery->andWhere(['onlinedrives_folder.parent_folder_id' => $this->id]);
         $specialFoldersQuery->andWhere(['is not', 'onlinedrives_folder.type', null]);
+
         return $specialFoldersQuery->all();
     }
 
@@ -648,6 +668,7 @@ class Folder extends FileSystemItem
         $filesQuery = File::find()->joinWith('baseFile')->contentContainer($this->content->container)->readable();
         $filesQuery->andWhere(['onlinedrives_file.parent_folder_id' => $this->id]);
         $filesQuery->orderBy($order);
+
         return $filesQuery->all();
     }
 
@@ -670,13 +691,12 @@ class Folder extends FileSystemItem
      */
     public function addUploadedFile(UploadedFile $uploadedFile, $replace = false)
     {
-
         // Get file instance either an existing one if $replace = true and a file already exists or a new one
         $file = $this->getFileInstance($uploadedFile, $replace);
 
         $fileName = (!$replace) ? $this->getAddedFileName($uploadedFile->name) : $uploadedFile->name;
 
-        if($file->setUploadedFile($uploadedFile, $fileName)) {
+        if ($file->setUploadedFile($uploadedFile, $fileName)) {
             $file->save();
         }
 
@@ -690,11 +710,12 @@ class Folder extends FileSystemItem
     private function getFileInstance(UploadedFile $uploadedFile, $replace = false)
     {
         $result = null;
-        if($replace) {
+
+        if ($replace) {
             $result = $this->findFileByName($uploadedFile->name);
         }
 
-        if(!$result) {
+        if (!$result) {
             $result = new File($this->content->container, $this->getNewItemVisibility(), [
                 'parent_folder_id' => $this->id
             ]);
@@ -773,11 +794,13 @@ class Folder extends FileSystemItem
 
         if ($item instanceof Folder && !$item->isEditableFolder()) {
             $item->addError($item->getTitle(), Yii::t('OnlinedrivesModule.base', 'Folder {name} given folder is not editable!', ['name' => $item->getTitle()]));
+
             return false;
         }
 
         if ($item->getItemId() === $this->getItemId()) {
             $item->addError($item->getTitle(), Yii::t('OnlinedrivesModule.base', 'Folder {name} can\'t be moved to itself!', ['name' => $item->getTitle()]));
+
             return false;
         }
 
@@ -820,10 +843,12 @@ class Folder extends FileSystemItem
     private function checkForDuplicate(FileSystemItem $item)
     {
         $result = null;
+
         if ($item instanceof File) {
             $item->setTitle($this->getAddedFileName($item->getTitle()));
             $result = $item;
-        } else if ($item instanceof Folder) {
+        }
+        elseif ($item instanceof Folder) {
             $result = $item;
 
             $existingFolderWithTitle = $this->findFolderByName($item->title);
@@ -865,7 +890,7 @@ class Folder extends FileSystemItem
         $ext = sizeof($parts) == 2 ? '.' . $parts[1] : '';
 
         while ($this->fileExists($fileName)) {
-            $fileName = $origName . '(' . ++$counter . ')' . $ext;
+            $fileName = $origName.'(' . ++$counter . ')'.$ext;
         }
 
         return $fileName;
@@ -895,3 +920,4 @@ class Folder extends FileSystemItem
     }
 
 }
+?>

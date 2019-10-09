@@ -3,8 +3,8 @@
  * @link https://www.humhub.org/
  * @copyright Copyright (c) 2017 HumHub GmbH & Co. KG
  * @license https://www.humhub.com/licences
- *
  */
+
 namespace humhub\modules\onlinedrives\models\forms;
 
 use humhub\modules\onlinedrives\models\FileSystemItem;
@@ -120,6 +120,5 @@ class MoveForm extends SelectionForm
             $this->addErrors([$key => $error]);
         }
     }
-
-
 }
+?>

@@ -1081,6 +1081,8 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
             getElementById(\'select_gd_login\').src = \'protected/modules/onlinedrives/resources/gd_gray50.png\';
             this.src = \'protected/modules/onlinedrives/resources/sciebo50.png\';
             getElementById(\'line_sciebo_login\').className = \'line_icons showblock\';
+            getElementById(\'form_sciebo_login\').className = \'showblock\';
+            getElementById(\'form_gd_login\').className = \'shownone\';
     " />',
     'gd' => '<img
         id="select_gd_login"
@@ -1093,6 +1095,8 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
             getElementById(\'select_sciebo_login\').src = \'protected/modules/onlinedrives/resources/sciebo_gray50.png\';
             this.src = \'protected/modules/onlinedrives/resources/gd50.png\';
             getElementById(\'line_gd_login\').className = \'line_icons showblock\';
+            getElementById(\'form_sciebo_login\').className = \'shownone\';
+            getElementById(\'form_gd_login\').className = \'showblock\';
     " />',
 ], ['encode' => false]); // https://stackoverflow.com/questions/46094352/display-image-with-label-in-radiobutton-yii2
 
@@ -1101,24 +1105,39 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
 '<div id="line_gd_login" class="line_icons shownone"></div><br/><span style="color: red" id="err_msg"></span>';
 ?>
 
-<div id="app_id" style="
-    position: relative;
-    margin: 0;
-    padding: 15px;
-    padding-bottom: 0;
-">
-    <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'AppID'); ?></div>
-    <?php echo $form_login->field($model_login, 'app_id'); ?>
+<!-- Login Sciebo form -->
+<div id="form_sciebo_login">
+    <div id="app_id" style="
+        position: relative;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'AppID'); ?></div>
+        <?php echo $form_login->field($model_login, 'app_id'); ?>
+    </div>
+
+    <div id="app_id" style="
+        position: relative;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'Password'); ?></div>
+        <?php echo $form_login->field($model_login, 'password')->passwordInput(); ?>
+    </div>
 </div>
 
-<div id="app_id" style="
-    position: relative;
-    margin: 0;
-    padding: 15px;
-    padding-bottom: 0;
-">
-    <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'Password'); ?></div>
-    <?php echo $form_login->field($model_login, 'password')->passwordInput(); ?>
+<!-- Login GD form -->
+<div id="form_gd_login" class="shownone" style="border: 1px solid black; widht: 100px; height: 100px;">
+    <div id="app_id" style="
+        position: relative;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <?php echo $form_login->field($model_login, 'upload_gd_client_secret_file')->fileInput([]); ?>
+    </div>
 </div>
 
 <!-- Send button -->
