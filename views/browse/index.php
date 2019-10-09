@@ -12,49 +12,40 @@ use humhub\modules\onlinedrives\models\forms\CreateFileForm;
 use humhub\modules\onlinedrives\models\forms\UploadFileForm;
 use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
 
+// DB connection
 include_once __DIR__ . '/../../models/dbconnect.php';
 $db = dbconnect();
 
-
-/**
- * General vars
- */
-
+// General vars
 $now = time();
-
 $home_url = Url::base(true);
 
-$username = '';
-if (isset(Yii::$app->user->identity->username)) {
-    $username = Yii::$app->user->identity->username;
-}
-
-if (!empty($_GET['cguid'])) {
-    $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
-}
+// Declare vars
 $all_folders = array();
 $all_files = array();
 $all = 0; // Counter of all folders and files
 $afo = 0; // Counter of all folders
 $afi = 0; // Counter of all files
 
+// Read username
+$username = '';
+if (isset(Yii::$app->user->identity->username)) {
+    $username = Yii::$app->user->identity->username;
+}
 
-/**
- * Success and error message
- */
+// Get GUID
+if (!empty($_GET['cguid'])) {
+    $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
+}
 
+// Read success/error message
+$success_msg = '';
+$error_msg = '';
 if (isset($_REQUEST['success_msg'])) {
     $success_msg = $_REQUEST['success_msg'];
 }
-else {
-    $success_msg = '';
-}
-
-if (isset($_REQUEST['error_msg'])) {
+elseif (isset($_REQUEST['error_msg'])) {
     $error_msg = $_REQUEST['error_msg'];
-}
-else {
-    $error_msg = '';
 }
 
 
@@ -111,9 +102,7 @@ function getScieboClient($user_id, $pw) {
 }
 
 function getScieboFiles($client, $app_user_id, $drive_path) {
-
     $folder_content = false;
-
     $home_url = Url::base(true);
 
     if (!empty($_GET['cguid'])) {
@@ -140,62 +129,78 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
     catch ( Sabre\HTTP\ClientHttpException $e) {
         Yii::warning("Sciebo Connection Unseccessful");
     }
-
 }
 
-function getGoogleClient($home_url, $guid) {
-    $client = new Google_Client();
-    $client->setApplicationName('HumHub');
-    $client->addScope(Google_Service_Drive::DRIVE);
-    $client->setAuthConfig('protected/modules/onlinedrives/client_secret.json');
-    $client->setAccessType('offline'); // offline access
-    $client->setPrompt('select_account consent');
-    $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+function getGoogleClient($db, $space_id, $home_url, $guid) {
+    // Check for DB entry for GD and this space
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name',
+        [':space_id' => $space_id,
+            ':drive_name' => 'gd'])->queryAll();
 
-    $tokenPath = 'protected/modules/onlinedrives/token.json';
-    if (file_exists($tokenPath)) {
-        $accessToken = json_decode(file_get_contents($tokenPath), true);
-        $client->setAccessToken($accessToken);
-    }
-    // If there is no previous token or it's expired
-    if ($client->isAccessTokenExpired()) {
-        // Refresh the token if possible, else fetch a new one
-        if ($client->getRefreshToken()) {
-            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+    if (count($sql) > 0) {
+        $client = new Google_Client();
+        $client->setApplicationName('HumHub');
+        $client->addScope(Google_Service_Drive::DRIVE);
+        $client->setAuthConfig('protected/modules/onlinedrives/client_secret.json');
+        $client->setAccessType('offline'); // offline access
+        $client->setPrompt('select_account consent');
+        $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+
+        $tokenPath = 'protected/modules/onlinedrives/token.json';
+        if (file_exists($tokenPath)) {
+            $accessToken = json_decode(file_get_contents($tokenPath), true);
+            $client->setAccessToken($accessToken);
         }
-        else {
-            // Request authorization from the user
-            if (!isset($_GET['code'])) {
-                $authUrl = $client->createAuthUrl();
-                header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
+        // If there is no previous token or it's expired
+        if ($client->isAccessTokenExpired()) {
+            // Refresh the token if possible, else fetch a new one
+            if ($client->getRefreshToken()) {
+                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
             }
-            //Hier Code übergeben
-            if (isset($_GET['code'])) {
-                $code = $_GET['code'];
-
-                $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-                $client->setAccessToken($accessToken);
-
-                // Check to see if there was an error
-                if (array_key_exists('error', $accessToken)) {
-                    throw new Exception(join(', ', $accessToken));
+            else {
+                // Request authorization from the user
+                if (!isset($_GET['code'])) {
+                    $authUrl = $client->createAuthUrl();
+                    header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
                 }
+                //Hier Code übergeben
+                if (isset($_GET['code'])) {
+                    $code = $_GET['code'];
 
-                // Save the token to a file
-                if (!file_exists(dirname($tokenPath))) {
-                    mkdir(dirname($tokenPath), 0700, true);
+                    $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+                    $client->setAccessToken($accessToken);
+
+                    // Check to see if there was an error
+                    if (array_key_exists('error', $accessToken)) {
+                        throw new Exception(join(', ', $accessToken));
+                    }
+
+                    // Save the token to a file
+                    if (!file_exists(dirname($tokenPath))) {
+                        mkdir(dirname($tokenPath), 0700, true);
+                    }
+                    file_put_contents($tokenPath, json_encode($client->getAccessToken()));
                 }
-                file_put_contents($tokenPath, json_encode($client->getAccessToken()));
             }
         }
+
+        return $client;
     }
-    return $client;
+    else {
+        return false;
+    }
 }
 
 
 /**
  * Get params
  */
+
+// Space ID
+$space_id = '';
+if (!empty($_GET['cguid'])) {
+    $space_id = $_GET['cguid'];
+}
 
 // Declare vars
 $get_drive_key = '';
@@ -216,6 +221,7 @@ if ($get_drive_key != '') {
     elseif (!empty($_POST['sciebo_path'])) {
         $get_sciebo_path = $_POST['sciebo_path'];
     }
+
     // Rework
     $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
 
@@ -261,14 +267,23 @@ $this->registerJsConfig('onlinedrives', [
 
 
 /**
+ * GD client
+ */
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+$session = Yii::$app->session;
+
+// Get the API client and construct the service object
+$gd_client = getGoogleClient($db, $space_id, $home_url, $guid);
+if ($gd_client !== false) {
+    $gd_service = new Google_Service_Drive($gd_client);
+}
+
+
+/**
  * Access check
  */
 
-// DB check
-$space_id = '';
-if (!empty($_GET['cguid'])) {
-    $space_id = $_GET['cguid'];
-}
 $k = 0;
 $n = 0;
 
@@ -276,14 +291,23 @@ $arr_app_user_detail = array();
 $arr_app_user_detail_with_no_share = array();
 $check = 0;
 
+// Count Sciebo login entries
+$count_sciebo_accounts = 0;
+$sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name',
+    [':space_id' => $space_id,
+        ':drive_name' => 'sciebo'])->queryAll();
+if (count($sql) > 0) {
+    $count_sciebo_accounts = count($sql);
+}
 
+// DB check
 if ($username <> '' && !isset($_GET['op'])) {
+    // Load Sciebo entries
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id=p.onlinedrives_app_detail_id
-                                WHERE d.space_id = :space_id',
-        [':space_id' => $space_id])->queryAll();
-
+            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+            WHERE d.space_id = :space_id AND d.drive_name = :drive_name',
+        [':space_id' => $space_id,
+            ':drive_name' => 'sciebo'])->queryAll();
     foreach ($sql as $value) {
         $drive_path = $value['drive_path'];
         $app_user_id = $value['app_user_id'];
@@ -295,7 +319,44 @@ if ($username <> '' && !isset($_GET['op'])) {
         $share_status = $value['share_status'];
         $user_id = $value['user_id'];
 
-        if ($if_shared == 'Y' && $share_status=='Y') {
+        if ($if_shared == 'Y' && $share_status == 'Y') {
+            $arr_app_user_detail[$k]['drive_path'] = $drive_path;
+            $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
+            $arr_app_user_detail[$k]['app_password'] = $app_password;
+            $arr_app_user_detail[$k]['drive_key'] = $drive_key;
+            $arr_app_user_detail[$k]['user_id'] = $user_id;
+            $k++;
+        }
+        else {
+            $arr_app_user_detail_with_no_share[$n]['drive_path'] = $drive_path;
+            $arr_app_user_detail_with_no_share[$n]['app_user_id'] = $app_user_id;
+            $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
+            $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
+            $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
+            $arr_app_user_detail_with_no_share[$n]['if_shared'] = $if_shared;
+            $arr_app_user_detail_with_no_share[$n]['share_status'] = $share_status;
+            $n++;
+        }
+    }
+
+    // Load GD entries
+    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+            WHERE d.space_id = :space_id AND d.drive_name = :drive_name',
+        [':space_id' => $space_id,
+            ':drive_name' => 'gd'])->queryAll();
+    foreach ($sql as $value) {
+        $drive_path = $value['drive_path'];
+        $app_user_id = $value['app_user_id'];
+        $app_password = $value['app_password'];
+        $drive_key = $value['drive_key'];
+        $uid = $value['uid'];
+        $pid = $value['pid'];
+        $if_shared = $value['if_shared'];
+        $share_status = $value['share_status'];
+        $user_id = $value['user_id'];
+
+        if ($gd_client !== false) {
             $arr_app_user_detail[$k]['drive_path'] = $drive_path;
             $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
             $arr_app_user_detail[$k]['app_password'] = $app_password;
@@ -317,51 +378,33 @@ if ($username <> '' && !isset($_GET['op'])) {
 }
 // Disable App Detail ID
 elseif ($username <> '' && isset($_GET['op']) && isset($_GET['app_detail_id'])) {
+    if ($_GET['op'] == 'disable' && $_GET['app_detail_id'] != '') {
+        $app_detail_id = $_GET['app_detail_id'];
 
-        if($_GET['op']=='disable' && $_GET['app_detail_id']!=''){
+        //before update check user id and authority;
 
-            $app_detail_id = $_GET['app_detail_id'];
+        $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
+                WHERE id = :app_detail_id AND user_id = :user_id AND if_shared <> \'D\'',
+            [':app_detail_id' => $app_detail_id,
+                ':user_id' => $username])->queryAll();
 
-            //before update check user id and authority;
+        if (count($sql) > 0) {
+            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\' WHERE id = :app_detail_id',
+                [':app_detail_id' => $app_detail_id])->execute();
 
-            $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE id=:app_detail_id AND user_id=:user_id AND if_shared<>\'D\'',
-                [':app_detail_id' => $app_detail_id,
-                    ':user_id'=>$username])->queryAll();
+            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
 
-            if(count($sql)>0){
-                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared=\'D\' WHERE id= :app_detail_id',
-                    [':app_detail_id' => $app_detail_id])->execute();
-
-                $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
-
-                (new yii\web\Controller('1','onlinedrives'))->redirect($redirect_url);
-            }
-            else{
-                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Un-authorized Action!');
-            }
-
-
+            (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
         }
+        else {
+            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Un-authorized Action!');
+        }
+    }
 }
 else {
-     (new yii\web\Controller('1','onlinedrives'))->redirect($home_url);
+    (new yii\web\Controller('1','onlinedrives'))->redirect($home_url);
     //return $this->redirect($home_url);
 }
-
-
-
-
-
-/**
- * GDrive client
- */
-require_once __DIR__ . '/../../vendor/autoload.php';
-
-$session = Yii::$app->session;
-
-// Get the API client and construct the service object
-$gd_client = getGoogleClient($home_url, $guid);
-$gd_service = new Google_Service_Drive($gd_client);
 
 
 /**
@@ -379,9 +422,13 @@ $drive_key = $arr_app_user_detail[$j]['drive_key'];
 // Set Sciebo path to replace with user ID
 $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
 
-if ($drive_path != '' || $drive_path != '/') {
+if ($drive_path != '' || $drive_path != '/' || // For Sciebo
+    $gd_service !== false                      // For GD
+) {
     $check = 1;
-    if ($drive_path == '/') { $drive_path = ''; }
+    if ($drive_path == '/') {
+        $drive_path = '';
+    }
 
     // Get the API client and construct the service object
     $sciebo_client = getScieboClient($app_user_id, $app_password);
@@ -422,9 +469,10 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                 $db_app_user_id = '';
                 if ($get_drive_key != '') {
                     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id=p.onlinedrives_app_detail_id
-                                WHERE drive_key = :drive_key', [':drive_key' => $get_drive_key])->queryAll();
+                            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                            ON d.id = p.onlinedrives_app_detail_id
+                            WHERE drive_key = :drive_key',
+                        [':drive_key' => $get_drive_key])->queryAll();
 
                     foreach ($sql as $value) {
                         $db_app_user_id = $value['app_user_id'];
@@ -552,18 +600,19 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
  * Get Sciebo files
  */
 
-if (!empty($get_sciebo_path)) { $drive_path = $get_sciebo_path; }
+if (!empty($get_sciebo_path)) {
+    $drive_path = $get_sciebo_path;
+}
 
 $db_app_user_id = '';
 $sciebo_content = array();
 $count_sciebo_files = 0;
 if ($get_gd_folder_id == '') {
-
     if ($get_drive_key != '') {
         $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id=p.onlinedrives_app_detail_id
-                                WHERE drive_key = :drive_key', [':drive_key' => $get_drive_key])->queryAll();
+                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+                WHERE drive_key = :drive_key',
+            [':drive_key' => $get_drive_key])->queryAll();
 
         foreach ($sql as $value) {
             $db_app_user_id = $value['app_user_id'];
@@ -574,7 +623,9 @@ if ($get_gd_folder_id == '') {
     if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
         $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
     }
-    $count_sciebo_files = count($sciebo_content);
+    if (isset($sciebo_content)) {
+        $count_sciebo_files = count($sciebo_content);
+    }
 }
 
 if ($count_sciebo_files > 0) {
@@ -751,11 +802,10 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
 <!-- Breadcrumb navigation -->
 <div class="box">
-
     <?php
     // Output start of navigation
     $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
-    echo '<a href="'.$ref.'">'.Yii::t('OnlinedrivesModule.new', 'All drives').'</a>';
+    echo '<a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . '</a>';
 
     // Output Sciebo navigation
     if ($get_sciebo_path != '') {
@@ -866,117 +916,121 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     ?>
 </div>
 
+
 <?php
 /**
  * Sciebo data who didn't share
  */
-    $arr_app_user_admin = array(); $adm = 0;
+$arr_app_user_admin = array();
+$adm = 0;
 
-    if ($username <> '') {
-        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id=p.onlinedrives_app_detail_id
-                                WHERE d.space_id = :space_id
-                                AND d.user_id = :user_id
-                                GROUP BY d.app_user_id;',
-        [':space_id' => $space_id,':user_id'=>$username ])->queryAll();
+if ($username <> '') {
+    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+            WHERE d.space_id = :space_id AND d.user_id = :user_id
+            GROUP BY d.app_user_id',
+        [':space_id' => $space_id,
+            ':user_id' => $username ])->queryAll();
 
-        foreach ($sql as $value) {
-            $drive_path = $value['drive_path'];
-            $app_user_id = $value['app_user_id'];
-            $app_password = $value['app_password'];
-            $drive_key = $value['drive_key'];
-            $uid = $value['uid'];
-            $pid = $value['pid'];
-            $if_shared = $value['if_shared'];
-            $share_status = $value['share_status'];
-            $user_id = $value['user_id'];
+    foreach ($sql as $value) {
+        $drive_path = $value['drive_path'];
+        $app_user_id = $value['app_user_id'];
+        $app_password = $value['app_password'];
+        $drive_key = $value['drive_key'];
+        $uid = $value['uid'];
+        $pid = $value['pid'];
+        $if_shared = $value['if_shared'];
+        $share_status = $value['share_status'];
+        $user_id = $value['user_id'];
 
-            $arr_app_user_admin[$adm]['drive_path'] = $drive_path;
-            $arr_app_user_admin[$adm]['app_user_id'] = $app_user_id;
-            $arr_app_user_admin[$adm]['app_password'] = $app_password;
-            $arr_app_user_admin[$adm]['drive_key'] = $drive_key;
-            $arr_app_user_admin[$adm]['user_id'] = $user_id;
-            $arr_app_user_admin[$adm]['if_shared'] = $if_shared;
-            $arr_app_user_admin[$adm]['share_status'] = $share_status;
-            $arr_app_user_admin[$adm]['uid'] = $uid;
-            $arr_app_user_admin[$adm]['pid'] = $pid;
-            $adm++;
-        }
-
+        $arr_app_user_admin[$adm]['drive_path'] = $drive_path;
+        $arr_app_user_admin[$adm]['app_user_id'] = $app_user_id;
+        $arr_app_user_admin[$adm]['app_password'] = $app_password;
+        $arr_app_user_admin[$adm]['drive_key'] = $drive_key;
+        $arr_app_user_admin[$adm]['user_id'] = $user_id;
+        $arr_app_user_admin[$adm]['if_shared'] = $if_shared;
+        $arr_app_user_admin[$adm]['share_status'] = $share_status;
+        $arr_app_user_admin[$adm]['uid'] = $uid;
+        $arr_app_user_admin[$adm]['pid'] = $pid;
+        $adm++;
     }
+}
 
-    if (count($arr_app_user_admin) > 0) {
-        //echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
-        $logged_username =  Yii::$app->user->identity->username;
-        $email = Yii::$app->user->identity->email;
+if (count($arr_app_user_admin) > 0) {
+    //echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
+    $logged_username =  Yii::$app->user->identity->username;
+    $email = Yii::$app->user->identity->email;
+    ?>
 
-        ?>
-        <div class="box">
+    <div class="box">
         <table id="table" class="table table-responsive">
-        <thead>
-        <?php
+            <thead>
 
-        for ($j = 0; $j < count($arr_app_user_admin); $j++) { // start of for loop (j)
-            $drive_path = $arr_app_user_admin[$j]['drive_path'];
-            $app_user_id = $arr_app_user_admin[$j]['app_user_id'];
-            $app_password = $arr_app_user_admin[$j]['app_password'];
-            $drive_key = $arr_app_user_admin[$j]['drive_key'];
-            $username = $arr_app_user_admin[$j]['user_id'];
-            $if_shared = $arr_app_user_admin[$j]['if_shared'];
-            $share_status = $arr_app_user_admin[$j]['share_status'];
-            $uid = $arr_app_user_admin[$j]['uid'];
-            $pid = $arr_app_user_admin[$j]['pid'];
+                <?php
+                for ($j = 0; $j < count($arr_app_user_admin); $j++) { // start of for loop (j)
+                    $drive_path = $arr_app_user_admin[$j]['drive_path'];
+                    $app_user_id = $arr_app_user_admin[$j]['app_user_id'];
+                    $app_password = $arr_app_user_admin[$j]['app_password'];
+                    $drive_key = $arr_app_user_admin[$j]['drive_key'];
+                    $username = $arr_app_user_admin[$j]['user_id'];
+                    $if_shared = $arr_app_user_admin[$j]['if_shared'];
+                    $share_status = $arr_app_user_admin[$j]['share_status'];
+                    $uid = $arr_app_user_admin[$j]['uid'];
+                    $pid = $arr_app_user_admin[$j]['pid'];
 
-            if ($username == $logged_username && $if_shared <> 'D') {
-                ?>
-                <!--Table for selecting path-->
-
+                    if ($username == $logged_username && $if_shared <> 'D') {
+                    ?>
+                        <!--Table for selecting path-->
                         <tr>
-                            <td class="valign_m"><?php
+                            <td class="valign_m">
+                                <?php
                                 // Output Sciebo icon in navigation
                                 $ref = 'https://uni-siegen.sciebo.de/login';
                                 $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
                                 echo '<a href="'.$ref.'" target="_blank">
-                                <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-                            </a>';
+                                    <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
+                                </a>';
                                 ?>
-                                <b><?php echo $app_user_id; ?></b>
-                            </td>
-                            <td>
-                                <a class="btn btn-success" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Add</a>
+
+                                <b>
+                                    <?php echo $app_user_id; ?>
+                                </b>
                             </td>
                             <td>
                                 <?php
-                                    if($if_shared='Y') {
-                                        ?>
-                                        <a class="btn btn-default"
-                                           href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&<?=$guid.'&sciebo_path='?>&app_detail_id=<?=$uid?>">Update</a>
-                                        <?php
-                                    }
-                                    ?>
+                                echo '<a class="btn btn-success" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
+                                    'Add'.
+                                '</a>';
+                                ?>
                             </td>
                             <td>
-                             <?php
-                                if($if_shared='Y') {
-                                    ?>
-                                    <a class="btn btn-danger" href="<?=$home_url?>/index.php?r=onlinedrives%2Fbrowse%2Findex&<?=$guid.'&op=disable'?>&app_detail_id=<?=$uid?>">Disable</a>
-                                    <?php
+                                <?php
+                                if ($if_shared = 'Y') {
+                                    echo '<a class="btn btn-default" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
+                                        'Update'.
+                                    '</a>';
+                                }
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                if ($if_shared = 'Y') {
+                                    echo '<a class="btn btn-danger" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">'.
+                                        'Disable'.
+                                    '</a>';
                                 }
                                 ?>
                             </td>
                         </tr>
-
-
-                <?php
-            }
-        }
-        ?>
-        </thead>
+                    <?php
+                    }
+                }
+                ?>
+            </thead>
         </table>
-        </div>
-        <?php
-    }
+    </div>
+<?php
+}
 ?>
 
 
@@ -1017,6 +1071,8 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
             getElementById(\'select_gd_login\').src = \'protected/modules/onlinedrives/resources/gd_gray50.png\';
             this.src = \'protected/modules/onlinedrives/resources/sciebo50.png\';
             getElementById(\'line_sciebo_login\').className = \'line_icons showblock\';
+            getElementById(\'form_sciebo_login\').className = \'showblock\';
+            getElementById(\'form_gd_login\').className = \'shownone\';
     " />',
     'gd' => '<img
         id="select_gd_login"
@@ -1029,6 +1085,8 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
             getElementById(\'select_sciebo_login\').src = \'protected/modules/onlinedrives/resources/sciebo_gray50.png\';
             this.src = \'protected/modules/onlinedrives/resources/gd50.png\';
             getElementById(\'line_gd_login\').className = \'line_icons showblock\';
+            getElementById(\'form_sciebo_login\').className = \'shownone\';
+            getElementById(\'form_gd_login\').className = \'showblock\';
     " />',
 ], ['encode' => false]); // https://stackoverflow.com/questions/46094352/display-image-with-label-in-radiobutton-yii2
 
@@ -1037,24 +1095,39 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
 '<div id="line_gd_login" class="line_icons shownone"></div><br/><span style="color: red" id="err_msg"></span>';
 ?>
 
-<div id="app_id" style="
-    position: relative;
-    margin: 0;
-    padding: 15px;
-    padding-bottom: 0;
-">
-    <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'AppID'); ?></div>
-    <?php echo $form_login->field($model_login, 'app_id'); ?>
+<!-- Login Sciebo form -->
+<div id="form_sciebo_login">
+    <div id="app_id" style="
+        position: relative;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'AppID'); ?></div>
+        <?php echo $form_login->field($model_login, 'app_id'); ?>
+    </div>
+
+    <div id="app_id" style="
+        position: relative;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'Password'); ?></div>
+        <?php echo $form_login->field($model_login, 'password')->passwordInput(); ?>
+    </div>
 </div>
 
-<div id="app_id" style="
-    position: relative;
-    margin: 0;
-    padding: 15px;
-    padding-bottom: 0;
-">
-    <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'Password'); ?></div>
-    <?php echo $form_login->field($model_login, 'password')->passwordInput(); ?>
+<!-- Login GD form -->
+<div id="form_gd_login" class="shownone" style="border: 1px solid black; widht: 100px; height: 100px;">
+    <div id="app_id" style="
+        position: relative;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <?php echo $form_login->field($model_login, 'upload_gd_client_secret_file')->fileInput([]); ?>
+    </div>
 </div>
 
 <!-- Send button -->
@@ -1063,31 +1136,45 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
         <?php echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
             'onclick' =>
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
-                var src_sciebo_gray50 = "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png";
+                var src_sciebo_gray50 = \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png\';
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
-                if (select_sciebo_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png" &&
-                select_gd_login_src == "'.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png") {
-                document.getElementById("err_msg").innerHTML = "Please select a cloud service";
-                return false;}
 
-				var app_id = document.getElementById("loginform-app_id").value;
-                if(app_id==""){
-                document.getElementById("err_msg").innerHTML = "App Id Required!";
-                document.getElementById("loginform-app_id").focus();
-                return false;}
+                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png\' &&
+                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
+                ) {
+                    document.getElementById(\'err_msg\').innerHTML = "Please select a cloud service";
 
-                var password = document.getElementById("loginform-password").value;
-                if(password==""){
-                document.getElementById("err_msg").innerHTML = "Password Required!";
-                document.getElementById("loginform-password").focus();
-                return false;}
-                ']); ?>
+                    return false;
+                }
+
+                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo50.png\' &&
+                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
+                ) {
+    				var app_id = document.getElementById(\'loginform-app_id\').value;
+                    if (app_id == \'\') {
+                        document.getElementById(\'err_msg\').innerHTML = \'App Id Required!\';
+                        document.getElementById(\'loginform-app_id\').focus();
+
+                        return false;
+                    }
+
+                    var password = document.getElementById(\'loginform-password\').value;
+                    if (password == \'\') {
+                        document.getElementById(\'err_msg\').innerHTML = \'Password Required!\';
+                        document.getElementById(\'loginform-password\').focus();
+
+                        return false;
+                    }
+                }
+            ']);
+        ?>
     </div>
 </div>
 
 </div>
 
-<?php ActiveForm::end();
+<?php
+ActiveForm::end();
 
 
 /**
@@ -1399,10 +1486,11 @@ $form_u = ActiveForm::begin([
     }
 
     // Icon for uploading file
-    echo '<div class="'.$css.'">
-        '.$form_u->field($model_u, 'upload')->fileInput(['onchange' => 'this.form.submit()']).'
-        <label for="uploadfileform-upload">
-            <span id="upload_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg" title="'.Yii::t('OnlinedrivesModule.new', 'Create file').'"
+    echo '<div class="'.$css.'">' .
+        $form_u->field($model_u, 'upload')->fileInput(['onchange' => 'this.form.submit()']) .
+        '<label for="uploadfileform-upload">
+            <span id="upload_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg"
+                title="' . Yii::t('OnlinedrivesModule.new', 'Create file') . '"
                 onclick="'.
                     // outcommented because of double opening of select windows
                     //$(\'#uploadfileform-upload\').trigger(\'click\');
@@ -1465,7 +1553,7 @@ $form_u = ActiveForm::begin([
 
 // Print the data for up to all files
 
-if (1==0) { // Only for temporary undisplaying GD folders/files
+if (1==1) { // Only for temporary undisplaying GD folders/files
 
 if ($get_gd_folder_id != '') {
     $optParams = array(

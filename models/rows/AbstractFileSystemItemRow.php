@@ -3,7 +3,6 @@
  * @link https://www.humhub.org/
  * @copyright Copyright (c) 2017 HumHub GmbH & Co. KG
  * @license https://www.humhub.com/licences
- *
  */
 
 namespace humhub\modules\onlinedrives\models\rows;
@@ -82,7 +81,7 @@ abstract class AbstractFileSystemItemRow extends Model
     public static function translateOrder($sort = null, $order = 'ASC') {
         $result = static::DEFAULT_ORDER;
 
-        if($sort && array_key_exists($sort, static::ORDER_MAPPING)) {
+        if ($sort && array_key_exists($sort, static::ORDER_MAPPING)) {
             $result = static::ORDER_MAPPING[$sort] ? static::ORDER_MAPPING[$sort].' '.$order : $result;
         }
 
@@ -95,11 +94,11 @@ abstract class AbstractFileSystemItemRow extends Model
      */
     public function isRenderColumn($column)
     {
-        if($column === self::COLUMN_SELECT && !$this->showSelect) {
+        if ($column === self::COLUMN_SELECT && !$this->showSelect) {
             return false;
         }
 
-        if(!$this->_columns) {
+        if (!$this->_columns) {
             $this->_columns = $this->getColumns();
         }
 
@@ -211,3 +210,4 @@ abstract class AbstractFileSystemItemRow extends Model
      */
     public abstract function canEdit();
 }
+?>

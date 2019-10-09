@@ -1,5 +1,4 @@
 <?php
-
 namespace humhub\modules\onlinedrives\models;
 
 use humhub\components\behaviors\PolymorphicRelation;
@@ -33,7 +32,6 @@ class File extends FileSystemItem
      * @inheritdoc
      */
     public $wallEntryClass = "humhub\modules\onlinedrives\widgets\WallEntryFile";
-
 
     /**
      * @var File
@@ -84,7 +82,7 @@ class File extends FileSystemItem
             ['description', 'string', 'max' => 255]
         ];
 
-        if($this->parentFolder && $this->parentFolder->content->isPublic()) {
+        if ($this->parentFolder && $this->parentFolder->content->isPublic()) {
             $rules[] = ['visibility', 'integer', 'min' => 0, 'max' => 1];
         }
 
@@ -111,18 +109,20 @@ class File extends FileSystemItem
             'description' => $this->description
         ];
 
-        if($this->getCreator()) {
+        if ($this->getCreator()) {
             $attributes['creator'] = $this->getCreator()->getDisplayName();
         }
 
-        if($this->getEditor()) {
+        if ($this->getEditor()) {
             $attributes['editor'] = $this->getEditor()->getDisplayName();
         }
 
         if ($this->baseFile) {
             $attributes['name'] = $this->getTitle();
         }
+
         $this->trigger(self::EVENT_SEARCH_ADD, new SearchAddEvent($attributes));
+
         return $attributes;
     }
 
@@ -131,7 +131,7 @@ class File extends FileSystemItem
         $baseFile = new FileUpload(['show_in_stream' => false]);
         $baseFile->setUploadedFile($uploadedFile);
 
-        if($title) {
+        if ($title) {
             $baseFile->file_name = $title;
         }
 
@@ -140,8 +140,7 @@ class File extends FileSystemItem
 
     public function setFileContent(\humhub\modules\file\models\File $fileContent)
     {
-
-        if($this->baseFile) {
+        if ($this->baseFile) {
             $this->baseFile->delete();
         }
 
@@ -160,12 +159,12 @@ class File extends FileSystemItem
             $this->populateRelation('baseFile', $this->_setFileContent);
         }
 
-        if($insert && $this->baseFile || ($this->baseFile && $this->baseFile->isNewRecord)) {
+        if ($insert && $this->baseFile || ($this->baseFile && $this->baseFile->isNewRecord)) {
             $this->baseFile->setPolymorphicRelation($this);
         }
 
-        // Required if title has changed.
-        if($this->baseFile && ($insert ||  ($this->baseFile->getOldAttribute('file_name') != $this->baseFile->file_name || $this->baseFile->isNewRecord))) {
+        // Required if title has changed
+        if ($this->baseFile && ($insert || ($this->baseFile->getOldAttribute('file_name') != $this->baseFile->file_name || $this->baseFile->isNewRecord))) {
             $this->baseFile->save(false);
         }
 
@@ -180,7 +179,7 @@ class File extends FileSystemItem
             return;
         }
 
-        if(!$this->parentFolder->content->isPrivate() || $visibility == Content::VISIBILITY_PRIVATE) {
+        if (!$this->parentFolder->content->isPrivate() || $visibility == Content::VISIBILITY_PRIVATE) {
             // For user profile files we use Content::VISIBILITY_OWNER isntead of private
             $this->content->visibility = $visibility;
         }
@@ -188,19 +187,20 @@ class File extends FileSystemItem
 
     public function getVisibilityTitle()
     {
-        if(Yii::$app->getModule('friendship')->getIsEnabled() && $this->content->container instanceof User) {
-            if($this->content->container->isCurrentuser()) {
-                $privateText =  Yii::t('OnlinedrivesModule.base', 'This file is only visible for you and your friends.');
-            } else {
-                $privateText =  Yii::t('OnlinedrivesModule.base', 'This file is protected.');
+        if (Yii::$app->getModule('friendship')->getIsEnabled() && $this->content->container instanceof User) {
+            if ($this->content->container->isCurrentuser()) {
+                $privateText = Yii::t('OnlinedrivesModule.base', 'This file is only visible for you and your friends.');
+            }
+            else {
+                $privateText = Yii::t('OnlinedrivesModule.base', 'This file is protected.');
             }
 
-            return  $this->content->isPublic()
+            return $this->content->isPublic()
                 ?  Yii::t('OnlinedrivesModule.base', 'This file is public.')
                 : $privateText;
         }
 
-        return  $this->content->isPublic()
+        return $this->content->isPublic()
             ?  Yii::t('OnlinedrivesModule.base', 'This file is public.')
             : Yii::t('OnlinedrivesModule.base', 'This file is private.');
     }
@@ -226,24 +226,28 @@ class File extends FileSystemItem
                     'xml'
                 ])) {
             return 'fa-file-code-o';
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'zip',
                     'rar',
                     'gz',
                     'tar'
                 ])) {
             return "fa-file-archive-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'mp3',
                     'wav'
                 ])) {
             return "fa-file-audio-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'xls',
                     'xlsx'
                 ])) {
             return "fa-file-excel-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'jpg',
                     'gif',
                     'bmp',
@@ -252,33 +256,39 @@ class File extends FileSystemItem
                     'png'
                 ])) {
             return "fa-file-image-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'pdf'
                 ])) {
             return "fa-file-pdf-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'ppt',
                     'pptx'
                 ])) {
             return "fa-file-powerpoint-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'txt',
                     'log',
                     'md'
                 ])) {
             return "fa-file-text-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'mp4',
                     'mpeg',
                     'swf'
                 ])) {
             return "fa-file-video-o";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'doc',
                     'docx'
                 ])) {
             return "fa-file-word-o";
         }
+
         return 'fa-file-o';
     }
 
@@ -303,24 +313,28 @@ class File extends FileSystemItem
                     'xml'
                 ])) {
             return 'code';
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'zip',
                     'rar',
                     'gz',
                     'tar'
                 ])) {
             return "archive";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'mp3',
                     'wav'
                 ])) {
             return "audio";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'xls',
                     'xlsx'
                 ])) {
             return "excel";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'jpg',
                     'gif',
                     'bmp',
@@ -329,33 +343,39 @@ class File extends FileSystemItem
                     'png'
                 ])) {
             return "image";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'pdf'
                 ])) {
             return "pdf";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'ppt',
                     'pptx'
                 ])) {
             return "powerpoint";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'txt',
                     'log',
                     'md'
                 ])) {
             return "text";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'mp4',
                     'mpeg',
                     'swf'
                 ])) {
             return "video";
-        } elseif (in_array($ext, [
+        }
+        elseif (in_array($ext, [
                     'doc',
                     'docx'
                 ])) {
             return "word";
         }
+
         return 'unknown';
     }
 
@@ -367,8 +387,9 @@ class File extends FileSystemItem
         // needs to be checked cause used with uninitialized basefile by search index
         if (!empty($this->baseFile)) {
             return $this->baseFile->file_name;
-        } else {
-            return "";
+        }
+        else {
+            return '';
         }
     }
 
@@ -419,9 +440,10 @@ class File extends FileSystemItem
      */
     public function getDownloadUrl($forceDownload = false, $scheme = true)
     {
-        if(!$scheme) {
+        if (!$scheme) {
             return DownloadFileHandler::getUrl($this->baseFile, $forceDownload);
-        } else {
+        }
+        else {
             // Todo can be removed after v1.2.3 then call DownloadFileHandler::getUrl($this->baseFile, $forceDownload, $scheme)
             return Url::to(['/file/file/download', 'guid' => $this->baseFile->guid, 'download' => $forceDownload], $scheme);
         }
@@ -472,8 +494,9 @@ class File extends FileSystemItem
         if ($id == 0) {
             return $separator;
         }
+
         $item = File::findOne([
-                    'id' => $id
+            'id' => $id
         ]);
 
         if (empty($item)) {
@@ -481,16 +504,20 @@ class File extends FileSystemItem
         }
 
         $tempFolder = $item->parentFolder;
+
         $path = $separator;
         if (!$parentFolderPath) {
             $path .= $item->title;
         }
+
         $counter = 0;
+
         // break at maxdepth 20 to avoid hangs
-        while (!empty($tempFolder) && $counter ++ <= 20) {
+        while (!empty($tempFolder) && $counter++ <= 20) {
             $path = $separator . $tempFolder->title . $path;
             $tempFolder = $tempFolder->parentFolder;
         }
+
         return $path;
     }
 
@@ -517,7 +544,7 @@ class File extends FileSystemItem
 
         $query->andWhere(['content.contentcontainer_id' => $contentContainer->contentContainerRecord->id]);
 
-        if(!$contentContainer->canAccessPrivateContent()) {
+        if (!$contentContainer->canAccessPrivateContent()) {
             // Note this will cut comment images, but including the visibility of comments is pretty complex...
             $query->andWhere(['content.visibility' => Content::VISIBILITY_PUBLIC]);
         }
@@ -533,7 +560,7 @@ class File extends FileSystemItem
         return $query->orderBy($filesOrder);
     }
 
-        /**
+    /**
      * @return file of given name in given parent folder
      */
     public static function getFileByName($name, $parentFolderId, $contentContainer)
@@ -545,6 +572,8 @@ class File extends FileSystemItem
             'file_name' => $name,
             'parent_folder_id' => $parentFolderId
         ]);
+
         return $filesQuery->one();
     }
 }
+?>

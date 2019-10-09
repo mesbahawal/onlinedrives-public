@@ -1,5 +1,4 @@
 <?php
-
 namespace humhub\modules\onlinedrives\models;
 
 use Yii;
@@ -13,7 +12,6 @@ use humhub\modules\onlinedrives\Module;
  */
 class ConfigureForm extends \yii\base\Model
 {
-
     public $disableZipSupport;
     public $uploadBehaviour;
 
@@ -66,13 +64,15 @@ class ConfigureForm extends \yii\base\Model
 
     public function save()
     {
-        if(!$this->validate()) {
+        if (!$this->validate()) {
             return false;
         }
 
         $module = $this->getModule();
         $module->settings->set('disableZipSupport', $this->disableZipSupport);
         $module->settings->set('uploadBehaviour', $this->uploadBehaviour);
+
         return true;
     }
 }
+?>

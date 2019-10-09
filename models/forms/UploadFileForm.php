@@ -3,7 +3,6 @@
  * @link https://www.humhub.org/
  * @copyright Copyright (c) 2017 HumHub GmbH & Co. KG
  * @license https://www.humhub.com/licences
- *
  */
 
 namespace humhub\modules\onlinedrives\models\forms;
@@ -12,9 +11,7 @@ use Yii;
 use yii\base\Model;
 use Sabre\DAV\Client;
 
-include __DIR__."/../../vendor/autoload.php";
-
-//use Sabre\DAV;
+include __DIR__ . '/../../vendor/autoload.php';
 
 class UploadFileForm extends \yii\base\Model
 {

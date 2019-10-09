@@ -1,5 +1,4 @@
 <?php
-
 namespace humhub\modules\onlinedrives\models;
 
 use humhub\modules\content\models\Content;
@@ -64,20 +63,19 @@ abstract class FileSystemItem extends ContentActiveRecord implements ItemInterfa
     {
         /* @var $content Content */
         $content = ($content) ? $content : $evt->sender;
-        if($evt->sender->container instanceof User && $evt->sender->isPrivate()) {
+        if ($evt->sender->container instanceof User && $evt->sender->isPrivate()) {
             $evt->sender->visibility = Content::VISIBILITY_OWNER;
         }
 
         return true;
     }
 
-
     /**
      * @inheritdoc
      */
     public function beforeSave($insert)
     {
-        if ($this->parent_folder_id == "") {
+        if ($this->parent_folder_id == '') {
             $this->parent_folder_id = null;
         }
 
@@ -124,6 +122,7 @@ abstract class FileSystemItem extends ContentActiveRecord implements ItemInterfa
         $query = $this->hasOne(Folder::className(), [
             'id' => 'parent_folder_id'
         ]);
+
         return $query;
     }
 
@@ -144,6 +143,7 @@ abstract class FileSystemItem extends ContentActiveRecord implements ItemInterfa
     {
         $query = $this->hasOne(\humhub\modules\content\models\Content::className(), ['object_id' => 'id']);
         $query->andWhere(['file.object_model' => self::className()]);
+
         return $query;
     }
 
@@ -197,6 +197,7 @@ abstract class FileSystemItem extends ContentActiveRecord implements ItemInterfa
         if ($this instanceof Folder) {
             return !($this->isRoot() || $this->isAllPostedFiles());
         }
+
         return true;
     }
 
@@ -215,9 +216,11 @@ abstract class FileSystemItem extends ContentActiveRecord implements ItemInterfa
         }
 
         list ($type, $id) = explode('_', $itemId);
+
         if ($type == 'file') {
             return File::find()->andWhere(['onlinedrives_file.id' => $id])->readable()->one();
-        } elseif ($type == 'folder') {
+        }
+        elseif ($type == 'folder') {
             return Folder::find()->andWhere(['onlinedrives_folder.id' => $id])->readable()->one();
         }
 
@@ -238,3 +241,4 @@ abstract class FileSystemItem extends ContentActiveRecord implements ItemInterfa
     }
 
 }
+?>

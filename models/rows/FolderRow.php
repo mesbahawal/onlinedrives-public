@@ -3,7 +3,6 @@
  * @link https://www.humhub.org/
  * @copyright Copyright (c) 2017 HumHub GmbH & Co. KG
  * @license https://www.humhub.com/licences
- *
  */
 
 namespace humhub\modules\onlinedrives\models\rows;
@@ -12,7 +11,6 @@ use Yii;
 
 class FolderRow extends FileSystemItemRow
 {
-
     const DEFAULT_ORDER = 'title ASC';
 
     const ORDER_MAPPING = [
@@ -50,3 +48,4 @@ class FolderRow extends FileSystemItemRow
         return $this->item->content->canEdit();
     }
 }
+?>
