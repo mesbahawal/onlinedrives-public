@@ -109,7 +109,7 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
         $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
     }
 
-    try{
+    try {
         $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
             '{http://owncloud.org/ns}fileid', // ID
             '{DAV:}getetag', //TODO doesn't work
@@ -623,8 +623,12 @@ if ($get_gd_folder_id == '') {
     if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
         $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
     }
+
     if (isset($sciebo_content)) {
         $count_sciebo_files = count($sciebo_content);
+    }
+    else {
+        $count_sciebo_files = 0;
     }
 }
 

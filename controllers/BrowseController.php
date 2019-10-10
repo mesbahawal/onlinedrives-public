@@ -194,26 +194,27 @@ class BrowseController extends BaseController
         }
         // Delete file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
-                $get_dk = '';
-                if (!empty($_GET['dk'])) {
-                    $get_dk = $_GET['dk'];
-                }
+            $get_dk = '';
+            if (!empty($_GET['dk'])) {
+                $get_dk = $_GET['dk'];
+            }
 
-                $gd_client = $model_gd_delete->getGoogleClient($home_url, $guid);
+            $gd_client = $model_gd_delete->getGoogleClient($home_url, $guid);
 
-                $gd_service = new Google_Service_Drive($gd_client);
+            $gd_service = new Google_Service_Drive($gd_client);
 
-                include_once __DIR__ . '/../models/dbconnect.php';
-                $db = dbconnect();
-                $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                ON d.id = p.onlinedrives_app_detail_id
-                                WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
-                foreach ($sql as $value) {
-                    $drive_path = $value['drive_path'];
-                    $app_user_id = $value['app_user_id'];
-                    $app_password = $value['app_password'];
-                }
+            include_once __DIR__ . '/../models/dbconnect.php';
+            $db = dbconnect();
+            $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+                    FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                    ON d.id = p.onlinedrives_app_detail_id
+                    WHERE drive_key = :drive_key',
+                [':drive_key' => $get_dk])->queryAll();
+            foreach ($sql as $value) {
+                $drive_path = $value['drive_path'];
+                $app_user_id = $value['app_user_id'];
+                $app_password = $value['app_password'];
+            }
 
             if (!empty($model_gd_delete->delete_file_id)) {
                 $cloud = $model_gd_delete->cloud;

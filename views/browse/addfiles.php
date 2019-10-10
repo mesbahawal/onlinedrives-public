@@ -287,14 +287,12 @@ if ($app_user_id <> '') {
 
     $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
 
-    if(isset($sciebo_content)){
+    if (isset($sciebo_content)) {
         $count_sciebo_files = count($sciebo_content);
     }
-    else{
+    else {
         $count_sciebo_files = 0;
     }
-
-
 
     if ($count_sciebo_files > 0) {
         $keys = array_keys($sciebo_content);
@@ -466,10 +464,51 @@ if ($app_user_id <> '') {
                             for ($i = 0; $i < $count_all_folders; $i++) {
                             ?>
                                 if (checked == true) {
-                                    <?php echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;'; ?>
+                                    <?php
+                                    echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
+
+                                    if (document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3]) {
+                                        document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
+                                    }';
+                                    ?>
                                 }
                                 else {
-                                    <?php echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;'; ?>
+                                    <?php
+                                    echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
+
+                                    if (document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3]) {
+                                        document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
+                                    }';
+                                    ?>
+                                }
+                            <?php
+                            }
+
+                            for ($i = 0; $i < $count_all_files; $i++) {
+                                $checkbox_index = $i + $count_all_folders;
+                                ?>
+                                if (checked == true) {
+                                    <?php
+                                    echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[3].checked = true;';
+                                    ?>
+                                }
+                                else {
+                                    <?php
+                                    echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;';
+                                    ?>
                                 }
                             <?php
                             }
@@ -596,14 +635,19 @@ if ($app_user_id <> '') {
                 echo '</td>
                     <td>';
                 $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
-                if ($fav <> 0) { $span_fav_icon = '<span class="glyphicon glyphicon-star fav_brown"></span>'; }
-                else { $span_fav_icon = '<span class="glyphicon glyphicon-star fav_default"></span>'; }
+                if ($fav <> 0) {
+                    $span_fav_icon = '<span class="glyphicon glyphicon-star fav_brown"></span>';
+                }
+                else {
+                    $span_fav_icon = '<span class="glyphicon glyphicon-star fav_default"></span>';
+                }
 
                 if ($cloud == 'sciebo') {
                     $path = urlencode($path);
                     $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
                     echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
-                } elseif ($cloud == 'gd') {
+                }
+                elseif ($cloud == 'gd') {
                     $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                     echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                 }
@@ -613,10 +657,24 @@ if ($app_user_id <> '') {
                     echo $form_addfiles->field($model_addfiles, 'permission['.$i.']')->checkboxList([
                         'Rn' => 'Rename',
                         'Mv' => 'Move',
-//                        'C' => 'Copy',
+                        // 'C' => 'Copy',
                         'D' => 'Delete',
                         'U' => 'Upload',
-                ]);
+                    ],
+                    [
+                        'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked;
+                            checked_1 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked;
+                            checked_2 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked;
+                            checked_3 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked;
+
+                            if (checked_0 == true || checked_1 == true || checked_2 == true || checked_3 == true) {
+                                document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
+                            }
+                            else {
+                                document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;
+                            }'
+                    ]);
+ 
                 echo '</td>
                         <td>
 
@@ -647,11 +705,10 @@ if ($app_user_id <> '') {
             $file_shared = $all_files[$i]['file_shared'];
             $file_comment = $all_files[$i]['file_comment'];
 
-
             $created_time_txt = $created_time;
             $modified_time_txt = $modified_time;
 
-            $checkbox_index = $i+$count_all_folders;
+            $checkbox_index = $i + $count_all_folders;
 
             // Parents list
             $count_parents = 0;
@@ -727,7 +784,6 @@ if ($app_user_id <> '') {
                 // Time title
                 $time_title = 'Modified time: '.$modified_time_txt_exact."\n".
                     'Creation time: '.$created_time_txt."\n";
-
 
                 /**
                  * Icon
@@ -825,10 +881,22 @@ if ($app_user_id <> '') {
                     echo $form_addfiles->field($model_addfiles, 'permission['.$checkbox_index.']')->checkboxList([
                         'Rn' => 'Rename',
                         'Mv' => 'Move',
-//                        'C' => 'Copy',
+                        // 'C' => 'Copy',
                         'D' => 'Delete',
-                ]);
+                    ],
+                    [
+                        'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked;
+                            checked_1 = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked;
+                            checked_2 = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked;
 
+                            if (checked_0 == true || checked_1 == true || checked_2 == true) {
+                                document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = true;
+                            }
+                            else {
+                                document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = false;
+                            }'
+                    ]);
+ 
                 echo '</td>
                 <td></td>
                 </tr>';
