@@ -946,6 +946,7 @@ if ($username <> '') {
         $if_shared = $value['if_shared'];
         $share_status = $value['share_status'];
         $user_id = $value['user_id'];
+        $drive_name = $value['drive_name'];
 
         $arr_app_user_admin[$adm]['drive_path'] = $drive_path;
         $arr_app_user_admin[$adm]['app_user_id'] = $app_user_id;
@@ -956,6 +957,7 @@ if ($username <> '') {
         $arr_app_user_admin[$adm]['share_status'] = $share_status;
         $arr_app_user_admin[$adm]['uid'] = $uid;
         $arr_app_user_admin[$adm]['pid'] = $pid;
+        $arr_app_user_admin[$adm]['drive_name'] = $drive_name;
         $adm++;
     }
 }
@@ -969,7 +971,6 @@ if (count($arr_app_user_admin) > 0) {
     <div class="box">
         <table id="table" class="table table-responsive">
             <thead>
-
                 <?php
                 for ($j = 0; $j < count($arr_app_user_admin); $j++) { // start of for loop (j)
                     $drive_path = $arr_app_user_admin[$j]['drive_path'];
@@ -981,6 +982,7 @@ if (count($arr_app_user_admin) > 0) {
                     $share_status = $arr_app_user_admin[$j]['share_status'];
                     $uid = $arr_app_user_admin[$j]['uid'];
                     $pid = $arr_app_user_admin[$j]['pid'];
+                    $drive_name = $arr_app_user_admin[$j]['drive_name'];
 
                     if ($username == $logged_username && $if_shared <> 'D') {
                     ?>
@@ -989,8 +991,13 @@ if (count($arr_app_user_admin) > 0) {
                             <td class="valign_m">
                                 <?php
                                 // Output Sciebo icon in navigation
-                                $ref = 'https://uni-siegen.sciebo.de/login';
-                                $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
+                                if ($drive_name == 'sciebo') {
+                                    $ref = 'https://uni-siegen.sciebo.de/login';
+                                }
+                                elseif ($drive_name == 'gd') {
+                                    $ref = 'https://accounts.google.com/ServiceLogin';
+                                }
+                                $src = 'protected/modules/onlinedrives/resources/'.$drive_name.'20.png';
                                 echo '<a href="'.$ref.'" target="_blank">
                                     <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
                                 </a>';
