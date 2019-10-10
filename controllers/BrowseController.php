@@ -386,8 +386,17 @@ class BrowseController extends BaseController
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
                         if ($val <> '') {
-                            //echo $key ." = ".  $val ." <br> ";
+                            //echo $key ." = "." <br> ";
                             //print_r($val);
+                            //var_dump($permission[$key]);
+                            //echo "<br>";
+
+                            if($permission[$key]<>""){
+                                $permission_items = implode("|",$permission[$key]);
+                            }
+                            else{
+                                $permission_items="";
+                            }
 
                             $drive_path = urldecode($val[0]);
 
@@ -410,7 +419,7 @@ class BrowseController extends BaseController
                                                             (`drive_path`,`permission`,`onlinedrives_app_detail_id`,`drive_key`) 
                                                     VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
                                     ':drive_path' => $drive_path,
-                                    ':permission' => 'Rd',
+                                    ':permission' => $permission_items,
                                     ':onlinedrives_app_detail_id' => $app_detail_id,
                                     ':drive_key' => md5(microtime()),
                                 ])->execute();

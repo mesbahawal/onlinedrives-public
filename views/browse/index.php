@@ -1577,7 +1577,7 @@ else {
 
 $gd_results = array();
 $count_gd_files = 0;
-if ($get_sciebo_path == '') {
+if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
     $gd_results = $gd_service->files->listFiles($optParams);
     $count_gd_files = count($gd_results->getFiles());
 }
