@@ -33,8 +33,9 @@ return array (
   'Die Berechtigung für diesen Ordner fehlt.' => 'Die Berechtigung für diesen Ordner fehlt.',
   'Datei wurde nicht hochgeladen, weil die Berechtigung dazu fehlt.' => 'Datei wurde nicht hochgeladen, weil die Berechtigung dazu fehlt.',
   'Close' => 'Schließen',
-  '' => '',
-  '' => '',
-  '' => '',
+  'Already app user exist.' => 'App-User existiert bereits.',
+  'Cloud storage is added successfuly.' => 'Cloud Service wurde erfolgreich hinzugefügt.',
+  'JSON file' => 'JSON-Datei',
   '' => '',
 );
+?>

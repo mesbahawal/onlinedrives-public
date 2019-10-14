@@ -16,13 +16,16 @@ class LoginForm extends \yii\base\Model
     public $app_id;
     public $password;
     public $upload_gd_client_secret_file;
+    public $image_src_filename;
+    public $image_web_filename;
 
     public function rules()
     {
         return [
-            ['selected_cloud_login', 'required'],
+            [['selected_cloud_login'], 'required'],
             [['app_id', 'password'], 'string'],
-            ['upload_gd_client_secret_file', 'file', 'extensions' => 'json'],
+            [['upload_gd_client_secret_file'], 'file', 'extensions' => 'json'],
+            [['image_src_filename', 'image_web_filename'], 'string', 'max' => 255],
             // ['selected_cloud_login', 'validateInput'],
             // ['app_id', 'validateInput'],
             // ['password', 'validateInput'],

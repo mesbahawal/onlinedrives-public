@@ -8,6 +8,7 @@ use humhub\modules\onlinedrives\widgets\FileListContextMenu;
 use humhub\modules\onlinedrives\widgets\FolderView;
 
 use humhub\modules\onlinedrives\models\forms\LoginForm;
+use humhub\modules\onlinedrives\models\forms\LoginFormGDClient;
 use humhub\modules\onlinedrives\models\forms\CreateFileForm;
 use humhub\modules\onlinedrives\models\forms\UploadFileForm;
 use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
@@ -132,58 +133,61 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
 }
 
 function getGoogleClient($db, $space_id, $home_url, $guid) {
-    // Check for DB entry for GD and this space
-    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name',
-        [':space_id' => $space_id,
-            ':drive_name' => 'gd'])->queryAll();
-
+    // Check for database entry for Google Drive and this space
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name', [
+        ':space_id' => $space_id,
+        ':drive_name' => 'gd',
+    ])->queryAll();
     if (count($sql) > 0) {
-        $client = new Google_Client();
-        $client->setApplicationName('HumHub');
-        $client->addScope(Google_Service_Drive::DRIVE);
-        $client->setAuthConfig('protected/modules/onlinedrives/client_secret.json');
-        $client->setAccessType('offline'); // offline access
-        $client->setPrompt('select_account consent');
-        $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+        foreach ($sql as $value) {
+            $app_password = $value['app_password'];
 
-        $tokenPath = 'protected/modules/onlinedrives/token.json';
-        if (file_exists($tokenPath)) {
-            $accessToken = json_decode(file_get_contents($tokenPath), true);
-            $client->setAccessToken($accessToken);
-        }
-        // If there is no previous token or it's expired
-        if ($client->isAccessTokenExpired()) {
-            // Refresh the token if possible, else fetch a new one
-            if ($client->getRefreshToken()) {
-                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+            $client = new Google_Client();
+            $client->setApplicationName('HumHub');
+            $client->addScope(Google_Service_Drive::DRIVE);
+            $client->setAuthConfig('protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json');
+            $client->setAccessType('offline'); // offline access
+            $client->setPrompt('select_account consent');
+            $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+
+            $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
+            if (file_exists($tokenPath)) {
+                $accessToken = json_decode(file_get_contents($tokenPath), true);
+                $client->setAccessToken($accessToken);
             }
-            else {
-                // Request authorization from the user
-                if (!isset($_GET['code'])) {
-                    $authUrl = $client->createAuthUrl();
-                    header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
+            // If there is no previous token or it's expired
+            if ($client->isAccessTokenExpired()) {
+                // Refresh the token if possible, else fetch a new one
+                if ($client->getRefreshToken()) {
+                    $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
                 }
-                //Hier Code übergeben
-                if (isset($_GET['code'])) {
-                    $code = $_GET['code'];
-
-                    $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-                    $client->setAccessToken($accessToken);
-
-                    // Check to see if there was an error
-                    if (array_key_exists('error', $accessToken)) {
-                        throw new Exception(join(', ', $accessToken));
+                else {
+                    // Request authorization from the user
+                    if (!isset($_GET['code'])) {
+                        $authUrl = $client->createAuthUrl();
+                        header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
                     }
+                    // Hier Code übergeben
+                    if (isset($_GET['code'])) {
+                        $code = $_GET['code'];
 
-                    // Save the token to a file
-                    if (!file_exists(dirname($tokenPath))) {
-                        mkdir(dirname($tokenPath), 0700, true);
+                        $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+                        $client->setAccessToken($accessToken);
+
+                        // Check to see if there was an error
+                        if (array_key_exists('error', $accessToken)) {
+                            throw new Exception(join(', ', $accessToken));
+                        }
+
+                        // Save the token to a file
+                        if (!file_exists(dirname($tokenPath))) {
+                            mkdir(dirname($tokenPath), 0700, true);
+                        }
+                        file_put_contents($tokenPath, json_encode($client->getAccessToken()));
                     }
-                    file_put_contents($tokenPath, json_encode($client->getAccessToken()));
                 }
             }
         }
-
         return $client;
     }
     else {
@@ -225,7 +229,7 @@ if ($get_drive_key != '') {
     // Rework
     $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
 
-    // GD params
+    // Google Drive params
     if (!empty($_GET['gd_folder_id']) && !empty($_GET['gd_folder_name'])) {
         $get_gd_folder_id = $_GET['gd_folder_id'];
         $get_gd_folder_name = $_GET['gd_folder_name'];
@@ -267,7 +271,7 @@ $this->registerJsConfig('onlinedrives', [
 
 
 /**
- * GD client
+ * Google Drive client
  */
 require_once __DIR__ . '/../../vendor/autoload.php';
 
@@ -293,9 +297,10 @@ $check = 0;
 
 // Count Sciebo login entries
 $count_sciebo_accounts = 0;
-$sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name',
-    [':space_id' => $space_id,
-        ':drive_name' => 'sciebo'])->queryAll();
+$sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name', [
+    ':space_id' => $space_id,
+    ':drive_name' => 'sciebo',
+])->queryAll();
 if (count($sql) > 0) {
     $count_sciebo_accounts = count($sql);
 }
@@ -304,10 +309,11 @@ if (count($sql) > 0) {
 if ($username <> '' && !isset($_GET['op'])) {
     // Load Sciebo entries
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-            WHERE d.space_id = :space_id AND d.drive_name = :drive_name',
-        [':space_id' => $space_id,
-            ':drive_name' => 'sciebo'])->queryAll();
+        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+        WHERE d.space_id = :space_id AND d.drive_name = :drive_name', [
+        ':space_id' => $space_id,
+        ':drive_name' => 'sciebo',
+    ])->queryAll();
     foreach ($sql as $value) {
         $drive_path = $value['drive_path'];
         $app_user_id = $value['app_user_id'];
@@ -339,12 +345,13 @@ if ($username <> '' && !isset($_GET['op'])) {
         }
     }
 
-    // Load GD entries
+    // Load Google Drive entries
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-            WHERE d.space_id = :space_id AND d.drive_name = :drive_name',
-        [':space_id' => $space_id,
-            ':drive_name' => 'gd'])->queryAll();
+        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+        WHERE d.space_id = :space_id AND d.drive_name = :drive_name', [
+            ':space_id' => $space_id,
+            ':drive_name' => 'gd',
+        ])->queryAll();
     foreach ($sql as $value) {
         $drive_path = $value['drive_path'];
         $app_user_id = $value['app_user_id'];
@@ -376,21 +383,23 @@ if ($username <> '' && !isset($_GET['op'])) {
         }
     }
 }
-// Disable App Detail ID
+// Disable app detail ID
 elseif ($username <> '' && isset($_GET['op']) && isset($_GET['app_detail_id'])) {
     if ($_GET['op'] == 'disable' && $_GET['app_detail_id'] != '') {
         $app_detail_id = $_GET['app_detail_id'];
 
-        //before update check user id and authority;
+        // Before update check user id and authority;
 
         $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
-                WHERE id = :app_detail_id AND user_id = :user_id AND if_shared <> \'D\'',
-            [':app_detail_id' => $app_detail_id,
-                ':user_id' => $username])->queryAll();
+            WHERE id = :app_detail_id AND user_id = :user_id AND if_shared <> \'D\'', [
+            ':app_detail_id' => $app_detail_id,
+            ':user_id' => $username,
+        ])->queryAll();
 
         if (count($sql) > 0) {
-            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\' WHERE id = :app_detail_id',
-                [':app_detail_id' => $app_detail_id])->execute();
+            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\' WHERE id = :app_detail_id', [
+                ':app_detail_id' => $app_detail_id,
+            ])->execute();
 
             $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
 
@@ -410,9 +419,9 @@ else {
 /**
  * Sciebo client
  */
-if (count($arr_app_user_detail) > 0) { // start of sciebo according to the DB table rows
+if (count($arr_app_user_detail) > 0) { // Start of Sciebo according to the database table rows
 
-for ($j = 0; $j < count($arr_app_user_detail); $j++) { // start of for loop (j)
+for ($j = 0; $j < count($arr_app_user_detail); $j++) { // Start of for loop (j)
 
 $drive_path = $arr_app_user_detail[$j]['drive_path'];
 $app_user_id = $arr_app_user_detail[$j]['app_user_id'];
@@ -423,7 +432,7 @@ $drive_key = $arr_app_user_detail[$j]['drive_key'];
 $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
 
 if ($drive_path != '' || $drive_path != '/' || // For Sciebo
-    $gd_service !== false                      // For GD
+    $gd_service !== false                      // For Google Drive
 ) {
     $check = 1;
     if ($drive_path == '/') {
@@ -469,10 +478,11 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                 $db_app_user_id = '';
                 if ($get_drive_key != '') {
                     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                            ON d.id = p.onlinedrives_app_detail_id
-                            WHERE drive_key = :drive_key',
-                        [':drive_key' => $get_drive_key])->queryAll();
+                        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                        ON d.id = p.onlinedrives_app_detail_id
+                        WHERE drive_key = :drive_key', [
+                        ':drive_key' => $get_drive_key,
+                    ])->queryAll();
 
                     foreach ($sql as $value) {
                         $db_app_user_id = $value['app_user_id'];
@@ -519,10 +529,10 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                 }
             }
         }
-        // GD
+        // Google Drive
         elseif ($cloud == 'gd') {
             if ($do == 'upload_file') {
-            //TODO GD UPLOAD file function
+            // TODO Google Drive UPLOAD file function
 /*
             $content = file_get_contents('files/'.$upload);
 
@@ -609,10 +619,11 @@ $sciebo_content = array();
 $count_sciebo_files = 0;
 if ($get_gd_folder_id == '') {
     if ($get_drive_key != '') {
-        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-                WHERE drive_key = :drive_key',
-            [':drive_key' => $get_drive_key])->queryAll();
+        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+            WHERE drive_key = :drive_key', [
+            ':drive_key' => $get_drive_key,
+        ])->queryAll();
 
         foreach ($sql as $value) {
             $db_app_user_id = $value['app_user_id'];
@@ -798,11 +809,14 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
         <div class="panel-body">
 
-            <?php /*
-                echo FolderView::widget([
+            <?php
+            /*
+            echo FolderView::widget([
                 'contentContainer' => $contentContainer,
-                'folder' => $folder
-            ])*/?>
+                'folder' => $folder,
+            ])
+            */
+            ?>
 
 <!-- Breadcrumb navigation -->
 <div class="box">
@@ -823,10 +837,11 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 /*
         // Test%201A/ins/
         // Check breadcrumb for shared location
-        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-                        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                        ON d.id=p.onlinedrives_app_detail_id
-                        WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
+        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id=p.onlinedrives_app_detail_id
+            WHERE drive_key = :drive_key', [
+            ':drive_key' => $get_dk,
+        ])->queryAll();
         foreach ($sql as $value) {
             $drive_path = $value['drive_path'];
             $app_user_id = $value['app_user_id'];
@@ -856,19 +871,19 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         // Output rest of Sciebo navigation
         echo $navi;
     }
-    // Output GD navigation
+    // Output Google Drive navigation
     elseif ($get_gd_folder_id != '') {
-        // Build GD icon for navigation
+        // Build Google Drive icon for navigation
         $ref = 'https://accounts.google.com/ServiceLogin';
         $src = 'protected/modules/onlinedrives/resources/gd20.png';
 
-        // Output GD icon in navigation
+        // Output Google Drive icon in navigation
         echo ' /
         <a href="'.$ref.'" target="_blank">
             <img src="'.$src.'" style="position: relative; top: -2px;" title="Google Drive" />
         </a>';
 
-        // Build rest of GD navigation
+        // Build rest of Google Drive navigation
         $navi = '';
         $check_id = $get_gd_folder_id;
         $check_name = $get_gd_folder_name;
@@ -903,7 +918,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             }
         } while ($check_id != '0AESKNHa25CPzUk9PVA'); // Means root
 
-        // Output rest of GD navigation
+        // Output rest of Google Drive navigation
         echo $navi;
     }
     ?>
@@ -930,11 +945,12 @@ $adm = 0;
 
 if ($username <> '') {
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-            WHERE d.space_id = :space_id AND d.user_id = :user_id
-            GROUP BY d.app_user_id',
-        [':space_id' => $space_id,
-            ':user_id' => $username ])->queryAll();
+        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+        WHERE d.space_id = :space_id AND d.user_id = :user_id
+        GROUP BY d.app_user_id', [
+        ':space_id' => $space_id,
+        ':user_id' => $username,
+    ])->queryAll();
 
     foreach ($sql as $value) {
         $drive_path = $value['drive_path'];
@@ -972,7 +988,7 @@ if (count($arr_app_user_admin) > 0) {
         <table id="table" class="table table-responsive">
             <thead>
                 <?php
-                for ($j = 0; $j < count($arr_app_user_admin); $j++) { // start of for loop (j)
+                for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j)
                     $drive_path = $arr_app_user_admin[$j]['drive_path'];
                     $app_user_id = $arr_app_user_admin[$j]['app_user_id'];
                     $app_password = $arr_app_user_admin[$j]['app_password'];
@@ -986,7 +1002,7 @@ if (count($arr_app_user_admin) > 0) {
 
                     if ($username == $logged_username && $if_shared <> 'D') {
                     ?>
-                        <!--Table for selecting path-->
+                        <!-- Table for selecting path -->
                         <tr>
                             <td class="valign_m">
                                 <?php
@@ -1084,6 +1100,9 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
             getElementById(\'line_sciebo_login\').className = \'line_icons showblock\';
             getElementById(\'form_sciebo_login\').className = \'showblock\';
             getElementById(\'form_gd_login\').className = \'shownone\';
+
+            getElementById(\'create_btn_login\').className = \'showblock\';
+            getElementById(\'create_btn_login_gd_client_upload\').className = \'shownone\';
     " />',
     'gd' => '<img
         id="select_gd_login"
@@ -1098,6 +1117,9 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
             getElementById(\'line_gd_login\').className = \'line_icons showblock\';
             getElementById(\'form_sciebo_login\').className = \'shownone\';
             getElementById(\'form_gd_login\').className = \'showblock\';
+
+            getElementById(\'create_btn_login\').className = \'shownone\';
+            getElementById(\'create_btn_login_gd_client_upload\').className = \'showblock\';
     " />',
 ], ['encode' => false]); // https://stackoverflow.com/questions/46094352/display-image-with-label-in-radiobutton-yii2
 
@@ -1129,22 +1151,11 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
     </div>
 </div>
 
-<!-- Login GD form -->
-<div id="form_gd_login" class="shownone" style="border: 1px solid black; widht: 100px; height: 100px;">
-    <div id="app_id" style="
-        position: relative;
-        margin: 0;
-        padding: 15px;
-        padding-bottom: 0;
-    ">
-        <?php echo $form_login->field($model_login, 'upload_gd_client_secret_file')->fileInput([]); ?>
-    </div>
-</div>
-
-<!-- Send button -->
+<!-- Send button Sciebo login-->
 <div id="create_btn_login" class="form-group">
     <div class="col-lg-offset-1 col-lg-11">
-        <?php echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
+        <?php
+        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
             'onclick' =>
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
                 var src_sciebo_gray50 = \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png\';
@@ -1162,6 +1173,91 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
                     select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
                 ) {
     				var app_id = document.getElementById(\'loginform-app_id\').value;
+                    if (app_id == \'\') {
+                        document.getElementById(\'err_msg\').innerHTML = \'App Id Required!\';
+                        document.getElementById(\'loginform-app_id\').focus();
+
+                        return false;
+                    }
+
+                    var password = document.getElementById(\'loginform-password\').value;
+                    if (password == \'\') {
+                        document.getElementById(\'err_msg\').innerHTML = \'Password Required!\';
+                        document.getElementById(\'loginform-password\').focus();
+
+                        return false;
+                    }
+                }
+            ']);
+        ?>
+    </div>
+</div>
+
+<?php ActiveForm::end(); ?>
+
+<!-- Login Goolge Drive form -->
+<div id="form_gd_login" class="shownone">
+    <?php
+    /**
+     * Form for login Google Drive client
+     */
+    $model_login_gd_client_upload = new LoginFormGDClient();
+    $form_login_gd_client_upload = ActiveForm::begin([
+        'id' => 'login_form_gd_client_upload',
+        'method' => 'post',
+        'options' => ['class' => 'form-horizontal', 'enctype' => 'multipart/form-data'],
+    ]);
+    ?>
+
+    <div id="app_id" style="
+        position: relative;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'AppID'); ?></div>
+        <div style="
+            margin-left: 15px;
+            width: 119px;
+        ">
+            <?php echo $form_login_gd_client_upload->field($model_login_gd_client_upload, 'app_id'); ?>
+        </div>
+    </div>
+
+    <div id="app_id" style="
+        position: relative;
+        top: -10px;
+        margin: 0;
+        padding: 15px;
+        padding-bottom: 0;
+    ">
+        <div class="upcr_label"><?php echo Yii::t('OnlinedrivesModule.new', 'JSON file'); ?></div>
+        <?php echo $form_login_gd_client_upload->field($model_login_gd_client_upload, 'upload_gd_client_secret_file')->fileInput([]); ?>
+    </div>
+</div>
+
+<!-- Send button Google Drive login -->
+<div id="create_btn_login_gd_client_upload" class="form-group shownone" style="position: relative; top: -7px;">
+    <div class="col-lg-offset-1 col-lg-11">
+        <?php
+        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
+            'onclick' =>
+                'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
+                var src_sciebo_gray50 = \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png\';
+                var select_gd_login_src = getElementById(\'select_gd_login\').src;
+
+                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo_gray50.png\' &&
+                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
+                ) {
+                    document.getElementById(\'err_msg\').innerHTML = "Please select a cloud service";
+
+                    return false;
+                }
+
+                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo50.png\' &&
+                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
+                ) {
+                    var app_id = document.getElementById(\'loginform-app_id\').value;
                     if (app_id == \'\') {
                         document.getElementById(\'err_msg\').innerHTML = \'App Id Required!\';
                         document.getElementById(\'loginform-app_id\').focus();
@@ -1503,8 +1599,8 @@ $form_u = ActiveForm::begin([
             <span id="upload_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg"
                 title="' . Yii::t('OnlinedrivesModule.new', 'Create file') . '"
                 onclick="'.
-                    // outcommented because of double opening of select windows
-                    //$(\'#uploadfileform-upload\').trigger(\'click\');
+                    // Outcommented because of double opening of select windows
+                    // $(\'#uploadfileform-upload\').trigger(\'click\');
                     'this.className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg upcr_btn_active\';
                     getElementById(\'create_folder\').className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-folder-open fa-lg\';
                     getElementById(\'create_file\').className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-file fa-lg\';
@@ -1559,26 +1655,26 @@ $form_u = ActiveForm::begin([
 
 <?php
 /**
- * Get GD files
+ * Get Google Drive files
  */
 
 // Print the data for up to all files
 
-if (1==1) { // Only for temporary undisplaying GD folders/files
+if (1 == 1) { // Only for temporary undisplaying Google Drive folders/files
 
 if ($get_gd_folder_id != '') {
     $optParams = array(
-        //'pageSize' => 10,
+        // 'pageSize' => 10,
         'q' => 'parents="'.$get_gd_folder_id.'"',
         'fields' => 'nextPageToken, files(*)',
-        'orderBy' => 'folder, name'
+        'orderBy' => 'folder, name',
     );
 }
 else {
     $optParams = array(
         //'pageSize' => 10,
         'fields' => 'nextPageToken, files(*)',
-        'orderBy' => 'folder, name'
+        'orderBy' => 'folder, name',
     );
 }
 
@@ -1592,7 +1688,7 @@ if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
 if ($count_gd_files != 0) {
     foreach ($gd_results->getFiles() as $file) {
         // Mime type, type (folder/file)
-        $mime_type = $file->getMimeType(); // Only GD at the moment
+        $mime_type = $file->getMimeType(); // Only Google Drive at the moment
         if (substr($mime_type, -6) == 'folder') {
         	$type = 'folder';
         }
@@ -1626,19 +1722,19 @@ if ($count_gd_files != 0) {
         if ($type == 'folder') {
             $all_folders[$afo]['cloud'] = 'gd';
             $all_folders[$afo]['cloud_name'] = 'Google Drive';
-            $all_folders[$afo]['id'] = $file->getId();                           // Only GD at the moment
+            $all_folders[$afo]['id'] = $file->getId();                           // Only Google Drive at the moment
             $all_folders[$afo]['path'] = "";
             $all_folders[$afo]['name'] = $file->getName();
             $all_folders[$afo]['mime_type'] = $mime_type;
             $all_folders[$afo]['type'] = $type;
-            $all_folders[$afo]['created_time'] = $created_time;                  // TODO Only GD at the moment!
+            $all_folders[$afo]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
             $all_folders[$afo]['modified_time'] = $modified_time;
-            $all_folders[$afo]['icon_link'] = $file->getIconLink();              // Only GD at the moment
-            $all_folders[$afo]['thumbnail_link'] = $file->getThumbnailLink();    // Only GD at the moment
-            $all_folders[$afo]['web_content_link'] = $file->getWebContentLink(); // Only GD at the moment
-            $all_folders[$afo]['web_view_link'] = $file->getWebViewLink();       // Only GD at the moment
+            $all_folders[$afo]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
+            $all_folders[$afo]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
+            $all_folders[$afo]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
+            $all_folders[$afo]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
             $all_folders[$afo]['download_link'] = '';
-            $all_folders[$afo]['parents'] = $file->getParents();                 // TODO Only GD at the moment!
+            $all_folders[$afo]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
             $all_folders[$afo]['fav'] = 0;
             $all_folders[$afo]['file_owner'] = '';
             $all_folders[$afo]['file_shared'] = array();
@@ -1649,19 +1745,19 @@ if ($count_gd_files != 0) {
         else {
             $all_files[$afi]['cloud'] = 'gd';
             $all_files[$afi]['cloud_name'] = 'Google Drive';
-            $all_files[$afi]['id'] = $file->getId();                           // Only GD at the moment
+            $all_files[$afi]['id'] = $file->getId();                           // Only Google Drive at the moment
             $all_files[$afi]['path'] = '';
             $all_files[$afi]['name'] = $file->getName();
             $all_files[$afi]['mime_type'] = $mime_type;
             $all_files[$afi]['type'] = $type;
-            $all_files[$afi]['created_time'] = $created_time;                  // TODO Only GD at the moment!
+            $all_files[$afi]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
             $all_files[$afi]['modified_time'] = $modified_time;
-            $all_files[$afi]['icon_link'] = $file->getIconLink();              // Only GD at the moment
-            $all_files[$afi]['thumbnail_link'] = $file->getThumbnailLink();    // Only GD at the moment
-            $all_files[$afi]['web_content_link'] = $file->getWebContentLink(); // Only GD at the moment
-            $all_files[$afi]['web_view_link'] = $file->getWebViewLink();       // Only GD at the moment
+            $all_files[$afi]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
+            $all_files[$afi]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
+            $all_files[$afi]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
+            $all_files[$afi]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
             $all_files[$afi]['download_link'] = '';
-            $all_files[$afi]['parents'] = $file->getParents();                 // TODO Only GD at the moment!
+            $all_files[$afi]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
             $all_files[$afi]['fav'] = 0;
             $all_files[$afi]['file_owner'] = '';
             $all_files[$afi]['file_shared'] = array();
@@ -1673,7 +1769,7 @@ if ($count_gd_files != 0) {
     }
 }
 
-} // Only for temporary undisplaying GD folders/files
+} // Only for temporary undisplaying Google Drive folders/files
 
 /**
  * Check (3) end
@@ -1681,10 +1777,7 @@ if ($count_gd_files != 0) {
 }
 
 
-/**
- * Output success/error msg
- */
-
+// Output success/error message
 if ($success_msg != '') {
     echo '<div id="success_msg" class="infbox green">'.$success_msg.'</div>';
 }
@@ -1769,7 +1862,9 @@ else {
         	</span>
         </th>
         <!-- 5 Properties -->
-        <th><?php echo Yii::t('OnlinedrivesModule.new', 'Properties'); ?></th>
+        <th>
+            <?php echo Yii::t('OnlinedrivesModule.new', 'Properties'); ?>
+        </th>
         <!-- 6 Info, only for development -->
         <!-- <th></th> -->
         <!-- 7 Service icon -->
@@ -1837,10 +1932,10 @@ else {
             }
 
             if ($cloud == 'sciebo' ||                        // Sciebo
-                $cloud == 'gd' &&                            // GD
-                    ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of GD
-                    $parents[0] == '' ||                     // Shared files of GD
-                    $get_gd_folder_id != '')                 // Folder ID of GD
+                $cloud == 'gd' &&                            // Google Drive
+                    ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
+                    $parents[0] == '' ||                     // Shared files of Google Drive
+                    $get_gd_folder_id != '')                 // Folder ID of Google Drive
                 )
             {
                 $no++;
@@ -2049,7 +2144,7 @@ else {
 
                                         ActiveForm::end();
                                     }
-                                    // GD delete function
+                                    // Google Drive delete function
                                     elseif ($cloud == 'gd' && $parents[0] != '') {
                                         $model_gd_delete = new DeleteFileForm();
                                         $form2 = ActiveForm::begin([
@@ -2120,10 +2215,10 @@ else {
             }
 
             if ($cloud == 'sciebo' ||                        // Sciebo
-                $cloud == 'gd' &&                            // GD
-                    ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of GD
-                    $parents[0] == '' ||                     // Shared files of GD
-                    $get_gd_folder_id != '')                 // Folder ID of GD
+                $cloud == 'gd' &&                            // Google Drive
+                    ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
+                    $parents[0] == '' ||                     // Shared files of Google Drive
+                    $get_gd_folder_id != '')                 // Folder ID of Google Drive
                 )
             {
                 $no++;
@@ -2187,7 +2282,7 @@ else {
                 // Standard icon
                 $img = '<span class="glyphicon glyphicon-file file-color"></span>';
 
-                // Requested GD icon
+                // Requested Google Drive icon
                 $img = '<img src="'.$icon_link.'" alt="" title="" />';
 */
                 // Read type
@@ -2400,7 +2495,7 @@ else {
 
                                         ActiveForm::end();
                                     }
-                                    // GD delete function
+                                    // Google Drive delete function
                                     elseif ($cloud == 'gd' && $parents[0] != '') {
                                         $model_gd_delete = new DeleteFileForm();
                                         $form2 = ActiveForm::begin([
@@ -2440,9 +2535,9 @@ else {
 
 
 /**
- * Sciebo and GD guide
+ * Sciebo and Google Drive guide
  */
-if (1==1) {
+if (1 == 1) {
     $guide_h = '<span style="font-size: 20px; font-weight: bold;">Access configuration guide</span>';
 
     $sciebo_guide_link = '<a href="#sciebo_guide">How to connect with your Sciebo account</a>';
@@ -2519,7 +2614,7 @@ if (1==1) {
     '<p>'.$sciebo_guide_txt6.'<p>'.
     '<p>'.$sciebo_guide_pic6.'<p><br />'.
 
-    // Output GD output
+    // Output Google Drive output
     '<br />'.
     $gd_guide_a.
 	'<p>'.$gd_guide_h.'</p><br />'.

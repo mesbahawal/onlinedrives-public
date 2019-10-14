@@ -86,6 +86,7 @@ div.required label::after { content: ''; }
     border: 3px solid #bbb;
     border-radius: 10px;
     width: 195px;
+    height: 325px;
     background: #eee;
 }
 #plus_menu_icon {

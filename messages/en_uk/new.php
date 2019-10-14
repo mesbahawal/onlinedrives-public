@@ -33,8 +33,9 @@ return array (
   'Die Berechtigung für diesen Ordner fehlt.' => 'The permission for this folder is missing.',
   'Datei wurde nicht hochgeladen, weil die Berechtigung dazu fehlt.' => 'File was not uploaded because the permission is missing.',
   'Close' => 'Close',
-  '' => '',
-  '' => '',
-  '' => '',
+  'Already app user exist.' => 'Already app user exist.',
+  'Cloud storage is added successfuly.' => 'Cloud storage is added successfuly.',
+  'JSON file' => 'JSON file',
   '' => '',
 );
+?>
