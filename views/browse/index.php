@@ -132,6 +132,16 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
     }
 }
 
+// Create necessary folders for Google Drive client JSON files
+$path_client = 'protected/modules/onlinedrives/upload_dir/google_client';
+$path_tokens = 'protected/modules/onlinedrives/upload_dir/google_client/tokens';
+if (!file_exists($path_client)) {
+    mkdir($path_client, 0700);
+}
+if (!file_exists($path_tokens)) {
+    mkdir($path_tokens, 0700);
+}
+
 function getGoogleClient($db, $space_id, $home_url, $guid) {
     // Check for database entry for Google Drive and this space
     $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name', [
