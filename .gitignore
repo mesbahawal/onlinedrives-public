@@ -51,3 +51,6 @@ models/dbconnect.php
 # google token
 token.json
 client_secret.json
+
+# Uploaded files
+/upload_dir/*
