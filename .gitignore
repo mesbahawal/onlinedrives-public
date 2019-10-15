@@ -53,4 +53,4 @@ token.json
 client_secret.json
 
 # Uploaded files
-/upload_dir/*
+upload_dir/*
