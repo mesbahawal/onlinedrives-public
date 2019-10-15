@@ -1043,9 +1043,9 @@ if (count($arr_app_user_admin) > 0) {
                             <td>
                                 <?php
                                 if ($if_shared = 'Y') {
-                                    echo '<a class="btn btn-default" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
+                                    /*echo '<a class="btn btn-default" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
                                         'Update'.
-                                    '</a>';
+                                    '</a>';*/
                                 }
                                 ?>
                             </td>
