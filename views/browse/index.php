@@ -148,10 +148,11 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
         ':space_id' => $space_id,
         ':drive_name' => 'gd',
     ])->queryAll();
+
     if (count($sql) > 0) {
         foreach ($sql as $value) {
             $app_password = $value['app_password'];
-
+//echo 'protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json';die();
             $client = new Google_Client();
             $client->setApplicationName('HumHub');
             $client->addScope(Google_Service_Drive::DRIVE);
@@ -1230,7 +1231,7 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
             margin-left: 15px;
             width: 119px;
         ">
-            <?php echo $form_login_gd_client_upload->field($model_login_gd_client_upload, 'app_id'); ?>
+            <?php echo $form_login_gd_client_upload->field($model_login_gd_client_upload, 'gd_app_id'); ?>
         </div>
     </div>
 
@@ -1267,21 +1268,15 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
                 if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/sciebo50.png\' &&
                     select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/resources/gd_gray50.png\'
                 ) {
-                    var app_id = document.getElementById(\'loginform-app_id\').value;
-                    if (app_id == \'\') {
+                    var gd_app_id = document.getElementById(\'loginformgdclient-gd_app_id\').value;
+                    if (gd_app_id == \'\') {
                         document.getElementById(\'err_msg\').innerHTML = \'App Id Required!\';
-                        document.getElementById(\'loginform-app_id\').focus();
+                        document.getElementById(\'loginformgdclient-gd_app_id\').focus();
 
                         return false;
                     }
 
-                    var password = document.getElementById(\'loginform-password\').value;
-                    if (password == \'\') {
-                        document.getElementById(\'err_msg\').innerHTML = \'Password Required!\';
-                        document.getElementById(\'loginform-password\').focus();
-
-                        return false;
-                    }
+                    
                 }
             ']);
         ?>

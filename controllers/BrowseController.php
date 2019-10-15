@@ -58,6 +58,7 @@ class BrowseController extends BaseController
 
         // Login Sciebo model
         if ($model_login->load(Yii::$app->request->post())) {
+
             if ($model_login->validate()) {
                 // DB connection
                 // https://www.yiiframework.com/doc/guide/2.0/en/db-active-record
@@ -128,7 +129,7 @@ class BrowseController extends BaseController
             $db->open();
 
             $space_id = $_GET['cguid'];
-            $app_user_id = $model_login_gd_client->app_id;
+            $app_user_id = $model_login_gd_client->gd_app_id;
 
             $username = Yii::$app->user->identity->username;
             $email = Yii::$app->user->identity->email;
@@ -158,7 +159,7 @@ class BrowseController extends BaseController
 
                     Yii::$app->params['uploadPath'] = Yii::$app->basePath . '/modules/onlinedrives/upload_dir/google_client/';
                     $path = Yii::$app->params['uploadPath'] . $model_login_gd_client->image_web_filename;
-
+//echo "y"; die();
                     if ($image->saveAs($path)) {
                         $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
                             VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [

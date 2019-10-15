@@ -12,7 +12,7 @@ use yii\base\Model;
 
 class LoginFormGDClient extends \yii\base\Model
 {
-    public $app_id;
+    public $gd_app_id;
     public $upload_gd_client_secret_file;
     public $image_src_filename;
     public $image_web_filename;
@@ -20,7 +20,7 @@ class LoginFormGDClient extends \yii\base\Model
     public function rules()
     {
         return [
-            [['app_id'], 'string'],
+            [['gd_app_id'], 'string'],
             [['upload_gd_client_secret_file'], 'file', 'extensions' => 'json'],
             [['image_src_filename', 'image_web_filename'], 'string', 'max' => 255],
         ];
