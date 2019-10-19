@@ -1891,7 +1891,6 @@ else {
       </tr>
     </thead>
     <tbody>
-
         <?php
         $no = 0;
         // Rework of folders array
@@ -1940,7 +1939,7 @@ else {
                     ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
                     $parents[0] == '' ||                     // Shared files of Google Drive
                     $get_gd_folder_id != '')                 // Folder ID of Google Drive
-                )
+            )
             {
                 $no++;
 
@@ -1985,10 +1984,10 @@ else {
                 }
 
                 // Info
-                $info = 'ID: '.$id."\n".
-                    'Mime-Type: '.$mime_type."\n".
-                    'Nr.: '.$no."\n".
-                    'Parents-Anzahl: '.$count_parents."\n".
+                $info = 'ID: '.$id . "\n" .
+                    'Mime-Type: '.$mime_type . "\n" .
+                    'Nr.: '.$no . "\n" .
+                    'Parents-Anzahl: '.$count_parents . "\n" .
                     'Parent-ID-Liste: '.$parent_id_list;
 
                 // Time title
@@ -2159,7 +2158,7 @@ else {
                                             'method' => 'post',
                                             'options' => ['class' => 'form-horizontal'],
                                         ]);
-
+echo "-$drive_key-";
                                         echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
                                         echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
 

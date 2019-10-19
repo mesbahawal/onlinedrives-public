@@ -53,7 +53,7 @@ class DeleteFileForm extends \yii\base\Model
         }
         $sql = $db->createCommand('SELECT app_password FROM onlinedrives_app_detail
             WHERE onlinedrives_app_detail_id = :drive_name', [
-            ':onlinedrives_app_detail_id' => $onlinedrives_app_detail_id,
+            ':onlinedrives_app_detail_id' => $app_detail_id,
         ])->queryAll();
 
         $client = new Google_Client();
