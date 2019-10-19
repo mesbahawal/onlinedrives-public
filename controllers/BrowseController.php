@@ -58,8 +58,16 @@ class BrowseController extends BaseController
 
         // Login Sciebo model
         if ($model_login->load(Yii::$app->request->post())) {
-
             if ($model_login->validate()) {
+                // Get params
+                $space_id = $_GET['cguid'];
+                $drive_name = $model_login->selected_cloud_login;
+                $app_user_id = $model_login->app_id;
+                $app_password = $model_login->password;
+
+                $username = Yii::$app->user->identity->username;
+                $email = Yii::$app->user->identity->email;
+
                 // DB connection
                 // https://www.yiiframework.com/doc/guide/2.0/en/db-active-record
                 // https://www.yiiframework.com/doc/guide/2.0/en/db-dao
@@ -68,14 +76,6 @@ class BrowseController extends BaseController
                 include_once __DIR__ . '/../models/dbconnect.php';
                 $db = dbconnect();
                 $db->open();
-
-                $space_id = $_GET['cguid'];
-                $drive_name = $model_login->selected_cloud_login;
-                $app_user_id = $model_login->app_id;
-                $app_password = $model_login->password;
-
-                $username = Yii::$app->user->identity->username;
-                $email = Yii::$app->user->identity->email;
 
                 // Check path is already exist in share
 
@@ -123,16 +123,17 @@ class BrowseController extends BaseController
 
         // Login GD model
         if ($model_login_gd_client->load(Yii::$app->request->post())) {
-            // DB connection
-            include_once __DIR__ . '/../models/dbconnect.php';
-            $db = dbconnect();
-            $db->open();
-
+            // Get params
             $space_id = $_GET['cguid'];
             $app_user_id = $model_login_gd_client->gd_app_id;
 
             $username = Yii::$app->user->identity->username;
             $email = Yii::$app->user->identity->email;
+
+            // DB connection
+            include_once __DIR__ . '/../models/dbconnect.php';
+            $db = dbconnect();
+            $db->open();
 
             // Check path is already exist in share
 
@@ -159,7 +160,7 @@ class BrowseController extends BaseController
 
                     Yii::$app->params['uploadPath'] = Yii::$app->basePath . '/modules/onlinedrives/upload_dir/google_client/';
                     $path = Yii::$app->params['uploadPath'] . $model_login_gd_client->image_web_filename;
-//echo "y"; die();
+
                     if ($image->saveAs($path)) {
                         $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
                             VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
@@ -270,17 +271,20 @@ class BrowseController extends BaseController
         }
         // Delete file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
+            // Get params
             $get_dk = '';
             if (!empty($_GET['dk'])) {
                 $get_dk = $_GET['dk'];
             }
 
-            $gd_client = $model_gd_delete->getGoogleClient($home_url, $guid);
-
-            $gd_service = new Google_Service_Drive($gd_client);
-
+            // DB connection
             include_once __DIR__ . '/../models/dbconnect.php';
             $db = dbconnect();
+
+            // Get the API client and construct the service object
+            $gd_client = $model_gd_delete->getGoogleClient($db, $get_dk, $home_url, $guid);
+            $gd_service = new Google_Service_Drive($gd_client);
+
             $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
                 FROM onlinedrives_app_detail d
                 LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id

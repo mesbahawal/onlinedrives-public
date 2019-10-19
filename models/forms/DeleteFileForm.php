@@ -41,17 +41,30 @@ class DeleteFileForm extends \yii\base\Model
 	    return $client;
 	}
 
-    function getGoogleClient($home_url, $guid)
+    function getGoogleClient($db, $dk, $home_url, $guid)
     {
+        // Check for database entry for Google Drive and this space
+        $sql = $db->createCommand('SELECT onlinedrives_app_detail_id FROM onlinedrives_app_drive_path_detail
+            WHERE drive_key = :drive_key', [
+            ':drive_key' => $dk,
+        ])->queryAll();
+        foreach ($sql as $value) {
+            $app_detail_id = $value['onlinedrives_app_detail_id'];
+        }
+        $sql = $db->createCommand('SELECT app_password FROM onlinedrives_app_detail
+            WHERE onlinedrives_app_detail_id = :drive_name', [
+            ':onlinedrives_app_detail_id' => $onlinedrives_app_detail_id,
+        ])->queryAll();
+
         $client = new Google_Client();
         $client->setApplicationName('HumHub');
         $client->addScope(Google_Service_Drive::DRIVE);
-        $client->setAuthConfig('protected/modules/onlinedrives/client_secret.json');
-        $client->setAccessType('offline'); // offline access
+        $client->setAuthConfig('protected/modules/onlinedrives/'.$app_password.'.json');
+        $client->setAccessType('offline'); // Offline access
         $client->setPrompt('select_account consent');
         $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
 
-        $tokenPath = 'protected/modules/onlinedrives/token.json';
+        $tokenPath = 'protected/modules/onlinedrives/'.$app_password.'.json';
         if (file_exists($tokenPath)) {
             $accessToken = json_decode(file_get_contents($tokenPath), true);
             $client->setAccessToken($accessToken);

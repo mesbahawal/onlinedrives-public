@@ -143,7 +143,7 @@ if (!file_exists($path_tokens)) {
 }
 
 function getGoogleClient($db, $space_id, $home_url, $guid) {
-    // Check for database entry for Google Drive and this space
+    // Check for database entries for Google Drive and this space
     $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name', [
         ':space_id' => $space_id,
         ':drive_name' => 'gd',
@@ -152,12 +152,11 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
     if (count($sql) > 0) {
         foreach ($sql as $value) {
             $app_password = $value['app_password'];
-//echo 'protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json';die();
             $client = new Google_Client();
             $client->setApplicationName('HumHub');
             $client->addScope(Google_Service_Drive::DRIVE);
             $client->setAuthConfig('protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json');
-            $client->setAccessType('offline'); // offline access
+            $client->setAccessType('offline'); // Offline access
             $client->setPrompt('select_account consent');
             $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
 
@@ -2123,9 +2122,9 @@ else {
                                 '<a href="#" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Delete').'" title="'.Yii::t('OnlinedrivesModule.new', 'Delete').'"
                                     onclick="
                                         getElementById(\'delete'.$no.'\').classList.toggle(\'showblock\');
+
                                         return false;
-                                    "
-                                >
+                                ">
                                     <span class="glyphicon glyphicon-floppy-remove" style="font-size: 25px;"></span>
                                     <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Delete').'</span>
                                 </a>
@@ -2134,18 +2133,21 @@ else {
                                     if ($cloud == 'sciebo') {
                                         $model_sciebo_delete = new DeleteFileForm();
                                         $form2 = ActiveForm::begin([
-                                            'id' => 'gd_delete_file',
+                                            'id' => 'sciebo_delete_file',
                                             'method' => 'post',
                                             'options' => ['class' => 'form-horizontal'],
                                         ]);
-                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
-                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
 
-                                            echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
-                                                echo '</div>
-                                            </div>';
+                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
+                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
+
+                                        echo '<div class="form-group">
+                                            <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
+                                                echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), [
+                                                    'class' => 'btn-danger',
+                                                ]);
+                                            echo '</div>
+                                        </div>';
 
                                         ActiveForm::end();
                                     }
@@ -2157,14 +2159,17 @@ else {
                                             'method' => 'post',
                                             'options' => ['class' => 'form-horizontal'],
                                         ]);
-                                            echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
-                                            echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
 
-                                            echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
-                                                echo '</div>
-                                            </div>';
+                                        echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
+                                        echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
+
+                                        echo '<div class="form-group">
+                                            <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
+                                                echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), [
+                                                    'class' => 'btn-danger',
+                                                ]);
+                                            echo '</div>
+                                        </div>';
 
                                         ActiveForm::end();
                                     }
@@ -2597,37 +2602,42 @@ if (1 == 1) {
     // Output hidden-able wrapper opening
     '<div id="guide"'.$temp_class.'>'.
 
-    // Output guide anchors
+    // Output Sciebo anchor
     $sciebo_guide_a.
+
+    // Output guide links to anchors
     '<p><ul>'.
         '<li>'.$sciebo_guide_link.'</li>'.
         '<li>'.$gd_guide_link.'</li>'.
-    '</ul></p><br />'.
+    '</ul></p><br />';
 
     // Output Sciebo guide
-    '<p>'.$sciebo_guide_h.'</p><br />'.
-    '<p>'.$sciebo_guide_txt1.'<p>'.
-    '<p>'.$sciebo_guide_pic1.'<p><br />'.
-    '<p>'.$sciebo_guide_txt2.'<p>'.
-    '<p>'.$sciebo_guide_pic2.'<p><br />'.
-    '<p>'.$sciebo_guide_txt3.'<p>'.
-    '<p>'.$sciebo_guide_pic3.'<p><br />'.
-    '<p>'.$sciebo_guide_txt4.'<p>'.
-    '<p>'.$sciebo_guide_pic4.'<p><br />'.
-    '<p>'.$sciebo_guide_txt5.'<p>'.
-    '<p>'.$sciebo_guide_pic5.'<p><br />'.
-    '<p>'.$sciebo_guide_txt6.'<p>'.
-    '<p>'.$sciebo_guide_pic6.'<p><br />'.
+    echo
+    '<p>'.$sciebo_guide_h.'</p><br />';
+    for ($i = 1; $i <= 6; $i++) {
+        $txt = 'sciebo_guide_txt'.$i;
+        $pic = 'sciebo_guide_pic'.$i;
+    	echo '<p>Step '.$i.': ' . $$txt . '<p>'.
+        '<p>' . $$pic . '<p><br />';
+    }
+
+    echo '<br />'.
+
+    // Output Google Drive anchor
+    $gd_guide_a.
 
     // Output Google Drive output
-    '<br />'.
-    $gd_guide_a.
-	'<p>'.$gd_guide_h.'</p><br />'.
-    '<p>'.$gd_guide_txt1.'</p>'.
-    '<p>'.$gd_guide_pic1.'</p>'.
+	'<p>'.$gd_guide_h.'</p><br />';
+
+    for ($i = 1; $i <= 1; $i++) {
+        $txt = 'gd_guide_txt'.$i;
+        $pic = 'gd_guide_pic'.$i;
+        echo '<p>Step '.$i.': ' . $$txt . '<p>'.
+        '<p>' . $$pic . '<p><br />';
+    }
 
     // Output hidden-able wrapper ending
-    '</div>'.
+    echo '</div>'.
 
     // Output box ending
     '</div>';
