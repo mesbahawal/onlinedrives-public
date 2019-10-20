@@ -611,15 +611,15 @@ if ($app_user_id <> '') {
                 }
 
                 // Info
-                $info = 'ID: '.$id."\n".
-                    'Mime-Type: '.$mime_type."\n".
-                    'Nr.: '.$no."\n".
-                    'Parents-Anzahl: '.$count_parents."\n".
-                    'Parent-ID-Liste: '.$parent_id_list;
+                $info = 'ID: '.$id . "\n" .
+                'Mime-Type: '.$mime_type . "\n" .
+                'Nr.: '.$no . "\n" .
+                'Parents-Anzahl: '.$count_parents . "\n" .
+                'Parent-ID-Liste: '.$parent_id_list;
 
                 // Time title
-                $time_title = 'Modified time: '.$modified_time_txt_exact."\n".
-                    'Creation time: '.$created_time_txt."\n";
+                $time_title = 'Modified time: '.$modified_time_txt_exact . "\n" .
+                'Creation time: '.$created_time_txt . "\n";
 
                 // Output all folders
                 echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
@@ -629,9 +629,25 @@ if ($app_user_id <> '') {
                 $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
 
                 echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
-                    urlencode($path_chunk) => ''
-                ]);
+                    urlencode($path_chunk) => '',
+                ],
+                [
+                    'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked;
 
+                    if (checked == true) {
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
+                    }
+                    else {
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
+                    }'
+                ]);
+ 
                 echo '</td>
                     <td>';
                 $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
@@ -867,7 +883,21 @@ if ($app_user_id <> '') {
                     <td>';
                 $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
                 echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
-                    urlencode($path_chunk) => ''
+                    urlencode($path_chunk) => '',
+                ],
+                [
+                    'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked;
+
+                    if (checked == true) {
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
+                    }
+                    else {
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
+                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;
+                    }'
                 ]);
                 echo '</td>
                     <td>';

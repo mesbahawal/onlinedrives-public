@@ -1691,85 +1691,111 @@ if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
 
 if ($count_gd_files != 0) {
     foreach ($gd_results->getFiles() as $file) {
-        // Mime type, type (folder/file)
-        $mime_type = $file->getMimeType(); // Only Google Drive at the moment
-        if (substr($mime_type, -6) == 'folder') {
-        	$type = 'folder';
-        }
-        else {
-        	$type = 'file';
-        }
+    	// Read folder/file ID
+    	$gd_file_id = $file->getId();
 
-        // Created time
-        $temp = $file->getCreatedTime();
-        $temp_d = substr($temp, 8, 2);
-        $temp_mon = substr($temp, 5, 2);
-        $temp_y = substr($temp, 0, 4);
-        $temp_h = substr($temp, 11, 2);
-        $temp_min = substr($temp, 14, 2);
-        $temp_s = substr($temp, 17, 2);
-        $created_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
-        $created_time += 60*60*2; // European time zone
+        // Check for database entry for Google Drive and this space
+        $sql = $db->createCommand('SELECT id, app_password FROM onlinedrives_app_detail
+            WHERE space_id = :space_id AND drive_name = :drive_name', [
+            ':space_id' => $space_id,
+            ':drive_name' => 'gd',
+        ])->queryAll();
 
-        // Modified time
-        $temp = $file->getModifiedTime();
-        $temp_d = substr($temp, 8, 2);
-        $temp_mon = substr($temp, 5, 2);
-        $temp_y = substr($temp, 0, 4);
-        $temp_h = substr($temp, 11, 2);
-        $temp_min = substr($temp, 14, 2);
-        $temp_s = substr($temp, 17, 2);
-        $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
-        $modified_time += 60*60*2; // European time zone
+        foreach ($sql as $value) {
+            $app_detail_id = $value['id'];
+            $app_password = $value['app_password'];
 
-        // Folder list, file list
-        if ($type == 'folder') {
-            $all_folders[$afo]['cloud'] = 'gd';
-            $all_folders[$afo]['cloud_name'] = 'Google Drive';
-            $all_folders[$afo]['id'] = $file->getId();                           // Only Google Drive at the moment
-            $all_folders[$afo]['path'] = "";
-            $all_folders[$afo]['name'] = $file->getName();
-            $all_folders[$afo]['mime_type'] = $mime_type;
-            $all_folders[$afo]['type'] = $type;
-            $all_folders[$afo]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
-            $all_folders[$afo]['modified_time'] = $modified_time;
-            $all_folders[$afo]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
-            $all_folders[$afo]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
-            $all_folders[$afo]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
-            $all_folders[$afo]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
-            $all_folders[$afo]['download_link'] = '';
-            $all_folders[$afo]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
-            $all_folders[$afo]['fav'] = 0;
-            $all_folders[$afo]['file_owner'] = '';
-            $all_folders[$afo]['file_shared'] = array();
-            $all_folders[$afo]['file_comment'] = '';
-            $all_folders[$afo]['drive_key'] = '';
-            $afo++;
+            $sql = $db->createCommand('SELECT drive_key FROM onlinedrives_app_drive_path_detail
+                WHERE drive_path = :gd_file_id AND onlinedrives_app_detail_id = :onlinedrives_app_detail_id', [
+                ':gd_file_id' => $gd_file_id,
+                ':onlinedrives_app_detail_id' => $app_detail_id,
+            ])->queryAll();
+            if (count($sql) == 1) {
+                foreach ($sql as $value) {
+                    $drive_key = $value['drive_key'];
+                }
+
+                // Mime type, type (folder/file)
+                $mime_type = $file->getMimeType(); // Only Google Drive at the moment
+                if (substr($mime_type, -6) == 'folder') {
+                	$type = 'folder';
+                }
+                else {
+            	   $type = 'file';
+                }
+
+                // Created time
+                $temp = $file->getCreatedTime();
+                $temp_d = substr($temp, 8, 2);
+                $temp_mon = substr($temp, 5, 2);
+                $temp_y = substr($temp, 0, 4);
+                $temp_h = substr($temp, 11, 2);
+                $temp_min = substr($temp, 14, 2);
+                $temp_s = substr($temp, 17, 2);
+                $created_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
+                $created_time += 7200; // 60m * 60m * 2h, European time zone
+
+                // Modified time
+                $temp = $file->getModifiedTime();
+                $temp_d = substr($temp, 8, 2);
+                $temp_mon = substr($temp, 5, 2);
+                $temp_y = substr($temp, 0, 4);
+                $temp_h = substr($temp, 11, 2);
+                $temp_min = substr($temp, 14, 2);
+                $temp_s = substr($temp, 17, 2);
+                $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
+                $modified_time += 7200; // 60m * 60m * 2h, European time zone
+
+                // Folder list, file list
+                if ($type == 'folder') {
+                    $all_folders[$afo]['cloud'] = 'gd';
+                    $all_folders[$afo]['cloud_name'] = 'Google Drive';
+                    $all_folders[$afo]['id'] = $file->getId();                           // Only Google Drive at the moment
+                    $all_folders[$afo]['path'] = "";
+                    $all_folders[$afo]['name'] = $file->getName();
+                    $all_folders[$afo]['mime_type'] = $mime_type;
+                    $all_folders[$afo]['type'] = $type;
+                    $all_folders[$afo]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
+                    $all_folders[$afo]['modified_time'] = $modified_time;
+                    $all_folders[$afo]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
+                    $all_folders[$afo]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
+                    $all_folders[$afo]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
+                    $all_folders[$afo]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
+                    $all_folders[$afo]['download_link'] = '';
+                    $all_folders[$afo]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
+                    $all_folders[$afo]['fav'] = 0;
+                    $all_folders[$afo]['file_owner'] = '';
+                    $all_folders[$afo]['file_shared'] = array();
+                    $all_folders[$afo]['file_comment'] = '';
+                    $all_folders[$afo]['drive_key'] = '';
+                    $afo++;
+                }
+                else {
+                    $all_files[$afi]['cloud'] = 'gd';
+                    $all_files[$afi]['cloud_name'] = 'Google Drive';
+                    $all_files[$afi]['id'] = $file->getId();                           // Only Google Drive at the moment
+                    $all_files[$afi]['path'] = '';
+                    $all_files[$afi]['name'] = $file->getName();
+                    $all_files[$afi]['mime_type'] = $mime_type;
+                    $all_files[$afi]['type'] = $type;
+                    $all_files[$afi]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
+                    $all_files[$afi]['modified_time'] = $modified_time;
+                    $all_files[$afi]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
+                    $all_files[$afi]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
+                    $all_files[$afi]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
+                    $all_files[$afi]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
+                    $all_files[$afi]['download_link'] = '';
+                    $all_files[$afi]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
+                    $all_files[$afi]['fav'] = 0;
+                    $all_files[$afi]['file_owner'] = '';
+                    $all_files[$afi]['file_shared'] = array();
+                    $all_files[$afi]['file_comment'] = '';
+                    $all_files[$afi]['drive_key'] = '';
+                    $afi++;
+                }
+                $all++;
+            }
         }
-        else {
-            $all_files[$afi]['cloud'] = 'gd';
-            $all_files[$afi]['cloud_name'] = 'Google Drive';
-            $all_files[$afi]['id'] = $file->getId();                           // Only Google Drive at the moment
-            $all_files[$afi]['path'] = '';
-            $all_files[$afi]['name'] = $file->getName();
-            $all_files[$afi]['mime_type'] = $mime_type;
-            $all_files[$afi]['type'] = $type;
-            $all_files[$afi]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
-            $all_files[$afi]['modified_time'] = $modified_time;
-            $all_files[$afi]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
-            $all_files[$afi]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
-            $all_files[$afi]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
-            $all_files[$afi]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
-            $all_files[$afi]['download_link'] = '';
-            $all_files[$afi]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
-            $all_files[$afi]['fav'] = 0;
-            $all_files[$afi]['file_owner'] = '';
-            $all_files[$afi]['file_shared'] = array();
-            $all_files[$afi]['file_comment'] = '';
-            $all_files[$afi]['drive_key'] = '';
-            $afi++;
-        }
-        $all++;
     }
 }
 
@@ -2139,6 +2165,7 @@ else {
 
                                         echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
                                         echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
+                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'dk', array('value' => $drive_key));
 
                                         echo '<div class="form-group">
                                             <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
@@ -2158,7 +2185,7 @@ else {
                                             'method' => 'post',
                                             'options' => ['class' => 'form-horizontal'],
                                         ]);
-echo "-$drive_key-";
+echo "-$drive_key-";//xxxx
                                         echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
                                         echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
 

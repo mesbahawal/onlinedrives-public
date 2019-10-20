@@ -276,14 +276,13 @@ class BrowseController extends BaseController
             if (!empty($_GET['dk'])) {
                 $get_dk = $_GET['dk'];
             }
+            elseif ($model_gd_delete->dk != '') {
+                $get_dk = $model_gd_delete->dk;
+            }
 
             // DB connection
             include_once __DIR__ . '/../models/dbconnect.php';
             $db = dbconnect();
-
-            // Get the API client and construct the service object
-            $gd_client = $model_gd_delete->getGoogleClient($db, $get_dk, $home_url, $guid);
-            $gd_service = new Google_Service_Drive($gd_client);
 
             $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
                 FROM onlinedrives_app_detail d
@@ -321,6 +320,10 @@ class BrowseController extends BaseController
                 }
                 // GD delete function
                 elseif ($cloud == 'gd') {
+                    // Get the API client and construct the service object
+                    $gd_client = $model_gd_delete->getGoogleClient($db, $get_dk, $home_url, $guid);
+                    $gd_service = new Google_Service_Drive($gd_client);
+
                     //implement google drive delete here
                     $gd_service->files->delete($delete_file_id);
 

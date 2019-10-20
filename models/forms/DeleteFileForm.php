@@ -20,12 +20,12 @@ class DeleteFileForm extends \yii\base\Model
 {
     public $cloud;
     public $delete_file_id;
+    public $dk;
 
     public function rules()
     {
         return [
-            [['cloud'], 'required'],
-            [['delete_file_id'], 'required']
+            [['cloud', 'delete_file_id', 'dk'], 'required'],
         ];
     }
 
@@ -52,7 +52,7 @@ class DeleteFileForm extends \yii\base\Model
             $app_detail_id = $value['onlinedrives_app_detail_id'];
         }
         $sql = $db->createCommand('SELECT app_password FROM onlinedrives_app_detail
-            WHERE onlinedrives_app_detail_id = :drive_name', [
+            WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id', [
             ':onlinedrives_app_detail_id' => $app_detail_id,
         ])->queryAll();
 
