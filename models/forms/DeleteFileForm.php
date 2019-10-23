@@ -20,12 +20,12 @@ class DeleteFileForm extends \yii\base\Model
 {
     public $cloud;
     public $delete_file_id;
-    public $dk;
 
     public function rules()
     {
         return [
-            [['cloud', 'delete_file_id', 'dk'], 'required'],
+            [['cloud'], 'required'],
+            [['delete_file_id'], 'required']
         ];
     }
 
@@ -41,7 +41,7 @@ class DeleteFileForm extends \yii\base\Model
 	    return $client;
 	}
 
-function getGoogleClient($db, $dk, $home_url, $guid)
+    function getGoogleClient($db, $dk, $home_url, $guid)
     {
         // Check for database entry for Google Drive and this space
         $sql = $db->createCommand('SELECT onlinedrives_app_detail_id FROM onlinedrives_app_drive_path_detail
@@ -63,6 +63,7 @@ function getGoogleClient($db, $dk, $home_url, $guid)
         //echo 'protected/modules/onlinedrives/'.$app_password.'.json'; die();
 
         if(file_exists('protected/modules/onlinedrives/'.$app_password.'.json')) {
+
 
             $client = new Google_Client();
             $client->setApplicationName('HumHub');
