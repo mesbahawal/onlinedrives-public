@@ -424,6 +424,7 @@ class BrowseController extends BaseController
                 // DB connection
                 include_once __DIR__ . '/../models/dbconnect.php';
                 $db = dbconnect();
+                $db->open();
 
                 if ($model_addfiles->validate()) {
                     $i = 0;
@@ -432,52 +433,11 @@ class BrowseController extends BaseController
                     $app_detail_id =  $model_addfiles->app_detail_id;
                     $permission =  $model_addfiles->permission;
 
-                    // RnD Array
-                    /*
-                    echo $arr_drive_path[0][0];
-                    echo $arr_drive_path[1][0];
-                    */
-
-                    /*
                     for ($i = 0; $i < count($arr_drive_path); $i++) {
-
-                            echo $arr_drive_path[$i][0]."<br>";
-
-
-                    }
-                    */
-
-                    /*
-                    foreach ($key as $value)
-                    {
-                        echo '<br> key - '.$value;
-                    }
-                    */
-                    // var_dump(array_keys($model_addfiles->drive_path));
-
-                    // Do table onlinedrives_app_drive_path_detail insert here
-                    /*
-                    foreach ($model_addfiles->drive_path as $key => $value_ck) {
-                        // $drive_path = $model_addfiles->drive_path;
-                        // $permission = $model_addfiles->permission;
-                        print_r($value_ck);
-
-                        $i++;
-                    }
-                    */
-
-                    $db->open();
-
-                     for ($i = 0; $i < count($arr_drive_path); $i++) {
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
                         if ($val <> '') {
-                            // echo $key ." = "." <br> ";
-                            // print_r($val);
-                            // var_dump($permission[$key]);
-                            // echo "<br>";
-
-                            if ($permission[$key] <> "") {
+                            if ($permission[$key] <> '') {
                                 $permission_items = implode('|', $permission[$key]);
                             }
                             else {
@@ -501,8 +461,8 @@ class BrowseController extends BaseController
                             ])->queryAll();
 
                             if (count($sql) == 0) {
-                                $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail` 
-                                                            (`drive_path`,`permission`,`onlinedrives_app_detail_id`,`drive_key`) 
+                                $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
+                                    (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
                                     VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
                                     ':drive_path' => $drive_path,
                                     ':permission' => $permission_items,

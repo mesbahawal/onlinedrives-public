@@ -11,13 +11,13 @@ use Sabre\DAV;
 include_once __DIR__ . '/../../models/dbconnect.php';
 include __DIR__ . '/../../vendor/autoload.php';
 
+$db = dbconnect();
+
 // General vars
 $now = time();
 $home_url = Url::base(true);
 
 $bundle = \humhub\modules\onlinedrives\assets\Assets::register($this);
-
-$db = dbconnect();
 
 if (!empty($_GET['app_detail_id'])) {
     $app_detail_id =  $_GET['app_detail_id'];
@@ -100,7 +100,6 @@ function getScieboClient($user_id, $pw) {
 }
 
 function getScieboFiles($client, $app_user_id, $drive_path) {
-
     $folder_content = false;
 
     $home_url = Url::base(true);
@@ -109,7 +108,7 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
         $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
     }
 
-    try{
+    try {
         $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
             '{http://owncloud.org/ns}fileid', // ID
             '{DAV:}getetag', //TODO doesn't work
@@ -129,16 +128,13 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
     catch ( Sabre\HTTP\ClientHttpException $e) {
         Yii::warning("Sciebo Connection Unseccessful");
     }
-
 }
 
 
 if (!empty($_GET['app_detail_id'])) {
-    $sql = $db->createCommand('SELECT * 
-                                FROM onlinedrives_app_detail 
-                                WHERE id = :id',
-        [':id' => $app_detail_id])->queryAll();
-
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE id = :id', [
+        ':id' => $app_detail_id,
+    ])->queryAll();
     foreach ($sql as $value) {
         $app_user_id = $value['app_user_id'];
         $app_password = $value['app_password'];
@@ -158,7 +154,6 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
         <!-- Breadcrumb navigation -->
         <div style="border: 1px solid #f0f0f0; border-radius: 10px; padding: 10px; background-color: #f5f5f5;">
-
             <?php
             $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&'.$guid ;
             if ($cloud == 'sciebo') {
@@ -273,16 +268,19 @@ if ($app_user_id <> '') {
     // Set Sciebo path to replace with user ID
     $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
 
-    if (!empty($get_sciebo_path)) { $drive_path = $get_sciebo_path; }
+    if (!empty($get_sciebo_path)) {
+        $drive_path = $get_sciebo_path;
+    }
 
     if ($drive_path != '' || $drive_path != '/') {
         $check = 1;
 
-        if ($drive_path == '/') { $drive_path = ''; }
+        if ($drive_path == '/') {
+            $drive_path = '';
+        }
 
         // Get the API client and construct the service object
         $sciebo_client = getScieboClient($app_user_id, $app_password);
-
     }
 
     $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
@@ -302,7 +300,7 @@ if ($app_user_id <> '') {
             -if sub-folder is selected, then we have to put 'subfolder/' in the table, no '/' in the beginig
             -for sharing files follow the same rule of subfolder
             */
-            $drive_path = '';
+            // $drive_path = '';
             $base_dir = '/remote.php/dav/files/'.$app_user_id.'/'.$drive_path; // Base directory (landing directory of shared folder)
 
             if ($values == $base_dir || (!empty($get_sciebo_path) && $values != $base_dir) || $drive_path == '') {
@@ -393,7 +391,7 @@ if ($app_user_id <> '') {
                         $all_files[$afi]['cloud'] = 'sciebo';
                         $all_files[$afi]['cloud_name'] = 'Sciebo';
                         $all_files[$afi]['id'] = $id;
-                        $all_files[$afi]['path'] = $values;
+                        $all_files[$afi]['path'] = $path;
                         $all_files[$afi]['name'] = $sciebo_file_name;
                         $all_files[$afi]['mime_type'] = $mime_type;
                         $all_files[$afi]['type'] = $type;
@@ -438,12 +436,15 @@ if ($app_user_id <> '') {
             <tr>
                 <td>
                 </td>
+
                 <td style="padding: 10px;" colspan="1">
                     Name
                 </td>
+
                 <td>
                     User permissions
                 </td>
+
                 <td>
                     <div id="create_btn_login" class="form-group">
                         <div class="col-lg-offset-1 col-lg-11">
@@ -562,11 +563,11 @@ if ($app_user_id <> '') {
                 }
             }
 
-            if ($cloud == 'sciebo' ||                        // Sciebo
-                $cloud == 'gd' &&                            // GD
-                ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of GD
-                    $parents[0] == '' ||                     // Shared files of GD
-                    $get_gd_folder_id != '')                 // Folder ID of GD
+            if ($cloud == 'sciebo' ||                    // Sciebo
+                $cloud == 'gd' &&                        // Google Drive
+                ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
+                    $parents[0] == '' ||                 // Shared files of Google Drive
+                    $get_gd_folder_id != '')             // Folder ID of Google Drive
             ) {
                 $no++;
 
@@ -621,80 +622,157 @@ if ($app_user_id <> '') {
                 $time_title = 'Modified time: '.$modified_time_txt_exact . "\n" .
                 'Creation time: '.$created_time_txt . "\n";
 
-                // Output all folders
-                echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
-                    <td class="shownone">'.$type.'</td>
-                    <td>';
+                // Check which boxes are selected
+                $permission = '';
+                $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
+                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id', [
+                    ':drive_path' => $path,
+                    ':app_detail_id' => $app_detail_id,
+                ])->queryAll();
+                foreach ($sql as $value) {
+                    $permission = $value['permission'];
+                }
 
-                $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
-
-                echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
-                    urlencode($path_chunk) => '',
-                ],
-                [
-                    'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked;
-
-                    if (checked == true) {
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
+                if ($permission != '') {
+                    $pos_rename = strpos($permission, 'Rn');
+                    $pos_move = strpos($permission, 'Mv');
+                    $pos_del = strpos($permission, 'D');
+                    $pos_upl = strpos($permission, 'U');
+                    if ($pos_rename !== false || $pos_move !== false || $pos_del !== false || $pos_upl !== false) {
+                        $pos_read = true;
                     }
                     else {
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
-                    }'
-                ]);
- 
-                echo '</td>
-                    <td>';
-                $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
-                if ($fav <> 0) {
-                    $span_fav_icon = '<span class="glyphicon glyphicon-star fav_brown"></span>';
+                        $pos_read = false;
+                    }
                 }
                 else {
-                    $span_fav_icon = '<span class="glyphicon glyphicon-star fav_default"></span>';
+                    $pos_rename = false;
+                    $pos_move = false;
+                    $pos_del = false;
+                    $pos_upl = false;
+                    $pos_read = false;
                 }
 
-                if ($cloud == 'sciebo') {
-                    $path = urlencode($path);
-                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
-                    echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
-                }
-                elseif ($cloud == 'gd') {
-                    $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
-                    echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
-                }
-                echo '</td>
+                // Output all folders
+                echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
+                    <td class="shownone">'.
+                        $type.
+                    '</td>
+
                     <td>';
+                        $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
+                        if ($pos_read === true) {
+                            $model_addfiles->drive_path[] = urlencode($path_chunk);
+                        }
+                        echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
+                            urlencode($path_chunk) => '',
+                        ], [
+                            'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked;
 
-                    echo $form_addfiles->field($model_addfiles, 'permission['.$i.']')->checkboxList([
-                        'Rn' => 'Rename',
-                        'Mv' => 'Move',
-                        // 'C' => 'Copy',
-                        'D' => 'Delete',
-                        'U' => 'Upload',
-                    ],
-                    [
-                        'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked;
-                            checked_1 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked;
-                            checked_2 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked;
-                            checked_3 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked;
+                                if (checked == true) {
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
+                                }
+                                else {
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
+                                }'
+                        ]);
+                    echo '</td>
 
-                            if (checked_0 == true || checked_1 == true || checked_2 == true || checked_3 == true) {
-                                document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
-                            }
-                            else {
-                                document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;
-                            }'
-                    ]);
- 
-                echo '</td>
-                        <td>
+                    <td>';
+                        $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
+                        if ($fav <> 0) {
+                            $span_fav_icon = '<span class="glyphicon glyphicon-star fav_brown"></span>';
+                        }
+                        else {
+                            $span_fav_icon = '<span class="glyphicon glyphicon-star fav_default"></span>';
+                        }
 
-                        </td>
+                        if ($cloud == 'sciebo') {
+                            $path = urlencode($path);
+                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
+                            echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
+                        }
+                        elseif ($cloud == 'gd') {
+                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                            echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
+                        }
+                    echo '</td>
+
+                    <td>';
+                        if ($pos_rename !== false && $pos_move !== false && $pos_del !== false && $pos_upl !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'Mv', 'D', 'U'];
+                        }
+                        elseif ($pos_rename !== false && $pos_move !== false && $pos_del !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'Mv', 'D'];
+                        }
+                        elseif ($pos_rename !== false && $pos_move !== false && $pos_upl !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'Mv', 'U'];
+                        }
+                        elseif ($pos_rename !== false && $pos_del !== false && $pos_upl !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'D', 'U'];
+                        }
+                        elseif ($pos_move !== false && $pos_del !== false && $pos_upl !== false) {
+                            $model_addfiles->permission[] = ['Mv', 'D', 'U'];
+                        }
+                        elseif ($pos_rename !== false && $pos_move !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'Mv'];
+                        }
+                        elseif ($pos_rename !== false && $pos_upl !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'U'];
+                        }
+                        elseif ($pos_rename !== false && $pos_del !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'D'];
+                        }
+                        elseif ($pos_del !== false && $pos_upl !== false) {
+                            $model_addfiles->permission[] = ['D', 'U'];
+                        }
+                        elseif ($pos_move !== false && $pos_del !== false) {
+                            $model_addfiles->permission[] = ['Mv', 'D'];
+                        }
+                        elseif ($pos_move !== false && $pos_upl !== false) {
+                            $model_addfiles->permission[] = ['Mv', 'U'];
+                        }
+                        elseif ($pos_rename !== false) {
+                            $model_addfiles->permission[] = ['Rn'];
+                        }
+                        elseif ($pos_move !== false) {
+                            $model_addfiles->permission[] = ['Mv'];
+                        }
+                        elseif ($pos_del !== false) {
+                            $model_addfiles->permission[] = ['D'];
+                        }
+                        elseif ($pos_upl !== false) {
+                            $model_addfiles->permission[] = ['U'];
+                        }
+                        echo $form_addfiles->field($model_addfiles, 'permission['.$i.']')->checkboxList([
+                            'Rn' => 'Rename',
+                            'Mv' => 'Move',
+                            // 'C' => 'Copy',
+                            'D' => 'Delete',
+                            'U' => 'Upload',
+                        ], [
+                            'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked;
+                                checked_1 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked;
+                                checked_2 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked;
+                                checked_3 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked;
+
+                                if (checked_0 == true || checked_1 == true || checked_2 == true || checked_3 == true) {
+                                    document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
+                                }
+                                else {
+                                    document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;
+                                }'
+                        ]);
+                    echo '</td>
+
+                    <td>
+                    </td>
                 </tr>';
             }
         }
@@ -742,11 +820,11 @@ if ($app_user_id <> '') {
                 }
             }
 
-            if ($cloud == 'sciebo' ||                        // Sciebo
-                $cloud == 'gd' &&                            // GD
-                ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of GD
-                    $parents[0] == '' ||                     // Shared files of GD
-                    $get_gd_folder_id != '')                 // Folder ID of GD
+            if ($cloud == 'sciebo' ||                    // Sciebo
+                $cloud == 'gd' &&                        // Google Drive
+                ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
+                    $parents[0] == '' ||                 // Shared files of Google Drive
+                    $get_gd_folder_id != '')             // Folder ID of Google Drive
             ) {
                 $no++;
 
@@ -791,27 +869,15 @@ if ($app_user_id <> '') {
                 }
 
                 // Info
-                $info = 'ID: '.$id."\n".
-                    'Mime-Type: '.$mime_type."\n".
-                    'Nr.: '.$no."\n".
-                    'Parents-Anzahl: '.$count_parents."\n".
-                    'Parent-ID-Liste: '.$parent_id_list;
+                $info = 'ID: '.$id . "\n" .
+                'Mime-Type: '.$mime_type . "\n" .
+                'Nr.: '.$no . "\n" .
+                'Parents-Anzahl: '.$count_parents . "\n" .
+                'Parent-ID-Liste: '.$parent_id_list;
 
                 // Time title
-                $time_title = 'Modified time: '.$modified_time_txt_exact."\n".
-                    'Creation time: '.$created_time_txt."\n";
-
-                /**
-                 * Icon
-                 */
-
-                /*
-                                // Standard icon
-                                $img = '<span class="glyphicon glyphicon-file file-color"></span>';
-
-                                // Requested GD icon
-                                $img = '<img src="'.$icon_link.'" alt="" title="" />';
-                */
+                $time_title = 'Modified time: '.$modified_time_txt_exact . "\n" .
+                'Creation time: '.$created_time_txt . "\n";
 
                 // Read type
                 if ($mime_type != '') {
@@ -873,48 +939,109 @@ if ($app_user_id <> '') {
                         $icon = ''; break;
                     default:
                         $icon = ''; break;
-                } //echo $mime_type_icon;
+                }
+                // echo $mime_type_icon;
 
                 $img = '<img src="protected/modules/onlinedrives/resources/type/'.$icon.'.png" alt="'.'" title="'.'" style="margin-right: 10px;" />';
 
-                // Output all files
-                echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
-                    <td class="shownone" >'.$type.'</td>
-                    <td>';
-                $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
-                echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
-                    urlencode($path_chunk) => '',
-                ],
-                [
-                    'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked;
+                // Check which boxes are selected
+                $permission = '';
+                $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
+                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id', [
+                    ':drive_path' => $path,
+                    ':app_detail_id' => $app_detail_id,
+                ])->queryAll();
+                foreach ($sql as $value) {
+                    $permission = $value['permission'];
+                }
 
-                    if (checked == true) {
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
+                if ($permission != '') {
+                    $pos_rename = strpos($permission, 'Rn');
+                    $pos_move = strpos($permission, 'Mv');
+                    $pos_del = strpos($permission, 'D');
+                    if ($pos_rename !== false || $pos_move !== false || $pos_del !== false) {
+                        $pos_read = true;
                     }
                     else {
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
-                        checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;
-                    }'
-                ]);
-                echo '</td>
-                    <td>';
-                if ($fav <> 0) { echo '<span class="glyphicon glyphicon-star fav_brown"></span>'; }
-                else { echo '<span class="glyphicon glyphicon-star fav_default"></span>'; }
-                echo '<a href="'.$web_view_link.'" target="_blank">'.$img.' '.$name.'</a>';
-                echo '
-                    </td>
-                    <td>';
+                        $pos_read = false;
+                    }
+                }
+                else {
+                    $pos_rename = false;
+                    $pos_move = false;
+                    $pos_del = false;
+                    $pos_upl = false;
+                    $pos_read = false;
+                }
 
-                    echo $form_addfiles->field($model_addfiles, 'permission['.$checkbox_index.']')->checkboxList([
-                        'Rn' => 'Rename',
-                        'Mv' => 'Move',
-                        // 'C' => 'Copy',
-                        'D' => 'Delete',
-                    ],
-                    [
+                // Output all files
+                echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
+                    <td class="shownone" >'.
+                        $type.
+                    '</td>
+
+                    <td>';
+                        $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
+                        if ($pos_read === true) {
+                            $model_addfiles->drive_path[] = urlencode($path_chunk);
+                        }
+                        echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
+                            urlencode($path_chunk) => '',
+                        ], [
+                            'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked;
+
+                                if (checked == true) {
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
+                                }
+                                else {
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
+                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;
+                                }'
+                        ]);
+                    echo '</td>
+
+                    <td>';
+                        if ($fav <> 0) {
+                            echo '<span class="glyphicon glyphicon-star fav_brown"></span>';
+                        }
+                        else {
+                            echo '<span class="glyphicon glyphicon-star fav_default"></span>';
+                        }
+                        echo '<a href="'.$web_view_link.'" target="_blank">'.$img.' '.$name.'</a>
+                    </td>
+
+                    <td>';
+                        if ($pos_rename !== false && $pos_move !== false && $pos_del !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'Mv', 'D'];
+                        }
+                        elseif ($pos_rename !== false && $pos_move !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'Mv'];
+                        }
+                        elseif ($pos_rename !== false && $pos_del !== false) {
+                            $model_addfiles->permission[] = ['Rn', 'D'];
+                        }
+                        elseif ($pos_move !== false && $pos_del !== false) {
+                            $model_addfiles->permission[] = ['Mv', 'D'];
+                        }
+                        elseif ($pos_rename !== false) {
+                            $model_addfiles->permission[] = ['Rn'];
+                        }
+                        elseif ($pos_move !== false) {
+                            $model_addfiles->permission[] = ['Mv'];
+                        }
+                        elseif ($pos_del !== false) {
+                            $model_addfiles->permission[] = ['D'];
+                        }
+
+                        echo $form_addfiles->field($model_addfiles, 'permission['.$checkbox_index.']')->checkboxList([
+                            'Rn' => 'Rename',
+                            'Mv' => 'Move',
+                            // 'C' => 'Copy',
+                            'D' => 'Delete',
+                        ], [
                         'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked;
                             checked_1 = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked;
                             checked_2 = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked;
@@ -925,16 +1052,18 @@ if ($app_user_id <> '') {
                             else {
                                 document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = false;
                             }'
-                    ]);
- 
-                echo '</td>
-                <td></td>
+                        ]);
+                    echo '</td>
+
+                    <td>
+                    </td>
                 </tr>';
             }
         }
         ?>
         </thead>
     </table>
+
     <div id="create_btn_login" class="form-group">
         <div class="col-lg-offset-1 col-lg-11">
             <?php

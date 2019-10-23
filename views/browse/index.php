@@ -634,7 +634,6 @@ if ($get_gd_folder_id == '') {
             WHERE drive_key = :drive_key', [
             ':drive_key' => $get_drive_key,
         ])->queryAll();
-
         foreach ($sql as $value) {
             $db_app_user_id = $value['app_user_id'];
             $db_drive_key = $value['drive_key'];
@@ -661,7 +660,9 @@ if ($count_sciebo_files > 0) {
         -if sub-folder is selected, then we have to put 'subfolder/' in the table, no '/' in the beginig
         -for sharing files follow the same rule of subfolder
         */
-        if ($drive_path == '/') { $drive_path = ''; }
+        if ($drive_path == '/') {
+        	$drive_path = '';
+        }
         $base_dir = '/remote.php/dav/files/'.$app_user_id.'/'.$drive_path; // Base directory (landing directory of shared folder)
 
         if ($values == $base_dir || (!empty($get_sciebo_path) && $values != $base_dir) || $drive_path == '') {
@@ -961,7 +962,6 @@ if ($username <> '') {
         ':space_id' => $space_id,
         ':user_id' => $username,
     ])->queryAll();
-
     foreach ($sql as $value) {
         $drive_path = $value['drive_path'];
         $app_user_id = $value['app_user_id'];
@@ -1042,7 +1042,7 @@ if (count($arr_app_user_admin) > 0) {
                             </td>
                             <td>
                                 <?php
-                                if ($if_shared = 'Y') {
+                                if ($if_shared == 'Y') {
                                     /*echo '<a class="btn btn-default" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
                                         'Update'.
                                     '</a>';*/
@@ -1051,7 +1051,7 @@ if (count($arr_app_user_admin) > 0) {
                             </td>
                             <td>
                                 <?php
-                                if ($if_shared = 'Y') {
+                                if ($if_shared == 'Y') {
                                     echo '<a class="btn btn-danger" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">'.
                                         'Disable'.
                                     '</a>';
@@ -2185,7 +2185,7 @@ else {
                                             'method' => 'post',
                                             'options' => ['class' => 'form-horizontal'],
                                         ]);
-echo "-$drive_key-";//xxxx
+
                                         echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
                                         echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
 
@@ -2586,20 +2586,32 @@ if (1 == 1) {
 	$gd_guide_h = '<h1><b>How to connect with your Google Drive account</b></h1>';
 
 	$sciebo_guide_txt1 = 'Go in Sciebo, click on your name, click on "Settings" / "Einstellungen" (orange circle):';
-    $sciebo_guide_pic1 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/1.png" />';
     $sciebo_guide_txt2 = 'Click on "Security" / "Sicherheit" (orange box):';
-    $sciebo_guide_pic2 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/2.png" />';
     $sciebo_guide_txt3 = 'Scroll down to "App passwords / tokens" / "App-Passwörter / Token" (orange circle). Here you can insert an app name. Please confirm after that:';
-    $sciebo_guide_pic3 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/3.png" />';
     $sciebo_guide_txt4 = 'Now new access data will be created and displayed. Copy them just now in the form above (which you\'ll see if you click on the burger menu in this module) because after refreshing the Sciebo page they won\t be longer visible:';
-    $sciebo_guide_pic4 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/4.png" />';
     $sciebo_guide_txt5 = 'Here you see the opened burger menu with fulfilled Sciebo login form:';
-    $sciebo_guide_pic5 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/5.png" />';
     $sciebo_guide_txt6 = 'After that you have a new box on your module homepage which makes it possible to share an existing folder or file of your Sciebo account with all the members in this space. Click on "Add":';
-    $sciebo_guide_pic6 = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/6.png" />';
+    $sciebo_guide_txt7 = 'You can click on "Add". Then you have the possibility to add every folder and file from your cloud storage you want. After that please click on "Share":';
+    $sciebo_guide_txt8 = 'For example if there were selected all the folders and files in the foreign screenshot, then you would see the following list. This list will see all members of this space:';
 
-    $gd_guide_txt1 = '';
-    $gd_guide_pic1 = '';
+    $count_guide_sciebo = 8;
+
+    $gd_guide_txt1 = 'Please go on https://console.developers.google.com and log in with your Google account access data.';
+    $gd_guide_txt2 = 'This could be your view after login:';
+    $gd_guide_txt3 = 'Click on "Credentials" / "Anmeldedaten" on the left sight (3rd point).';
+    $gd_guide_txt4 = 'Click on "" / "Anmeldedaten erstellen". Then click on "OAuth-Client-ID:';
+    $gd_guide_txt5 = 'In the next view click on "" / "Webanwendungen" and choose a name of your OAuth-Client-ID. (This is not the shown name of your application.)';
+    $gd_guide_txt6 = '';
+    $gd_guide_txt7 = '';
+    $gd_guide_txt8 = '';
+    $gd_guide_txt9 = '';
+    $gd_guide_txt10 = '';
+    $gd_guide_txt11 = '';
+    $gd_guide_txt12 = '';
+    $gd_guide_txt13 = '';
+    $gd_guide_txt14 = '';
+
+    $count_guide_gd = 5;
 
     // Output box opening
     echo '<div class="box">'.
@@ -2640,11 +2652,11 @@ if (1 == 1) {
     // Output Sciebo guide
     echo
     '<p>'.$sciebo_guide_h.'</p><br />';
-    for ($i = 1; $i <= 6; $i++) {
+    for ($i = 1; $i <= $count_guide_sciebo; $i++) {
         $txt = 'sciebo_guide_txt'.$i;
-        $pic = 'sciebo_guide_pic'.$i;
+        $pic = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/'.$i.'.png" />';
     	echo '<p>Step '.$i.': ' . $$txt . '<p>'.
-        '<p>' . $$pic . '<p><br />';
+        '<p>' . $pic . '<p><br />';
     }
 
     echo '<br />'.
@@ -2655,11 +2667,11 @@ if (1 == 1) {
     // Output Google Drive output
 	'<p>'.$gd_guide_h.'</p><br />';
 
-    for ($i = 1; $i <= 1; $i++) {
+    for ($i = 1; $i <= $count_guide_gd; $i++) {
         $txt = 'gd_guide_txt'.$i;
-        $pic = 'gd_guide_pic'.$i;
+        $pic = '<img src="protected/modules/onlinedrives/resources/guide/gd/'.$i.'.png" />';
         echo '<p>Step '.$i.': ' . $$txt . '<p>'.
-        '<p>' . $$pic . '<p><br />';
+        '<p>' . $pic . '<p><br />';
     }
 
     // Output hidden-able wrapper ending
