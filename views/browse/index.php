@@ -144,7 +144,7 @@ if (!file_exists($path_tokens)) {
 
 function getGoogleClient($db, $space_id, $home_url, $guid) {
     // Check for database entries for Google Drive and this space
-    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name', [
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared<>\'D\'', [
         ':space_id' => $space_id,
         ':drive_name' => 'gd',
     ])->queryAll();
