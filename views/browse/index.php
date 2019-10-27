@@ -1,4 +1,6 @@
 <?php
+
+use humhub\modules\admin\models\forms\FileSettingsForm;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\ActiveForm;
@@ -143,14 +145,18 @@ if (!file_exists($path_tokens)) {
 }
 
 function getGoogleClient($db, $space_id, $home_url, $guid) {
+
+    $client = false ;
     // Check for database entries for Google Drive and this space
-    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared<>\'D\'', [
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\')', [
         ':space_id' => $space_id,
         ':drive_name' => 'gd',
     ])->queryAll();
 
-    if (count($sql) > 0) {
-        foreach ($sql as $value) {
+    if (count($sql)>0) {
+
+
+            foreach ($sql as $value) {
             $app_password = $value['app_password'];
             $client = new Google_Client();
             $client->setApplicationName('HumHub');
@@ -165,6 +171,7 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
                 $accessToken = json_decode(file_get_contents($tokenPath), true);
                 $client->setAccessToken($accessToken);
             }
+
             // If there is no previous token or it's expired
             if ($client->isAccessTokenExpired()) {
                 // Refresh the token if possible, else fetch a new one
@@ -186,14 +193,24 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
 
                         // Check to see if there was an error
                         if (array_key_exists('error', $accessToken)) {
-                            throw new Exception(join(', ', $accessToken));
+                            //throw new Exception(join(', ', $accessToken));
+                            return false;
                         }
 
                         // Save the token to a file
                         if (!file_exists(dirname($tokenPath))) {
                             mkdir(dirname($tokenPath), 0700, true);
                         }
-                        file_put_contents($tokenPath, json_encode($client->getAccessToken()));
+
+                        if(file_put_contents($tokenPath, json_encode($client->getAccessToken()))){
+
+                            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'N\' WHERE app_password = :app_password', [
+                                ':app_password' => $app_password,
+                            ])->execute();
+                        }
+                        else{
+                            return false;
+                        }
                     }
                 }
             }
@@ -401,7 +418,7 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['app_detail_id'])) 
         // Before update check user id and authority;
 
         $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
-            WHERE id = :app_detail_id AND user_id = :user_id AND if_shared <> \'D\'', [
+            WHERE id = :app_detail_id AND user_id = :user_id AND if_shared NOT IN (\'D\')', [
             ':app_detail_id' => $app_detail_id,
             ':user_id' => $username,
         ])->queryAll();
@@ -1010,7 +1027,7 @@ if (count($arr_app_user_admin) > 0) {
                     $pid = $arr_app_user_admin[$j]['pid'];
                     $drive_name = $arr_app_user_admin[$j]['drive_name'];
 
-                    if ($username == $logged_username && $if_shared <> 'D') {
+                    if ($username == $logged_username && $if_shared != 'D' && $if_shared != 'T') {
                     ?>
                         <!-- Table for selecting path -->
                         <tr>
@@ -1051,7 +1068,7 @@ if (count($arr_app_user_admin) > 0) {
                             </td>
                             <td>
                                 <?php
-                                if ($if_shared == 'Y') {
+                                if ($if_shared != 'D') {
                                     echo '<a class="btn btn-danger" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">'.
                                         'Disable'.
                                     '</a>';
@@ -1685,7 +1702,6 @@ else {
 $gd_results = array();
 $count_gd_files = 0;
 if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
-    //var_dump($gd_service);
     $gd_results = $gd_service->files->listFiles($optParams);
     $count_gd_files = count($gd_results->getFiles());
 } //TODO $gd_service XX YY

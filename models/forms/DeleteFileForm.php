@@ -20,12 +20,12 @@ class DeleteFileForm extends \yii\base\Model
 {
     public $cloud;
     public $delete_file_id;
+    public $dk;
 
     public function rules()
     {
         return [
-            [['cloud'], 'required'],
-            [['delete_file_id'], 'required']
+            [['cloud', 'delete_file_id', 'dk'], 'required'],
         ];
     }
 
@@ -52,18 +52,17 @@ class DeleteFileForm extends \yii\base\Model
             $app_detail_id = $value['onlinedrives_app_detail_id'];
         }
         $sql = $db->createCommand('SELECT app_password FROM onlinedrives_app_detail
-            WHERE id = :onlinedrives_app_detail_id', [
+            WHERE id = :onlinedrives_app_detail_id  AND if_shared NOT IN (\'D\',\'T\')', [
             ':onlinedrives_app_detail_id' => $app_detail_id,
         ])->queryAll();
+
+        $app_password ='';
 
         foreach ($sql as $value) {
             $app_password = $value['app_password'];
         }
 
-        //echo 'protected/modules/onlinedrives/'.$app_password.'.json'; die();
-
-        if(file_exists('protected/modules/onlinedrives/'.$app_password.'.json')) {
-
+        if($app_password<>'' && file_exists('protected/modules/onlinedrives/'.$app_password.'.json')) {
 
             $client = new Google_Client();
             $client->setApplicationName('HumHub');

@@ -162,8 +162,9 @@ class BrowseController extends BaseController
                     $path = Yii::$app->params['uploadPath'] . $model_login_gd_client->image_web_filename;
 
                     if ($image->saveAs($path)) {
-                        $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
-                            VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
+
+                        $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
+                            VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date, :if_shared)', [
                             ':space_id' => $space_id,
                             ':user_id' => $username,
                             ':email' => $email,
@@ -171,10 +172,18 @@ class BrowseController extends BaseController
                             ':app_user_id' => $app_user_id,
                             ':app_password' => $random_string,
                             ':create_date' => time(),
+                            ':if_shared' => 'T',
                         ])->execute();
+
+                        if (isset($_GET['code'])) {
+                           unset($_GET['code']);
+                        }
 
                         // Success message
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfuly.');
+                    }
+                    else{
+                        $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Google Client Add Failed.');
                     }
                 }
             }
