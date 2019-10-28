@@ -297,7 +297,7 @@ if ($app_user_id <> '') {
         foreach ($keys as $values) {
             /*
             -if root dir is selected to share, then we have to put '/' in the table
-            -if sub-folder is selected, then we have to put 'subfolder/' in the table, no '/' in the beginig
+            -if sub-folder is selected, then we have to put 'subfolder/' in the table, no '/' in the beginning
             -for sharing files follow the same rule of subfolder
             */
             // $drive_path = '';
@@ -1069,7 +1069,7 @@ if ($app_user_id <> '') {
             <?php
                 if ($count_sciebo_files > 0) {
                     echo Html::ActiveHiddenInput($model_addfiles, 'app_detail_id', array('value' => $app_detail_id));
-                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Share'), ['class' => 'btn btn-primary']);
+                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Save'), ['class' => 'btn btn-primary']);
                 }
             ?>
         </div>

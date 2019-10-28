@@ -1053,7 +1053,7 @@ if (count($arr_app_user_admin) > 0) {
                             <td>
                                 <?php
                                 echo '<a class="btn btn-success" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
-                                    'Add'.
+                                    'Select Files'.
                                 '</a>';
                                 ?>
                             </td>

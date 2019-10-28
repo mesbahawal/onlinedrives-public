@@ -479,6 +479,23 @@ class BrowseController extends BaseController
                                     ':drive_key' => md5(microtime()),
                                 ])->execute();
                             }
+                            else{
+
+                                foreach($sql as $values){
+                                    $drive_path_detail_id = $values['id'];
+                                    $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                                                        SET `drive_path`=:drive_path, 
+                                                        `permission`=:permission, 
+                                                        `onlinedrives_app_detail_id`=:onlinedrives_app_detail_id
+                                                        WHERE id = :drive_path_detail_id', [
+                                        ':drive_path_detail_id' => $drive_path_detail_id,
+                                        ':drive_path' => $drive_path,
+                                        ':permission' => $permission_items,
+                                        ':onlinedrives_app_detail_id' => $app_detail_id,
+                                    ])->execute();
+                                }
+
+                            }
                         }
                         next($arr_drive_path);
                     } // DB insert done
