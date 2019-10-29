@@ -145,16 +145,18 @@ if (!file_exists($path_tokens)) {
 }
 
 function getGoogleClient($db, $space_id, $home_url, $guid) {
-
+    $logged_username =  Yii::$app->user->identity->username;
     $client = false ;
     // Check for database entries for Google Drive and this space
-    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\')', [
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail 
+                                WHERE space_id = :space_id AND drive_name = :drive_name 
+                                AND if_shared NOT IN (\'D\') AND user_id=:user_id', [
         ':space_id' => $space_id,
         ':drive_name' => 'gd',
+        ':user_id' => $logged_username,
     ])->queryAll();
 
     if (count($sql)>0) {
-
 
             foreach ($sql as $value) {
             $app_password = $value['app_password'];
