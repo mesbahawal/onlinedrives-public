@@ -2541,6 +2541,7 @@ else {
                                         ]);
                                             echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
                                             echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
+                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'dk', array('value' => $drive_key));
 
                                             echo '<div class="form-group">
                                                 <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
@@ -2560,6 +2561,7 @@ else {
                                         ]);
                                             echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
                                             echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
+                                            echo Html::ActiveHiddenInput($model_gd_delete, 'dk', array('value' => $drive_key));
 
                                             echo '<div class="form-group">
                                                 <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';

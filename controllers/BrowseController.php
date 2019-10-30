@@ -303,14 +303,16 @@ class BrowseController extends BaseController
                 $drive_path = $value['drive_path'];
                 $app_user_id = $value['app_user_id'];
                 $app_password = $value['app_password'];
+                $permission = $value['permission'];
             }
 
             if (!empty($model_gd_delete->delete_file_id)) {
                 $cloud = $model_gd_delete->cloud;
                 $delete_file_id = $model_gd_delete->delete_file_id;
+                $permission_pos = strpos($permission, 'D');
 
                 // Sciebo delete function
-                if ($cloud == 'sciebo') {
+                if ($cloud == 'sciebo' && $permission_pos!==false) {
                     $delete_file_id = str_replace(' ', '%20', $delete_file_id);
 
                     // http://sabre.io/dav/davclient
@@ -328,7 +330,7 @@ class BrowseController extends BaseController
                     }
                 }
                 // GD delete function
-                elseif ($cloud == 'gd') {
+                elseif ($cloud == 'gd' && $permission_pos!==false) {
                     // Get the API client and construct the service object
                     $gd_client = $model_gd_delete->getGoogleClient($db, $get_dk, $home_url, $guid);
                     $gd_service = new Google_Service_Drive($gd_client);
