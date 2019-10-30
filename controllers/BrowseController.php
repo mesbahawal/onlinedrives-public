@@ -280,6 +280,9 @@ class BrowseController extends BaseController
         }
         // Delete file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
+
+
+
             // Get params
             $get_dk = '';
             if (!empty($_GET['dk'])) {
@@ -311,6 +314,17 @@ class BrowseController extends BaseController
                 $delete_file_id = $model_gd_delete->delete_file_id;
                 $permission_pos = strpos($permission, 'D');
 
+                if (isset(Yii::$app->user->identity->username)) {
+                    $username = Yii::$app->user->identity->username;
+                }
+                else{
+                    $username = '';
+
+                    $home_url = Url::base(true);
+
+                    return $this->redirect($home_url);
+                }
+
                 // Sciebo delete function
                 if ($cloud == 'sciebo' && $permission_pos!==false) {
                     $delete_file_id = str_replace(' ', '%20', $delete_file_id);
@@ -340,6 +354,9 @@ class BrowseController extends BaseController
 
                     // Success msg
                     $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');
+                }
+                else{
+                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
                 }
             }
 
