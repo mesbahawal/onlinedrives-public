@@ -624,14 +624,21 @@ if ($app_user_id <> '') {
 
                 // Check which boxes are selected
                 $permission = '';
+
+                //echo 'name='.$name.'--path='.$path.'--permission=';
+
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
-                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id', [
+                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id
+                    AND share_status=\'Y\' ', [
                     ':drive_path' => $path,
                     ':app_detail_id' => $app_detail_id,
                 ])->queryAll();
+
                 foreach ($sql as $value) {
                     $permission = $value['permission'];
                 }
+
+                //echo $permission."<br>";
 
                 if ($permission != '') {
                     $pos_rename = strpos($permission, 'Rn');
@@ -661,7 +668,10 @@ if ($app_user_id <> '') {
 
                     <td>';
                         $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
+                        $has_share='N';
                         if ($pos_read === true) {
+                            //echo "I am true";
+                            $has_share = 'Y';
                             $model_addfiles->drive_path[] = urlencode($path_chunk);
                         }
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
@@ -685,7 +695,26 @@ if ($app_user_id <> '') {
                     echo '</td>
 
                     <td>';
+
+                    // Check if has child
+                    $path_regex = '^'.$path.'.[a-zA-Z0-9!@#$+%&*_.-]*'; //'^Test%201A/.[a-zA-Z0-9!@#$+%&*_.-]*'
+                    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
+                        WHERE onlinedrives_app_detail_id = :app_detail_id
+                        AND drive_path REGEXP :drive_path
+                        AND share_status=\'Y\' ', [
+                        ':drive_path' => $path_regex,
+                        ':app_detail_id' => $app_detail_id,
+                    ])->queryAll();
+
+                    /*if($has_share=='Y'){
+                        $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #0b93d5"></span>';
+                    }
+                    else*/if(count($sql)>0){
+                        $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #f4d9f4"></span>';
+                    }
+                    else{
                         $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
+                    }
                         if ($fav <> 0) {
                             $span_fav_icon = '<span class="glyphicon glyphicon-star fav_brown"></span>';
                         }
@@ -947,7 +976,8 @@ if ($app_user_id <> '') {
                 // Check which boxes are selected
                 $permission = '';
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
-                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id', [
+                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id
+                    AND share_status=\'Y\'', [
                     ':drive_path' => $path,
                     ':app_detail_id' => $app_detail_id,
                 ])->queryAll();

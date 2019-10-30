@@ -442,6 +442,15 @@ class BrowseController extends BaseController
                     $app_detail_id =  $model_addfiles->app_detail_id;
                     $permission =  $model_addfiles->permission;
 
+                    if(isset($_GET['sciebo_path'])){
+                        $get_sciebo_path = $_GET['sciebo_path'];
+                        $str_drive_path_check = ' AND ';
+                    }// TODO: XXX
+                    else{
+                        $get_sciebo_path = '';
+                        $str_drive_path_check = '';
+                    }
+
                     for ($i = 0; $i < count($arr_drive_path); $i++) {
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
@@ -457,19 +466,22 @@ class BrowseController extends BaseController
 
                             // Check path is already exist in share
 
-                            $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                            $sql = $db->createCommand('SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.* 
+                                FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
                                 WHERE d.`id` = p.`onlinedrives_app_detail_id`
                                 AND d.`space_id` = :space_id
                                 AND d.`user_id` = :username
                                 AND p.`drive_path` = :drive_path
-                                AND d.`id` = :app_detail_id', [
+                                AND d.`id` = :app_detail_id
+                                AND p.`share_status`=\'Y\'', [
                                 ':space_id' => $space_id,
                                 ':username' => $username,
                                 ':drive_path' => $drive_path,
                                 ':app_detail_id' => $app_detail_id,
                             ])->queryAll();
 
-                            if (count($sql) == 0) {
+                            if (count($sql) == 0) { // if there is no such drive path then create new row. else update existing row.
+
                                 $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
                                     (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
                                     VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
@@ -479,10 +491,10 @@ class BrowseController extends BaseController
                                     ':drive_key' => md5(microtime()),
                                 ])->execute();
                             }
-                            else{
+                            else{ // Update existing row which are selected from the addfiles-form checkbox list.
 
                                 foreach($sql as $values){
-                                    $drive_path_detail_id = $values['id'];
+                                    $drive_path_detail_id = $values['p_id'];
                                     $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
                                                         SET `drive_path`=:drive_path, 
                                                         `permission`=:permission, 
@@ -494,11 +506,53 @@ class BrowseController extends BaseController
                                         ':onlinedrives_app_detail_id' => $app_detail_id,
                                     ])->execute();
                                 }
-
                             }
                         }
                         next($arr_drive_path);
                     } // DB insert done
+
+
+                    // get not in list
+                    $not_in_list = array();
+                    $arr_drive_path = $model_addfiles->drive_path;
+
+                    for ($i = 0; $i < count($arr_drive_path); $i++) {
+                        $key = key($arr_drive_path);
+                        $val = $arr_drive_path[$key];
+                        if ($val <> '') {
+
+                            $drive_path = urldecode($val[0]);
+
+                            // Check path is already exist in share
+
+                            $sql = $db->createCommand('SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.* 
+                                FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
+                                AND d.`space_id` = :space_id
+                                AND d.`user_id` = :username
+                                AND p.`drive_path` = :drive_path
+                                AND d.`id` = :app_detail_id
+                                AND p.`share_status`=\'Y\'', [
+                                ':space_id' => $space_id,
+                                ':username' => $username,
+                                ':drive_path' => $drive_path,
+                                ':app_detail_id' => $app_detail_id,
+                            ])->queryAll();
+
+                            if (count($sql) > 0) { // if there is drive path then push in array of ids where status needs to update.
+
+                                array_push($not_in_list,$sql[0]['p_id']);
+                            }
+                        }
+                        next($arr_drive_path);
+                    }
+
+
+                    //print_r($not_in_list);
+
+                    $not_in = implode(',', $not_in_list);
+
+                    //echo $get_sciebo_path."--not in (".$not_in.")--";
 
                     $sql = $db->createCommand('SELECT * FROM `onlinedrives_app_drive_path_detail` 
                         WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id AND share_status = "Y"', [
@@ -511,6 +565,30 @@ class BrowseController extends BaseController
                          $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = "Y" WHERE id = :onlinedrives_app_detail_id', [
                              ':onlinedrives_app_detail_id' => $app_detail_id,
                          ])->execute();
+
+                         // Update other drives paths to disabled which are unchecked from the addfiles-Form
+
+                        // Step-1: Select all rows with same owner (onlinedrives_app_detail_id of table- onlinedrives_app_drive_path_detail)
+                        // Step-1: also check if they are children of same parent drive path.
+
+                        // Step-2: Update share_status=D for unchecked values.
+                        if($get_sciebo_path!='') {
+                            $regular_exp1 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*/$';
+                            $regular_exp2 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*.[.]+.[a-zA-Z]*$';
+                            $id_not_in = 'NOT IN ('.$not_in.')';
+
+                            //echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
+
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D" 
+                                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                                AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
+                                                AND id NOT IN ('.$not_in.')
+                                                AND share_status=\'Y\' ', [
+                                ':onlinedrives_app_detail_id' => $app_detail_id,
+                                ':regex1' => $regular_exp1,
+                                ':regex2' => $regular_exp2,
+                            ])->execute();
+                        }
                      }
 
                     return $this->render('index', [
