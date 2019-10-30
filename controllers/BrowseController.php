@@ -594,15 +594,20 @@ class BrowseController extends BaseController
                         if($get_sciebo_path!='') {
                             $regular_exp1 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*/$';
                             $regular_exp2 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*.[.]+.[a-zA-Z]*$';
-                            $id_not_in = 'NOT IN ('.$not_in.')';
+                            if(!empty($not_in)){
+                                $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
+                            }
+                            else{
+                                $id_not_in_str = '';
+                            }
+
 
                             //echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
 
                             $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D" 
                                                 WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
                                                 AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
-                                                AND id NOT IN ('.$not_in.')
-                                                AND share_status=\'Y\' ', [
+                                                AND share_status=\'Y\' '.$id_not_in_str, [
                                 ':onlinedrives_app_detail_id' => $app_detail_id,
                                 ':regex1' => $regular_exp1,
                                 ':regex2' => $regular_exp2,
