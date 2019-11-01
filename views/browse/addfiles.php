@@ -19,6 +19,25 @@ $home_url = Url::base(true);
 
 $bundle = \humhub\modules\onlinedrives\assets\Assets::register($this);
 
+// Declare vars
+$app_user_id = '';
+$get_sciebo_path = '';
+$if_shared = '';
+$app_password = '';
+$drive_path = '';
+$get_gd_folder_id = '';
+$get_gd_folder_name = '';
+
+
+/**
+ * Get params
+ */
+
+// Space ID
+$space_id = '';
+if (!empty($_GET['cguid'])) {
+    $space_id = $_GET['cguid'];
+}
 if (!empty($_GET['app_detail_id'])) {
     $app_detail_id =  $_GET['app_detail_id'];
 }
@@ -27,13 +46,6 @@ if (!empty($_GET['cguid'])) {
     $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
 }
 
-$app_user_id = '';
-$get_sciebo_path = '';
-$if_shared = '';
-$app_password = '';
-$drive_path = '';
-$get_gd_folder_id = '';
-$get_gd_folder_name = '';
 
 // Sciebo params
 if (!empty($_GET['sciebo_path'])) {
@@ -51,7 +63,6 @@ $all_files = array();
 $all = 0; // Counter for all folders and files
 $afo = 0; // All folders counter
 $afi = 0; // All files counter
-
 
 // Success and error message
 if (isset($_REQUEST['success_msg'])) {
@@ -131,6 +142,84 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
 }
 
 
+function getGoogleClient($db, $space_id, $home_url, $guid) {
+    $client = false ;
+    // Check for database entries for Google Drive and this space
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\')', [
+        ':space_id' => $space_id,
+        ':drive_name' => 'gd',
+    ])->queryAll();
+
+    if (count($sql) > 0) {
+        foreach ($sql as $value) {
+            $app_password = $value['app_password'];
+            $client = new Google_Client();
+            $client->setApplicationName('ResearchHub');
+            $client->addScope(Google_Service_Drive::DRIVE);
+            $client->setAuthConfig('protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json');
+            $client->setAccessType('offline'); // Offline access
+            $client->setPrompt('select_account consent');
+            $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+        }
+
+        $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
+        if (file_exists($tokenPath)) {
+            $accessToken = json_decode(file_get_contents($tokenPath), true);
+            $client->setAccessToken($accessToken);
+        }
+
+        // If there is no previous token or it's expired
+        if ($client->isAccessTokenExpired()) {
+            // Refresh the token if possible, else fetch a new one
+            if ($client->getRefreshToken()) {
+                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+            }
+            else {
+                // Request authorization from the user
+                if (!isset($_GET['code'])) {
+                    $authUrl = $client->createAuthUrl();
+                    header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
+                }
+                // Hier Code übergeben
+                if (isset($_GET['code'])) {
+                    $code = $_GET['code'];
+
+                    $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+                    $client->setAccessToken($accessToken);
+
+                    // Check to see if there was an error
+                    if (array_key_exists('error', $accessToken)) {
+                        //throw new Exception(join(', ', $accessToken));
+                        return false;
+                    }
+
+                    // Save the token to a file
+                    if (!file_exists(dirname($tokenPath))) {
+                        mkdir(dirname($tokenPath), 0700, true);
+                    }
+
+                    if (file_put_contents($tokenPath, json_encode($client->getAccessToken()))){
+
+                        $sql = $db->createCommand('UPDATE onlinedrives_app_detail
+                            SET if_shared = \'N\' WHERE app_password = :app_password', [
+                            ':app_password' => $app_password,
+                        ])->execute();
+                    }
+                    else {
+                        return false;
+                    }
+                }
+            }
+        }
+        return $client;
+    }
+    else {
+        return false;
+    }
+}
+
+
+// Sciebo?
 if (!empty($_GET['app_detail_id'])) {
     $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE id = :id', [
         ':id' => $app_detail_id,
@@ -144,6 +233,23 @@ if (!empty($_GET['app_detail_id'])) {
         $app_detail_id = $value['id'];
     }
 }
+
+
+/**
+ * Google Drive client
+ */
+$session = Yii::$app->session;
+
+// Get the API client and construct the service object
+$gd_client = getGoogleClient($db, $space_id, $home_url, $guid);
+if ($gd_client !== false) {
+    $gd_service = new Google_Service_Drive($gd_client);
+
+    // Get root ID
+    // https://stackoverflow.com/questions/36763941/how-can-i-list-files-dirs-in-root-directory-with-google-drive-api-v3
+    $gd_root_id = $gd_service->files->get('root')->getId();
+}
+
 
 echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onlinedrives-form']);
 ?>
@@ -159,7 +265,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             if ($cloud == 'sciebo') {
                 $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=';
             }
-            echo '<a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'Location:') . '</a>';
+            echo '<a href="'.$ref.'">'.$app_user_id.'</a>';
 
             // Output Sciebo navigation
             if ($get_sciebo_path != '') {
@@ -210,19 +316,19 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 // Output rest of Sciebo navigation
                 echo $navi;
             }
-            // Output GD navigation
+            // Output Google Drive navigation
             elseif ($get_gd_folder_id != '') {
-                // Build GD icon for navigation
+                // Build Google Drive icon for navigation
                 $ref = 'https://accounts.google.com/ServiceLogin';
                 $src = 'protected/modules/onlinedrives/resources/gd20.png';
 
-                // Output GD icon in navigation
+                // Output Google Drive icon in navigation
                 echo ' /
                 <a href="'.$ref.'" target="_blank">
                     <img src="'.$src.'" style="position: relative; top: -2px;" title="Google Drive" />
                 </a>';
 
-                // Build rest of GD navigation
+                // Build rest of Googel Drive navigation
                 $navi = '';
                 $check_id = $get_gd_folder_id;
                 $check_name = $get_gd_folder_name;
@@ -251,11 +357,11 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
                     // Change search name for next loop
                     $check_id = $parents[0]; // Change parent folder ID to check
-                    if ($check_id != '0AESKNHa25CPzUk9PVA') { // Means root
+                    if ($check_id != $gd_root_id) { // Means root
                         $file = $gd_service->files->get($check_id);
                         $check_name = $file->getName(); // Change folder name to check
                     }
-                } while ($check_id != '0AESKNHa25CPzUk9PVA'); // Means root
+                } while ($check_id != $gd_root_id); // Means root
 
                 // Output rest of GD navigation
                 echo $navi;
@@ -292,6 +398,35 @@ if ($app_user_id <> '') {
         $count_sciebo_files = 0;
     }
 
+
+    /**
+     * Google Drive
+     */
+    if ($get_gd_folder_id != '') {
+        $optParams = array(
+            // 'pageSize' => 10,
+            'q' => 'parents="'.$get_gd_folder_id.'"',
+            'fields' => 'nextPageToken, files(*)',
+            'orderBy' => 'folder, name',
+        );
+    }
+    else {
+        $optParams = array(
+            //'pageSize' => 10,
+            'fields' => 'nextPageToken, files(*)',
+            'orderBy' => 'folder, name',
+        );
+    }
+
+    $gd_results = array();
+    $count_gd_files = 0;
+    if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
+        $gd_results = $gd_service->files->listFiles($optParams);
+        $count_gd_files = count($gd_results->getFiles());
+    }
+
+
+    // Sciebo
     if ($count_sciebo_files > 0) {
         $keys = array_keys($sciebo_content);
         foreach ($keys as $values) {
@@ -413,6 +548,93 @@ if ($app_user_id <> '') {
                     $all++;
                 }
             }
+        }
+    }
+    // Google Drive
+    elseif ($count_gd_files > 0) {
+        foreach ($gd_results->getFiles() as $file) {
+            // Read folder/file ID
+            $gd_file_id = $file->getId();
+
+            // Mime type, type (folder/file)
+            $mime_type = $file->getMimeType(); // Only Google Drive at the moment
+            if (substr($mime_type, -6) == 'folder') {
+                $type = 'folder';
+            }
+            else {
+               $type = 'file';
+            }
+
+            // Created time
+            $temp = $file->getCreatedTime();
+            $temp_d = substr($temp, 8, 2);
+            $temp_mon = substr($temp, 5, 2);
+            $temp_y = substr($temp, 0, 4);
+            $temp_h = substr($temp, 11, 2);
+            $temp_min = substr($temp, 14, 2);
+            $temp_s = substr($temp, 17, 2);
+            $created_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
+            $created_time += 7200; // 60m * 60m * 2h, European time zone
+
+            // Modified time
+            $temp = $file->getModifiedTime();
+            $temp_d = substr($temp, 8, 2);
+            $temp_mon = substr($temp, 5, 2);
+            $temp_y = substr($temp, 0, 4);
+            $temp_h = substr($temp, 11, 2);
+            $temp_min = substr($temp, 14, 2);
+            $temp_s = substr($temp, 17, 2);
+            $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
+            $modified_time += 7200; // 60m * 60m * 2h, European time zone
+
+            // Folder list, file list
+            if ($type == 'folder') {
+                $all_folders[$afo]['cloud'] = 'gd';
+                $all_folders[$afo]['cloud_name'] = 'Google Drive';
+                $all_folders[$afo]['id'] = $file->getId();                           // Only Google Drive at the moment
+                $all_folders[$afo]['path'] = '';
+                $all_folders[$afo]['name'] = $file->getName();
+                $all_folders[$afo]['mime_type'] = $mime_type;
+                $all_folders[$afo]['type'] = $type;
+                $all_folders[$afo]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
+                $all_folders[$afo]['modified_time'] = $modified_time;
+                $all_folders[$afo]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
+                $all_folders[$afo]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
+                $all_folders[$afo]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
+                $all_folders[$afo]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
+                $all_folders[$afo]['download_link'] = '';
+                $all_folders[$afo]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
+                $all_folders[$afo]['fav'] = 0;
+                $all_folders[$afo]['file_owner'] = '';
+                $all_folders[$afo]['file_shared'] = array();
+                $all_folders[$afo]['file_comment'] = '';
+                $all_folders[$afo]['drive_key'] = '';
+                $afo++;
+            }
+            else {
+                $all_files[$afi]['cloud'] = 'gd';
+                $all_files[$afi]['cloud_name'] = 'Google Drive';
+                $all_files[$afi]['id'] = $file->getId();                           // Only Google Drive at the moment
+                $all_files[$afi]['path'] = '';
+                $all_files[$afi]['name'] = $file->getName();
+                $all_files[$afi]['mime_type'] = $mime_type;
+                $all_files[$afi]['type'] = $type;
+                $all_files[$afi]['created_time'] = $created_time;                  // TODO Only Google Drive at the moment!
+                $all_files[$afi]['modified_time'] = $modified_time;
+                $all_files[$afi]['icon_link'] = $file->getIconLink();              // Only Google Drive at the moment
+                $all_files[$afi]['thumbnail_link'] = $file->getThumbnailLink();    // Only Google Drive at the moment
+                $all_files[$afi]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
+                $all_files[$afi]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
+                $all_files[$afi]['download_link'] = '';
+                $all_files[$afi]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
+                $all_files[$afi]['fav'] = 0;
+                $all_files[$afi]['file_owner'] = '';
+                $all_files[$afi]['file_shared'] = array();
+                $all_files[$afi]['file_comment'] = '';
+                $all_files[$afi]['drive_key'] = '';
+                $afi++;
+            }
+            $all++;
         }
     }
 
@@ -563,11 +785,11 @@ if ($app_user_id <> '') {
                 }
             }
 
-            if ($cloud == 'sciebo' ||                    // Sciebo
-                $cloud == 'gd' &&                        // Google Drive
-                ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
-                    $parents[0] == '' ||                 // Shared files of Google Drive
-                    $get_gd_folder_id != '')             // Folder ID of Google Drive
+            if ($cloud == 'sciebo' ||          // Sciebo
+                $cloud == 'gd' &&              // Google Drive
+                ($parents[0] == $gd_root_id || // Root ID of Google Drive
+                    $parents[0] == '' ||       // Shared files of Google Drive
+                    $get_gd_folder_id != '')   // Folder ID of Google Drive
             ) {
                 $no++;
 
@@ -622,23 +844,21 @@ if ($app_user_id <> '') {
                 $time_title = 'Modified time: '.$modified_time_txt_exact . "\n" .
                 'Creation time: '.$created_time_txt . "\n";
 
+                // In case of Google Drive we use 'ID' instead of 'path'
+                if ($cloud == 'gd') {
+                	$path = $id;
+                }
+
                 // Check which boxes are selected
                 $permission = '';
-
-                //echo 'name='.$name.'--path='.$path.'--permission=';
-
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
-                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id
-                    AND share_status=\'Y\' ', [
+                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id AND share_status = \'Y\' ', [
                     ':drive_path' => $path,
                     ':app_detail_id' => $app_detail_id,
                 ])->queryAll();
-
                 foreach ($sql as $value) {
                     $permission = $value['permission'];
                 }
-
-                //echo $permission."<br>";
 
                 if ($permission != '') {
                     $pos_rename = strpos($permission, 'Rn');
@@ -667,29 +887,35 @@ if ($app_user_id <> '') {
                     '</td>
 
                     <td>';
-                        $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
-                        $has_share='N';
-                        if ($pos_read === true) {
-                            //echo "I am true";
-                            $has_share = 'Y';
-                            $model_addfiles->drive_path[] = urlencode($path_chunk);
+                        if ($cloud == 'sciebo') {
+                            $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
+                            $has_share = 'N';
+
+                            if ($pos_read === true) {
+                                $has_share = 'Y';
+                                $model_addfiles->drive_path[] = urlencode($path_chunk);
+                            }
                         }
+                        elseif ($cloud == 'gd') {
+                            $path_chunk = $id;
+                        }
+
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
                             urlencode($path_chunk) => '',
                         ], [
                             'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked;
 
                                 if (checked == true) {
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
                                 }
                                 else {
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
                                 }'
                         ]);
                     echo '</td>
@@ -699,20 +925,18 @@ if ($app_user_id <> '') {
                     // Check if has child
                     $path_regex = '^'.$path.'.[a-zA-Z0-9!@#$+%&*_.-]*'; //'^Test%201A/.[a-zA-Z0-9!@#$+%&*_.-]*'
                     $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
-                        WHERE onlinedrives_app_detail_id = :app_detail_id
-                        AND drive_path REGEXP :drive_path
-                        AND share_status=\'Y\' ', [
-                        ':drive_path' => $path_regex,
+                        WHERE onlinedrives_app_detail_id = :app_detail_id AND drive_path REGEXP :drive_path AND share_status = \'Y\' ', [
                         ':app_detail_id' => $app_detail_id,
+                        ':drive_path' => $path_regex,
                     ])->queryAll();
 
-                    /*if($has_share=='Y'){
+                    /*if ($has_share == 'Y') {
                         $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #0b93d5"></span>';
                     }
-                    else*/if(count($sql)>0){
+                    else*/if(count($sql) > 0){
                         $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #f4d9f4"></span>';
                     }
-                    else{
+                    else {
                         $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
                     }
                         if ($fav <> 0) {
@@ -849,11 +1073,11 @@ if ($app_user_id <> '') {
                 }
             }
 
-            if ($cloud == 'sciebo' ||                    // Sciebo
-                $cloud == 'gd' &&                        // Google Drive
-                ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
-                    $parents[0] == '' ||                 // Shared files of Google Drive
-                    $get_gd_folder_id != '')             // Folder ID of Google Drive
+            if ($cloud == 'sciebo' ||          // Sciebo
+                $cloud == 'gd' &&              // Google Drive
+                ($parents[0] == $gd_root_id || // Root ID of Google Drive
+                    $parents[0] == '' ||       // Shared files of Google Drive
+                    $get_gd_folder_id != '')   // Folder ID of Google Drive
             ) {
                 $no++;
 
@@ -973,11 +1197,15 @@ if ($app_user_id <> '') {
 
                 $img = '<img src="protected/modules/onlinedrives/resources/type/'.$icon.'.png" alt="'.'" title="'.'" style="margin-right: 10px;" />';
 
+                // In case of Google Drive we use 'ID' instead of 'path'
+                if ($cloud == 'gd') {
+                	$path = $id;
+                }
+
                 // Check which boxes are selected
                 $permission = '';
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
-                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id
-                    AND share_status=\'Y\'', [
+                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id AND share_status = \'Y\'', [
                     ':drive_path' => $path,
                     ':app_detail_id' => $app_detail_id,
                 ])->queryAll();
@@ -1011,24 +1239,30 @@ if ($app_user_id <> '') {
                     '</td>
 
                     <td>';
-                        $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
-                        if ($pos_read === true) {
-                            $model_addfiles->drive_path[] = urlencode($path_chunk);
+                        if ($cloud == 'sciebo') {
+                            $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
+                            if ($pos_read === true) {
+                                $model_addfiles->drive_path[] = urlencode($path_chunk);
+                            }
                         }
+                        elseif ($cloud == 'gd') {
+                            $path_chunk = $id;
+                        }
+
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
                             urlencode($path_chunk) => '',
                         ], [
                             'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked;
 
                                 if (checked == true) {
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
                                 }
                                 else {
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
-                                    checked = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;
                                 }'
                         ]);
                     echo '</td>
@@ -1097,10 +1331,10 @@ if ($app_user_id <> '') {
     <div id="create_btn_login" class="form-group">
         <div class="col-lg-offset-1 col-lg-11">
             <?php
-                if ($count_sciebo_files > 0) {
-                    echo Html::ActiveHiddenInput($model_addfiles, 'app_detail_id', array('value' => $app_detail_id));
-                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Save'), ['class' => 'btn btn-primary']);
-                }
+            if ($count_sciebo_files > 0 || $count_gd_files > 0) {
+                echo Html::ActiveHiddenInput($model_addfiles, 'app_detail_id', array('value' => $app_detail_id));
+                echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Save'), ['class' => 'btn btn-primary']);
+            }
             ?>
         </div>
     </div>

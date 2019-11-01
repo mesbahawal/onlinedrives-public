@@ -161,7 +161,7 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
             foreach ($sql as $value) {
             $app_password = $value['app_password'];
             $client = new Google_Client();
-            $client->setApplicationName('HumHub');
+            $client->setApplicationName('ResearchHub');
             $client->addScope(Google_Service_Drive::DRIVE);
             $client->setAuthConfig('protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json');
             $client->setAccessType('offline'); // Offline access
@@ -2617,7 +2617,7 @@ if (1 == 1) {
 
     $count_guide_sciebo = 8;
 
-    $gd_guide_txt1 = 'Please go on https://console.developers.google.com and log in with your Google account access data.';
+    $gd_guide_txt1 = 'Please go on <a href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.';
     $gd_guide_txt2 = 'This could be your view after login:';
     $gd_guide_txt3 = 'Click on "Credentials" / "Anmeldedaten" on the left sight (3rd point).';
     $gd_guide_txt4 = 'Click on "" / "Anmeldedaten erstellen". Then click on "OAuth-Client-ID:';
