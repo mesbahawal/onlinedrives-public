@@ -851,6 +851,9 @@ if ($app_user_id <> '') {
 
                 // Check which boxes are selected
                 $permission = '';
+
+                //echo 'name='.$name.'--path='.$path.'--permission=';
+
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
                     WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id AND share_status = \'Y\' ', [
                     ':drive_path' => $path,
@@ -860,11 +863,14 @@ if ($app_user_id <> '') {
                     $permission = $value['permission'];
                 }
 
+                //echo $permission."<br>";
+
                 if ($permission != '') {
                     $pos_rename = strpos($permission, 'Rn');
                     $pos_move = strpos($permission, 'Mv');
                     $pos_del = strpos($permission, 'D');
                     $pos_upl = strpos($permission, 'U');
+
                     if ($pos_rename !== false || $pos_move !== false || $pos_del !== false || $pos_upl !== false) {
                         $pos_read = true;
                     }
@@ -887,19 +893,29 @@ if ($app_user_id <> '') {
                     '</td>
 
                     <td>';
+                        // Rework
                         if ($cloud == 'sciebo') {
                             $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
                             $has_share = 'N';
 
                             if ($pos_read === true) {
+                                //echo "I am true";
                                 $has_share = 'Y';
-                                $model_addfiles->drive_path[] = urlencode($path_chunk);
+                                $model_addfiles->drive_path[$i] = urlencode($path_chunk);
                             }
                         }
                         elseif ($cloud == 'gd') {
                             $path_chunk = $id;
+                            $has_share = 'N';
+
+                            if ($pos_read === true) {
+                                //echo "I am true";
+                                $has_share = 'Y';
+                                $model_addfiles->drive_path[$i] = $id;
+                            }
                         }
 
+                        // Output
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
                             urlencode($path_chunk) => '',
                         ], [
@@ -959,49 +975,49 @@ if ($app_user_id <> '') {
 
                     <td>';
                         if ($pos_rename !== false && $pos_move !== false && $pos_del !== false && $pos_upl !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'Mv', 'D', 'U'];
+                            $model_addfiles->permission[$i] = ['Rn', 'Mv', 'D', 'U'];
                         }
                         elseif ($pos_rename !== false && $pos_move !== false && $pos_del !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'Mv', 'D'];
+                            $model_addfiles->permission[$i] = ['Rn', 'Mv', 'D'];
                         }
                         elseif ($pos_rename !== false && $pos_move !== false && $pos_upl !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'Mv', 'U'];
+                            $model_addfiles->permission[$i] = ['Rn', 'Mv', 'U'];
                         }
                         elseif ($pos_rename !== false && $pos_del !== false && $pos_upl !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'D', 'U'];
+                            $model_addfiles->permission[$i] = ['Rn', 'D', 'U'];
                         }
                         elseif ($pos_move !== false && $pos_del !== false && $pos_upl !== false) {
-                            $model_addfiles->permission[] = ['Mv', 'D', 'U'];
+                            $model_addfiles->permission[$i] = ['Mv', 'D', 'U'];
                         }
                         elseif ($pos_rename !== false && $pos_move !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'Mv'];
+                            $model_addfiles->permission[$i] = ['Rn', 'Mv'];
                         }
                         elseif ($pos_rename !== false && $pos_upl !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'U'];
+                            $model_addfiles->permission[$i] = ['Rn', 'U'];
                         }
                         elseif ($pos_rename !== false && $pos_del !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'D'];
+                            $model_addfiles->permission[$i] = ['Rn', 'D'];
                         }
                         elseif ($pos_del !== false && $pos_upl !== false) {
-                            $model_addfiles->permission[] = ['D', 'U'];
+                            $model_addfiles->permission[$i] = ['D', 'U'];
                         }
                         elseif ($pos_move !== false && $pos_del !== false) {
-                            $model_addfiles->permission[] = ['Mv', 'D'];
+                            $model_addfiles->permission[$i] = ['Mv', 'D'];
                         }
                         elseif ($pos_move !== false && $pos_upl !== false) {
-                            $model_addfiles->permission[] = ['Mv', 'U'];
+                            $model_addfiles->permission[$i] = ['Mv', 'U'];
                         }
                         elseif ($pos_rename !== false) {
-                            $model_addfiles->permission[] = ['Rn'];
+                            $model_addfiles->permission[$i] = ['Rn'];
                         }
                         elseif ($pos_move !== false) {
-                            $model_addfiles->permission[] = ['Mv'];
+                            $model_addfiles->permission[$i] = ['Mv'];
                         }
                         elseif ($pos_del !== false) {
-                            $model_addfiles->permission[] = ['D'];
+                            $model_addfiles->permission[$i] = ['D'];
                         }
                         elseif ($pos_upl !== false) {
-                            $model_addfiles->permission[] = ['U'];
+                            $model_addfiles->permission[$i] = ['U'];
                         }
                         echo $form_addfiles->field($model_addfiles, 'permission['.$i.']')->checkboxList([
                             'Rn' => 'Rename',
@@ -1204,6 +1220,9 @@ if ($app_user_id <> '') {
 
                 // Check which boxes are selected
                 $permission = '';
+
+                //echo 'name='.$name.'--path='.$path.'--permission=';
+
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
                     WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id AND share_status = \'Y\'', [
                     ':drive_path' => $path,
@@ -1212,6 +1231,8 @@ if ($app_user_id <> '') {
                 foreach ($sql as $value) {
                     $permission = $value['permission'];
                 }
+
+                //echo $permission."<br>";
 
                 if ($permission != '') {
                     $pos_rename = strpos($permission, 'Rn');
@@ -1239,16 +1260,29 @@ if ($app_user_id <> '') {
                     '</td>
 
                     <td>';
+                        // Rework
                         if ($cloud == 'sciebo') {
                             $path_chunk = str_replace($sciebo_path_to_replace, '', $path);
+                            $has_share = 'N';
+
                             if ($pos_read === true) {
-                                $model_addfiles->drive_path[] = urlencode($path_chunk);
+                                //echo "I am true";
+                                $has_share = 'Y';
+                                $model_addfiles->drive_path[$checkbox_index] = urlencode($path_chunk);
                             }
                         }
                         elseif ($cloud == 'gd') {
                             $path_chunk = $id;
+                            $has_share = 'N';
+
+                            if ($pos_read === true) {
+                                //echo "I am true";
+                                $has_share = 'Y';
+                                $model_addfiles->drive_path[$checkbox_index] = $id;
+                            }
                         }
 
+                        // Output
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
                             urlencode($path_chunk) => '',
                         ], [
@@ -1279,25 +1313,25 @@ if ($app_user_id <> '') {
 
                     <td>';
                         if ($pos_rename !== false && $pos_move !== false && $pos_del !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'Mv', 'D'];
+                            $model_addfiles->permission[$checkbox_index] = ['Rn', 'Mv', 'D'];
                         }
                         elseif ($pos_rename !== false && $pos_move !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'Mv'];
+                            $model_addfiles->permission[$checkbox_index] = ['Rn', 'Mv'];
                         }
                         elseif ($pos_rename !== false && $pos_del !== false) {
-                            $model_addfiles->permission[] = ['Rn', 'D'];
+                            $model_addfiles->permission[$checkbox_index] = ['Rn', 'D'];
                         }
                         elseif ($pos_move !== false && $pos_del !== false) {
-                            $model_addfiles->permission[] = ['Mv', 'D'];
+                            $model_addfiles->permission[$checkbox_index] = ['Mv', 'D'];
                         }
                         elseif ($pos_rename !== false) {
-                            $model_addfiles->permission[] = ['Rn'];
+                            $model_addfiles->permission[$checkbox_index] = ['Rn'];
                         }
                         elseif ($pos_move !== false) {
-                            $model_addfiles->permission[] = ['Mv'];
+                            $model_addfiles->permission[$checkbox_index] = ['Mv'];
                         }
                         elseif ($pos_del !== false) {
-                            $model_addfiles->permission[] = ['D'];
+                            $model_addfiles->permission[$checkbox_index] = ['D'];
                         }
 
                         echo $form_addfiles->field($model_addfiles, 'permission['.$checkbox_index.']')->checkboxList([

@@ -148,17 +148,15 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
     $logged_username =  Yii::$app->user->identity->username;
     $client = false ;
     // Check for database entries for Google Drive and this space
-    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail 
-                                WHERE space_id = :space_id AND drive_name = :drive_name 
-                                AND if_shared NOT IN (\'D\') AND user_id=:user_id', [
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
+        WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\') AND user_id = :user_id', [
         ':space_id' => $space_id,
         ':drive_name' => 'gd',
         ':user_id' => $logged_username,
     ])->queryAll();
 
-    if (count($sql)>0) {
-
-            foreach ($sql as $value) {
+    if (count($sql) > 0) {
+        foreach ($sql as $value) {
             $app_password = $value['app_password'];
             $client = new Google_Client();
             $client->setApplicationName('ResearchHub');
@@ -204,13 +202,13 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
                             mkdir(dirname($tokenPath), 0700, true);
                         }
 
-                        if(file_put_contents($tokenPath, json_encode($client->getAccessToken()))){
-
-                            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'N\' WHERE app_password = :app_password', [
+                        if (file_put_contents($tokenPath, json_encode($client->getAccessToken()))) {
+                            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'N\'
+                                WHERE app_password = :app_password', [
                                 ':app_password' => $app_password,
                             ])->execute();
                         }
-                        else{
+                        else {
                             return false;
                         }
                     }
@@ -310,6 +308,10 @@ $session = Yii::$app->session;
 $gd_client = getGoogleClient($db, $space_id, $home_url, $guid);
 if ($gd_client !== false) {
     $gd_service = new Google_Service_Drive($gd_client);
+
+    // Get root ID
+    // https://stackoverflow.com/questions/36763941/how-can-i-list-files-dirs-in-root-directory-with-google-drive-api-v3
+    $gd_root_id = $gd_service->files->get('root')->getId();
 }
 
 
@@ -375,7 +377,7 @@ if ($username <> '' && !isset($_GET['op'])) {
     }
 
     // Load Google Drive entries
-    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
         WHERE d.space_id = :space_id AND d.drive_name = :drive_name', [
             ':space_id' => $space_id,
@@ -572,7 +574,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
 
             // Parent folder ID.
             if ($get_gd_folder_id == '') {
-            	$gd_parent_id = '0AESKNHa25CPzUk9PVA';
+            	$gd_parent_id = $gd_root_id;
             }
             else {
             	$gd_parent_id = $get_gd_folder_id;
@@ -590,7 +592,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
 
                 // Parent folder ID
                 if ($get_gd_folder_id == '') {
-                	$gd_parent_id = '0AESKNHa25CPzUk9PVA';
+                	$gd_parent_id = $gd_root_id;
                 }
                 else {
                 	$gd_parent_id = $get_gd_folder_id;
@@ -617,7 +619,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
 
                     // Parent folder ID.
                     if ($get_gd_folder_id == '') {
-                    	$gd_parent_id = '0AESKNHa25CPzUk9PVA';
+                    	$gd_parent_id = $gd_root_id;
                     }
                     else {
                     	$gd_parent_id = $get_gd_folder_id;
@@ -942,11 +944,11 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
             // Change search name for next loop
             $check_id = $parents[0]; // Change parent folder ID to check
-            if ($check_id != '0AESKNHa25CPzUk9PVA') { // Means root
+            if ($check_id != $gd_root_id) { // Means root
                 $file = $gd_service->files->get($check_id);
                 $check_name = $file->getName(); // Change folder name to check
             }
-        } while ($check_id != '0AESKNHa25CPzUk9PVA'); // Means root
+        } while ($check_id != $gd_root_id); // Means root
 
         // Output rest of Google Drive navigation
         echo $navi;
@@ -1052,6 +1054,7 @@ if (count($arr_app_user_admin) > 0) {
                                     <?php echo $app_user_id; ?>
                                 </b>
                             </td>
+
                             <td>
                                 <?php
                                 echo '<a class="btn btn-success" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
@@ -1059,6 +1062,7 @@ if (count($arr_app_user_admin) > 0) {
                                 '</a>';
                                 ?>
                             </td>
+
                             <td>
                                 <?php
                                 if ($if_shared == 'Y') {
@@ -1068,6 +1072,7 @@ if (count($arr_app_user_admin) > 0) {
                                 }
                                 ?>
                             </td>
+
                             <td>
                                 <?php
                                 if ($if_shared != 'D') {
@@ -1180,7 +1185,7 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
     </div>
 </div>
 
-<!-- Send button Sciebo login-->
+<!-- Send button Sciebo login -->
 <div id="create_btn_login" class="form-group">
     <div class="col-lg-offset-1 col-lg-11">
         <?php
@@ -1396,11 +1401,10 @@ elseif ($get_gd_folder_id != '') {
 
 // Wrapper container
 echo '<div class="rel" style="margin-bottom: 50px;">'.
-
 	// Icons for creating folder and creating file
     $form->field($model, 'create')->radioList([
 	    'create_folder' => '<div class="upcr_btn_div">
-    	    <span id="create_folder" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-folder-open fa-lg" title="'.Yii::t('OnlinedrivesModule.new', 'Create folder').'"
+    	    <span id="create_folder" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-folder-open fa-lg" title="' . Yii::t('OnlinedrivesModule.new', 'Create folder') . '"
         	    onclick="
                     getElementById(\'create_btn\').className = \'form-group showblock\';
 
@@ -1418,7 +1422,7 @@ echo '<div class="rel" style="margin-bottom: 50px;">'.
 	        "></span>
     	</div>',
 	    'create_file' => '<div class="upcr_btn_div">
-    	    <span id="create_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-file fa-lg" title="'.Yii::t('OnlinedrivesModule.new', 'Create file').'"
+    	    <span id="create_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-file fa-lg" title="' . Yii::t('OnlinedrivesModule.new', 'Create file') . '"
         	    onclick="
                     getElementById(\'create_btn\').className = \'form-group showblock\';
 
@@ -1431,7 +1435,6 @@ echo '<div class="rel" style="margin-bottom: 50px;">'.
 	        "></span>
     	</div>',
 	], ['encode' => false]); // https://stackoverflow.com/questions/46094352/display-image-with-label-in-radiobutton-yii2
-
 echo '</div>';
 
         //echo $form->field($model, 'new_file_upload')->fileInput(); // https://forum.yiiframework.com/t/uploading-file-help-please/78531
@@ -1465,21 +1468,21 @@ echo '</div>';
                 alt="Text file"
                 title="Text file"
                 onclick="
-                	type = \'.txt\';
-                	name = getElementById(\'createfileform-new_file_name\').value;
-                	pos = name.lastIndexOf(\'.\');
-                	sub = name.substr(pos);
-                	if (sub != type) {
-                		if (sub == \'.docx\' || sub == \'.xlsx\' || sub == \'.pptx\' || sub == \'.odt\') {
-                			name = name.substr(0, pos);
-                			}
-	                	getElementById(\'createfileform-new_file_name\').value = name + type;
+                    type = \'.txt\';
+                    name = getElementById(\'createfileform-new_file_name\').value;
+                    pos = name.lastIndexOf(\'.\');
+                    sub = name.substr(pos);
+                    if (sub != type) {
+                        if (sub == \'.docx\' || sub == \'.xlsx\' || sub == \'.pptx\' || sub == \'.odt\') {
+                            name = name.substr(0, pos);
+                        }
+                    	getElementById(\'createfileform-new_file_name\').value = name + type;
                         getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/resources/type/gray/docx.png\';
                         getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/resources/type/gray/xlsx.png\';
                         getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/resources/type/gray/pptx.png\';
                         getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/resources/type/gray/odt.png\';
                         this.src = \'protected/modules/onlinedrives/resources/type/txt.png\';
-	                }
+                    }
             " />',
             'docx' => '<img
                 id="type_docx"
@@ -1488,21 +1491,21 @@ echo '</div>';
                 alt="Document"
                 title="Document"
                 onclick="
-                	type = \'.docx\';
-                	name = getElementById(\'createfileform-new_file_name\').value;
-                	pos = name.lastIndexOf(\'.\');
-                	sub = name.substr(pos);
-                	if (sub != type) {
-                		if (sub == \'.txt\' || sub == \'.xlsx\' || sub == \'.pptx\' || sub == \'.odt\') {
-                			name = name.substr(0, pos);
-                		}
-	                	getElementById(\'createfileform-new_file_name\').value = name + type;
+                    type = \'.docx\';
+                    name = getElementById(\'createfileform-new_file_name\').value;
+                    pos = name.lastIndexOf(\'.\');
+                    sub = name.substr(pos);
+                    if (sub != type) {
+                        if (sub == \'.txt\' || sub == \'.xlsx\' || sub == \'.pptx\' || sub == \'.odt\') {
+                            name = name.substr(0, pos);
+                        }
+                        getElementById(\'createfileform-new_file_name\').value = name + type;
                         getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/resources/type/gray/txt.png\';
                         getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/resources/type/gray/xlsx.png\';
                         getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/resources/type/gray/pptx.png\';
                         getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/resources/type/gray/odt.png\';
                         this.src = \'protected/modules/onlinedrives/resources/type/docx.png\';
-	                }
+                    }
             " />',
             'xlsx' => '<img
                 id="type_xlsx"
@@ -1511,21 +1514,21 @@ echo '</div>';
                 alt="Table"
                 title="Table"
                 onclick="
-                	type = \'.xlsx\';
-                	name = getElementById(\'createfileform-new_file_name\').value;
-                	pos = name.lastIndexOf(\'.\');
-                	sub = name.substr(pos);
-                	if (sub != type) {
-                		if (sub == \'.txt\' || sub == \'.docx\' || sub == \'.pptx\' || sub == \'.odt\') {
-                			name = name.substr(0, pos);
-                		}
-	                	getElementById(\'createfileform-new_file_name\').value = name + type;
+                    type = \'.xlsx\';
+                    name = getElementById(\'createfileform-new_file_name\').value;
+                    pos = name.lastIndexOf(\'.\');
+                    sub = name.substr(pos);
+                    if (sub != type) {
+                        if (sub == \'.txt\' || sub == \'.docx\' || sub == \'.pptx\' || sub == \'.odt\') {
+                            name = name.substr(0, pos);
+                        }
+                        getElementById(\'createfileform-new_file_name\').value = name + type;
                         getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/resources/type/gray/txt.png\';
                         getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/resources/type/gray/docx.png\';
                         getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/resources/type/gray/pptx.png\';
                         getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/resources/type/gray/odt.png\';
                         this.src = \'protected/modules/onlinedrives/resources/type/xlsx.png\';
-	                }
+                    }
             " />',
             'pptx' => '<img
                 id="type_pptx"
@@ -1534,21 +1537,21 @@ echo '</div>';
                 alt="Presentation"
                 title="Presentation"
                 onclick="
-                	type = \'.pptx\';
-                	name = getElementById(\'createfileform-new_file_name\').value;
-                	pos = name.lastIndexOf(\'.\');
-                	sub = name.substr(pos);
-                	if (sub != type) {
-                		if (sub == \'.txt\' || sub == \'.docx\' || sub == \'.xlsx\' || sub == \'.odt\') {
-                			name = name.substr(0, pos);
-                		}
-	                	getElementById(\'createfileform-new_file_name\').value = name + type;
+                    type = \'.pptx\';
+                    name = getElementById(\'createfileform-new_file_name\').value;
+                    pos = name.lastIndexOf(\'.\');
+                    sub = name.substr(pos);
+                    if (sub != type) {
+                        if (sub == \'.txt\' || sub == \'.docx\' || sub == \'.xlsx\' || sub == \'.odt\') {
+                            name = name.substr(0, pos);
+                        }
+                        getElementById(\'createfileform-new_file_name\').value = name + type;
                         getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/resources/type/gray/txt.png\';
                         getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/resources/type/gray/docx.png\';
                         getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/resources/type/gray/xlsx.png\';
                         getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/resources/type/gray/odt.png\';
                         this.src = \'protected/modules/onlinedrives/resources/type/pptx.png\';
-	                }
+                    }
             " />',
             'odt' => '<img
                 id="type_odt"
@@ -1557,26 +1560,26 @@ echo '</div>';
                 alt="OpenDocument"
                 title="OpenDocument"
                 onclick="
-                	type = \'.odt\';
-                	name = getElementById(\'createfileform-new_file_name\').value;
-                	pos = name.lastIndexOf(\'.\');
-                	sub = name.substr(pos);
-                	if (sub != type) {
-                		if (sub == \'.txt\' || sub == \'.docx\' || sub == \'.xlsx\' || sub == \'.pptx\') {
-                			name = name.substr(0, pos);
-                		}
-	                	getElementById(\'createfileform-new_file_name\').value = name + type;
+                    type = \'.odt\';
+                    name = getElementById(\'createfileform-new_file_name\').value;
+                    pos = name.lastIndexOf(\'.\');
+                    sub = name.substr(pos);
+                    if (sub != type) {
+                        if (sub == \'.txt\' || sub == \'.docx\' || sub == \'.xlsx\' || sub == \'.pptx\') {
+                            name = name.substr(0, pos);
+                        }
+                        getElementById(\'createfileform-new_file_name\').value = name + type;
                         getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/resources/type/gray/txt.png\';
                         getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/resources/type/gray/docx.png\';
                         getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/resources/type/gray/xlsx.png\';
                         getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/resources/type/gray/pptx.png\';
                         this.src = \'protected/modules/onlinedrives/resources/type/odt.png\';
-	                }
+                    }
             " />',
         ], ['encode' => false]);
         ?>
 
-	    <div class="upcr_label">Name</div>
+        <div class="upcr_label">Name</div>
         <?php echo $form->field($model, 'new_file_name'); ?>
     </div>
 
@@ -1706,9 +1709,9 @@ $count_gd_files = 0;
 if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
     $gd_results = $gd_service->files->listFiles($optParams);
     $count_gd_files = count($gd_results->getFiles());
-} //TODO $gd_service XX YY
+}
 
-if ($count_gd_files != 0) {
+if ($count_gd_files > 0) {
     foreach ($gd_results->getFiles() as $file) {
     	// Read folder/file ID
     	$gd_file_id = $file->getId();
@@ -1725,7 +1728,7 @@ if ($count_gd_files != 0) {
             $app_password = $value['app_password'];
 
             $sql = $db->createCommand('SELECT drive_key FROM onlinedrives_app_drive_path_detail
-                WHERE drive_path = :gd_file_id AND onlinedrives_app_detail_id = :onlinedrives_app_detail_id', [
+                WHERE drive_path = :gd_file_id AND onlinedrives_app_detail_id = :onlinedrives_app_detail_id AND share_status = \'Y\'', [
                 ':gd_file_id' => $gd_file_id,
                 ':onlinedrives_app_detail_id' => $app_detail_id,
             ])->queryAll();
@@ -1786,7 +1789,7 @@ if ($count_gd_files != 0) {
                     $all_folders[$afo]['file_owner'] = '';
                     $all_folders[$afo]['file_shared'] = array();
                     $all_folders[$afo]['file_comment'] = '';
-                    $all_folders[$afo]['drive_key'] = '';
+                    $all_folders[$afo]['drive_key'] = $drive_key;
                     $afo++;
                 }
                 else {
@@ -1809,7 +1812,7 @@ if ($count_gd_files != 0) {
                     $all_files[$afi]['file_owner'] = '';
                     $all_files[$afi]['file_shared'] = array();
                     $all_files[$afi]['file_comment'] = '';
-                    $all_files[$afi]['drive_key'] = '';
+                    $all_files[$afi]['drive_key'] = $drive_key;
                     $afi++;
                 }
                 $all++;
@@ -1935,6 +1938,7 @@ else {
         -->
       </tr>
     </thead>
+
     <tbody>
         <?php
         $no = 0;
@@ -1979,13 +1983,12 @@ else {
                 }
             }
 
-            if ($cloud == 'sciebo' ||                        // Sciebo
-                $cloud == 'gd' &&                            // Google Drive
-                    ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
-                    $parents[0] == '' ||                     // Shared files of Google Drive
-                    $get_gd_folder_id != '')                 // Folder ID of Google Drive
-            )
-            {
+            if ($cloud == 'sciebo' ||              // Sciebo
+                $cloud == 'gd' &&                  // Google Drive
+                    ($parents[0] == $gd_root_id || // Root ID of Google Drive
+                    $parents[0] == '' ||           // Shared files of Google Drive
+                    $get_gd_folder_id != '')       // Folder ID of Google Drive
+            ) {
                 $no++;
 
                 // Modified time (folders)
@@ -2269,11 +2272,11 @@ else {
                 }
             }
 
-            if ($cloud == 'sciebo' ||                        // Sciebo
-                $cloud == 'gd' &&                            // Google Drive
-                    ($parents[0] == '0AESKNHa25CPzUk9PVA' || // Root ID of Google Drive
-                    $parents[0] == '' ||                     // Shared files of Google Drive
-                    $get_gd_folder_id != '')                 // Folder ID of Google Drive
+            if ($cloud == 'sciebo' ||              // Sciebo
+                $cloud == 'gd' &&                  // Google Drive
+                    ($parents[0] == $gd_root_id || // Root ID of Google Drive
+                    $parents[0] == '' ||           // Shared files of Google Drive
+                    $get_gd_folder_id != '')       // Folder ID of Google Drive
                 )
             {
                 $no++;

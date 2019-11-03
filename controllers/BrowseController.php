@@ -280,9 +280,6 @@ class BrowseController extends BaseController
         }
         // Delete file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
-
-
-
             // Get params
             $get_dk = '';
             if (!empty($_GET['dk'])) {
@@ -317,7 +314,7 @@ class BrowseController extends BaseController
                 if (isset(Yii::$app->user->identity->username)) {
                     $username = Yii::$app->user->identity->username;
                 }
-                else{
+                else {
                     $username = '';
 
                     $home_url = Url::base(true);
@@ -326,7 +323,7 @@ class BrowseController extends BaseController
                 }
 
                 // Sciebo delete function
-                if ($cloud == 'sciebo' && $permission_pos!==false) {
+                if ($cloud == 'sciebo' && $permission_pos !== false) {
                     $delete_file_id = str_replace(' ', '%20', $delete_file_id);
 
                     // http://sabre.io/dav/davclient
@@ -339,23 +336,23 @@ class BrowseController extends BaseController
                     $path_to_dir = str_replace(' ', '%20', $path_to_dir);
 
                     if ($client->request('DELETE', $path_to_dir, null)) {
-                        // Success msg
+                        // Success message
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Sciebo war erfolgreich.');
                     }
                 }
-                // GD delete function
-                elseif ($cloud == 'gd' && $permission_pos!==false) {
+                // Google Drive delete function
+                elseif ($cloud == 'gd' && $permission_pos !== false) {
                     // Get the API client and construct the service object
                     $gd_client = $model_gd_delete->getGoogleClient($db, $get_dk, $home_url, $guid);
                     $gd_service = new Google_Service_Drive($gd_client);
 
-                    //implement google drive delete here
+                    // Implement Google Drive delete here
                     $gd_service->files->delete($delete_file_id);
 
-                    // Success msg
+                    // Success message
                     $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');
                 }
-                else{
+                else {
                     $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
                 }
             }
@@ -593,14 +590,13 @@ class BrowseController extends BaseController
                         // Step-2: Update share_status=D for unchecked values.
                         if($get_sciebo_path!='') {
                             $regular_exp1 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*/$';
-                            $regular_exp2 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*.[.]+.[a-zA-Z]*$';
+                            $regular_exp2 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*.[.]+.[a-zA-Z0-9]*$';
                             if(!empty($not_in)){
                                 $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
                             }
                             else{
                                 $id_not_in_str = '';
                             }
-
 
                             //echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
 
@@ -613,7 +609,22 @@ class BrowseController extends BaseController
                                 ':regex2' => $regular_exp2,
                             ])->execute();
                         }
-                     }
+                        else{
+                            if(!empty($not_in)){
+                                $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
+                            }
+                            else{
+                                $id_not_in_str = '';
+                            }
+
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D" 
+                                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                                AND share_status=\'Y\' '.$id_not_in_str, [
+                                ':onlinedrives_app_detail_id' => $app_detail_id,
+                            ])->execute();
+
+                        }
+                    }
 
                     return $this->render('index', [
                         'contentContainer' => $this->contentContainer,
