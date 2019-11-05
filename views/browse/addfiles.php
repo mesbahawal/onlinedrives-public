@@ -16,6 +16,7 @@ $db = dbconnect();
 // General vars
 $now = time();
 $home_url = Url::base(true);
+$folder_is_empty = 0;
 
 $bundle = \humhub\modules\onlinedrives\assets\Assets::register($this);
 
@@ -46,13 +47,20 @@ if (!empty($_GET['cguid'])) {
     $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
 }
 
-
 // Sciebo params
 if (!empty($_GET['sciebo_path'])) {
     $get_sciebo_path = $_GET['sciebo_path'];
 }
 elseif (!empty($_POST['sciebo_path'])) {
     $get_sciebo_path = $_POST['sciebo_path'];
+}
+
+// Google Drive params
+if (!empty($_GET['gd_folder_id'])) {
+    $get_gd_folder_id = $_GET['gd_folder_id'];
+}
+if (!empty($_GET['gd_folder_name'])) {
+    $get_gd_folder_name = $_GET['gd_folder_name'];
 }
 
 // Rework
@@ -219,7 +227,7 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
 }
 
 
-// Sciebo?
+// Get information of app user detail
 if (!empty($_GET['app_detail_id'])) {
     $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE id = :id', [
         ':id' => $app_detail_id,
@@ -251,6 +259,33 @@ if ($gd_client !== false) {
 }
 
 
+/**
+ * Load Google Drive content
+ */
+if ($get_gd_folder_id != '') {
+    $optParams = array(
+        // 'pageSize' => 10,
+        'q' => 'parents="'.$get_gd_folder_id.'"',
+        'fields' => 'nextPageToken, files(*)',
+        'orderBy' => 'folder, name',
+    );
+}
+else {
+    $optParams = array(
+        //'pageSize' => 10,
+        'fields' => 'nextPageToken, files(*)',
+        'orderBy' => 'folder, name',
+    );
+}
+
+$gd_results = array();
+$count_gd_files = 0;
+if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
+    $gd_results = $gd_service->files->listFiles($optParams);
+    $count_gd_files = count($gd_results->getFiles());
+}
+
+
 echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onlinedrives-form']);
 ?>
 
@@ -261,10 +296,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         <!-- Breadcrumb navigation -->
         <div style="border: 1px solid #f0f0f0; border-radius: 10px; padding: 10px; background-color: #f5f5f5;">
             <?php
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&'.$guid ;
-            if ($cloud == 'sciebo') {
-                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=';
-            }
+            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&'.$guid.'&app_detail_id='.$app_detail_id;
             echo '<a href="'.$ref.'">'.$app_user_id.'</a>';
 
             // Output Sciebo navigation
@@ -352,7 +384,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                     }
 
                     // Build output
-                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&%2Faddfiles&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                     $navi = ' / <a href="'.$ref.'">'.$name.'</a>'.$navi;
 
                     // Change search name for next loop
@@ -398,36 +430,15 @@ if ($app_user_id <> '') {
         $count_sciebo_files = 0;
     }
 
-
-    /**
-     * Google Drive
-     */
-    if ($get_gd_folder_id != '') {
-        $optParams = array(
-            // 'pageSize' => 10,
-            'q' => 'parents="'.$get_gd_folder_id.'"',
-            'fields' => 'nextPageToken, files(*)',
-            'orderBy' => 'folder, name',
-        );
+    // Check if folder is empty
+    if ($count_sciebo_files == 0 && $count_gd_files == 0) {
+        $folder_is_empty = 1;
+        echo '<div style="margin-top: 25px; text-align: center; font-size: 20px;">' .
+            Yii::t('OnlinedrivesModule.new', 'Folder is <b>empty.</b>') .
+        '</div>';
     }
-    else {
-        $optParams = array(
-            //'pageSize' => 10,
-            'fields' => 'nextPageToken, files(*)',
-            'orderBy' => 'folder, name',
-        );
-    }
-
-    $gd_results = array();
-    $count_gd_files = 0;
-    if ($get_sciebo_path == '' && isset($gd_service) && $gd_service !== false) {
-        $gd_results = $gd_service->files->listFiles($optParams);
-        $count_gd_files = count($gd_results->getFiles());
-    }
-
-
-    // Sciebo
-    if ($count_sciebo_files > 0) {
+    // Rework Sciebo content
+    elseif ($count_sciebo_files > 0) {
         $keys = array_keys($sciebo_content);
         foreach ($keys as $values) {
             /*
@@ -550,7 +561,7 @@ if ($app_user_id <> '') {
             }
         }
     }
-    // Google Drive
+    // Rework Google Drive content
     elseif ($count_gd_files > 0) {
         foreach ($gd_results->getFiles() as $file) {
             // Read folder/file ID
@@ -651,6 +662,9 @@ if ($app_user_id <> '') {
         'method' => 'post',
         'options' => ['class' => 'form-horizontal'],
     ]);
+
+    // If folder is not empty
+    if ($folder_is_empty == 0) {
     ?>
 
     <table id="table" class="table table-responsive">
@@ -721,8 +735,7 @@ if ($app_user_id <> '') {
                                     echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = true;
                                     document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
                                     document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[3].checked = true;';
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;';
                                     ?>
                                 }
                                 else {
@@ -968,7 +981,7 @@ if ($app_user_id <> '') {
                             echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                         }
                         elseif ($cloud == 'gd') {
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                             echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                         }
                     echo '</td>
@@ -1361,6 +1374,10 @@ if ($app_user_id <> '') {
         ?>
         </thead>
     </table>
+
+    <?php
+    } // If folder is not empty
+    ?>
 
     <div id="create_btn_login" class="form-group">
         <div class="col-lg-offset-1 col-lg-11">
