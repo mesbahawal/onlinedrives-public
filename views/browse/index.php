@@ -1016,7 +1016,7 @@ if (count($arr_app_user_admin) > 0) {
     ?>
 
     <div class="box">
-        <table id="table" class="table table-responsive">
+        <table class="table table-responsive">
             <thead>
                 <?php
                 for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j)
