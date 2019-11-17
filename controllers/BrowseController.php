@@ -281,7 +281,7 @@ class BrowseController extends BaseController
         // Delete file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
             // Get params
-            $get_dk = '';
+            $get_dk = ''; $permission =''; $user_id='';
             if (!empty($_GET['dk'])) {
                 $get_dk = $_GET['dk'];
             }
@@ -304,6 +304,7 @@ class BrowseController extends BaseController
                 $app_user_id = $value['app_user_id'];
                 $app_password = $value['app_password'];
                 $permission = $value['permission'];
+                $user_id = $value['user_id'];
             }
 
             if (!empty($model_gd_delete->delete_file_id)) {
@@ -323,12 +324,12 @@ class BrowseController extends BaseController
                 }
 
                 // Sciebo delete function
-                if ($cloud == 'sciebo' && $permission_pos !== false) {
+                if ($cloud == 'sciebo' && ($username == $user_id || $permission_pos !== false)) {
                     $delete_file_id = str_replace(' ', '%20', $delete_file_id);
 
                     // http://sabre.io/dav/davclient
                     // Will do a DELETE request with a condition
-                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$delete_file_id;
+                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$delete_file_id;
 
                     $client = $model_gd_delete->getScieboClient($app_user_id,$app_password);
 
@@ -336,6 +337,23 @@ class BrowseController extends BaseController
                     $path_to_dir = str_replace(' ', '%20', $path_to_dir);
 
                     if ($client->request('DELETE', $path_to_dir, null)) {
+
+                        $search_file_id = $delete_file_id;
+
+                        /*$sql_qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status = \"D\"
+                                                WHERE drive_path= '$search_file_id'
+                                                AND share_status='Y' ";
+
+                        echo $sql_qry;*/
+
+                        $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
+                                                WHERE drive_path=:drive_path
+                                                AND share_status=\'Y\' ', [
+                            ':drive_path' => $search_file_id,
+                        ])->execute();
+
+                        //echo $delete_file_id.'-- has to be deleted of-'.$path_to_dir;
+
                         // Success message
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Sciebo war erfolgreich.');
                     }
@@ -600,7 +618,14 @@ class BrowseController extends BaseController
 
                             //echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
 
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D" 
+                            /*$qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status ='D'
+                                                WHERE onlinedrives_app_detail_id = ".$app_detail_id."
+                                                AND (drive_path REGEXP '".$regular_exp1."' OR drive_path REGEXP '".$regular_exp2."' )
+                                                AND share_status='Y' ".$id_not_in_str;
+
+                            echo $qry;*/
+
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
                                                 WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
                                                 AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
                                                 AND share_status=\'Y\' '.$id_not_in_str, [
@@ -617,9 +642,17 @@ class BrowseController extends BaseController
                                 $id_not_in_str = '';
                             }
 
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D" 
+                            $qry_drive_path = ' AND (LENGTH(`drive_path`) - LENGTH(REPLACE(`drive_path`, \'/\', \'\')))=1 AND drive_path REGEXP \'/$\' ';
+
+                            /*$qry = 'UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
+                                                WHERE onlinedrives_app_detail_id = '.$app_detail_id.'
+                                                AND share_status=\'Y\' '.$qry_drive_path.$id_not_in_str;
+
+                            echo $qry;*/
+
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
                                                 WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
-                                                AND share_status=\'Y\' '.$id_not_in_str, [
+                                                AND share_status=\'Y\' '.$qry_drive_path.$id_not_in_str, [
                                 ':onlinedrives_app_detail_id' => $app_detail_id,
                             ])->execute();
 
