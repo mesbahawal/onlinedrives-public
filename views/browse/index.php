@@ -2186,10 +2186,13 @@ else {
                     // Select field
                         echo '<div class="container-fluid">';
 
-
+                $logged_username =  Yii::$app->user->identity->username;
+                $space_guid = $_GET['cguid'];
                 $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
                     FROM `space` s, `user` u, `space_membership` sm
-                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`AND u.`username` = \'mesbah\'', [
+                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`
+                    AND u.`username` = :username AND s.`guid` <> :guid', [
+                    ':username' => $logged_username, ':guid' => $space_guid,
                 ])->queryAll();
 
                 if (count($sql) > 0) {
