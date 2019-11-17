@@ -2643,7 +2643,7 @@ else {
                                             'options' => ['class' => 'form-horizontal'],
                                         ]);
                                             echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
-                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
+                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => urldecode($path)));
                                             echo Html::ActiveHiddenInput($model_sciebo_delete, 'dk', array('value' => $drive_key));
 
                                             echo '<div class="form-group">
