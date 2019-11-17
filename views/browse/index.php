@@ -341,7 +341,7 @@ if ($username <> '' && !isset($_GET['op'])) {
     // Load Sciebo entries
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-        WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared<>"D"', [
+        WHERE d.space_id = :space_id AND d.drive_name = :drive_name', [
         ':space_id' => $space_id,
         ':drive_name' => 'sciebo',
     ])->queryAll();
@@ -379,7 +379,7 @@ if ($username <> '' && !isset($_GET['op'])) {
     // Load Google Drive entries
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-        WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared<>"D"', [
+        WHERE d.space_id = :space_id AND d.drive_name = :drive_name', [
             ':space_id' => $space_id,
             ':drive_name' => 'gd',
         ])->queryAll();
@@ -507,7 +507,6 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
             if ($do == 'create_folder') {
                 // http://sabre.io/dav/davclient
                 $db_app_user_id = '';
-                $permission_pos = false;
                 if ($get_drive_key != '') {
                     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
                         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
@@ -519,86 +518,30 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     foreach ($sql as $value) {
                         $db_app_user_id = $value['app_user_id'];
                         $db_drive_key = $value['drive_key'];
-                        $db_permission = $value['permission'];
-                        $permission_pos = strpos($db_permission, 'U'); // 'U' is for both Upload file and Create Folder
                     }
                 }
+                if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
+                    $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
+                }
 
-                //echo "db_app_user_id =".$db_app_user_id."-- app_user_id=".$app_user_id."-- get drive key=".$get_drive_key."-- owner=".$user_id."-- logged-in user=".$username; die();
-                // if get_drive_key='' means in the root folder, then only owner can upload/create, but if get_drive_key has value then check permission from DB.
-                // got an error while create folder, so out-commented the line
-                //if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                //if (($get_drive_key == '' && $user_id == $username) || ($db_app_user_id == $app_user_id && $permission_pos !== false)) {
-
-                //Check flag
-                $check_same_folder = '';
-                $flag_create_folder = 0;
-
-                $sciebo_content = array();
                 $upload_file_content = date('F j, Y, g:i a');
                 $upload_list = str_replace(' ', '%20', $name);
-                $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/' . $app_user_id . '/' . $get_sciebo_path . $upload_list;
+                $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$upload_list;
 
-                //echo "<br>get-dk-$get_drive_key-$db_app_user_id-$app_user_id-dk-$drive_key-dpath-$drive_path-get sciebo path-$get_sciebo_path";
+                $keys = array_keys($sciebo_content);
 
-                if($get_sciebo_path!=''){
-
-                    if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                        $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
+                foreach ($keys as $values) {
+                    if (str_replace($sciebo_path_to_replace, '', $values) === $upload_list)                 {
+                        echo '<br />File already exist! Please rename.'; //TODO No output at the moment?
+                        return false;
                     }
 
-                    $keys = array_keys((array)$sciebo_content);
+                    $response = $sciebo_client->request('MKCOL', $path_to_dir); // For creating folder only
+                    //$response = $client->request('MKCOL', $path_to_dir, $upload_file_content); // For creating files
 
-                    foreach ($keys as $values) {
-
-                        echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
-
-                        $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
-
-                        $new_folder_path = $get_sciebo_path.$upload_list.'/';
-
-                        //echo '--new folder path='.$new_folder_path;
-
-                        if ($existing_folder_path === $new_folder_path)                 {
-                            //echo '<br />File already exist! Please rename.'; //TODO No output at the moment?
-                            //return false;
-                            //next($arr_app_user_detail);
-                            $error_msg = Yii::t('OnlinedrivesModule.new', 'File already exist! Please rename.');
-                            $check_same_folder = 'y';
-                            continue;
-                        }
-
-                        $check_same_folder .= $check_same_folder;
-
-                    }
-                    if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-
-                        $flag_same_folder = strpos($check_same_folder,'y');
-
-                        //echo "<br>checksome=".$check_same_folder;
-
-                        if(($user_id= 'mesbah' || $permission_pos!==false) && $flag_same_folder === false)
-                        {
-                            //echo "<br>--I am creating folder".$path_to_dir;
-
-                            $response = $sciebo_client->request('MKCOL', $path_to_dir); // For creating folder only
-
-                            $check_same_folder = '';
-                            // Success msg
-                            $success_msg = Yii::t('OnlinedrivesModule.new', 'Ordner wurde erfolgreich in Sciebo erstellt.');
-                        }
-                        else {
-                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
-                        }
-                    }
-                    $check_same_folder = '';
+                    // Success msg
+                    $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Sciebo.');
                 }
-                else{
-                    echo "handle for landing page. dpath=".$drive_path;
-                }
-
-
-
             }
             elseif ($do == 'create_file') {
                 // Check for correct type
@@ -613,7 +556,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     $response = $sciebo_client->request('PUT', $path_to_dir, $content);
 
                     // Success msg
-                    $success_msg = Yii::t('OnlinedrivesModule.new', 'Datei wurde erfolgreich in Sciebo erstellt.');
+                    $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Sciebo.');
                 }
             }
         }
@@ -659,7 +602,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                 $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
 
                 // Success msg
-                $success_msg = Yii::t('OnlinedrivesModule.new', 'Ordner wurde erfolgreich in Google Drive erstellt.');
+                $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Google Drive.');
             }
             elseif ($do == 'create_file') {
                 // https://stackoverflow.com/questions/26919709/google-drive-php-api-insert-file-to-drive
@@ -686,7 +629,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
 
                     // Success msg
-                    $success_msg = Yii::t('OnlinedrivesModule.new', 'Datei wurde erfolgreich in Google Drive erstellt.');
+                    $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Google Drive.');
                 }
             }
         }
@@ -1168,7 +1111,7 @@ $form_login = ActiveForm::begin([
 
 <!-- Cross icon (login menu) -->
 <img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="<?php echo Yii::t('OnlinedrivesModule.new', 'Close'); ?>"
-    style="z-index: 1; position:absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
+    style="position:absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
     onclick="
         getElementById('login_menu').style.display = 'none';
         getElementById('select_sciebo_login').src = 'protected/modules/onlinedrives/resources/sciebo_gray50.png';
@@ -1890,7 +1833,7 @@ if ($count_gd_files > 0) {
 if ($success_msg != '') {
     echo '<div id="success_msg" class="infbox green">'.$success_msg.'</div>';
 }
-if ($error_msg != '') {
+elseif ($error_msg != '') {
     echo '<div id="error_msg" class="infbox red">'.$error_msg.'</div>';
 }
 
@@ -1976,8 +1919,8 @@ else {
         </th>
         <!-- 6 Info, only for development -->
         <!-- <th></th> -->
-        <!-- 6 Service icon -->
-        <th onclick="change_order_icon('service', 6, 'T');">
+        <!-- 7 Service icon -->
+        <th onclick="change_order_icon('service', 7, 'T');">
             <span class="rel" style="cursor: pointer;">
                 Service
                 <span id="col_service"></span>
@@ -2054,27 +1997,27 @@ else {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunden', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24) {
                     $diff = floor($diff / (60 * 60));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 hour} other{# hours}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 7) {
                     $diff = floor($diff / (60 * 60 * 24));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 day} other{# days}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 31) {
                     $diff = floor($diff / (60 * 60 * 24 * 7));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 week} other{# weeks}} ago', ['diff' => $diff]);
                 }
                 else {
                     $diff = floor($diff / (60 * 60 * 24 * 31));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 month} other{# months}} ago', ['diff' => $diff]);
                 }
 
                 // Exact modified time
@@ -2163,50 +2106,13 @@ else {
                     */
                     // Output service icon (folders)
                     '<td>
-                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
+                        <img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" />
                     </td>'.
                     // Output open link (folders)
-                        // TODO: Space Sharing
-                        // Query: SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `user` u, `space_membership` sm WHERE s.`id`=sm.`space_id` AND u.`id`=sm.`user_id`AND u.`username`='mesbah';
-
-
-                        '<td style="position: relative;">
-                        <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
-                            <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
+                    '<td>
+                        <a href="'.$web_view_link.'" target="_blank">
+                            <span class="glyphicon glyphicon-new-window" style="font-size: 20px;"></span>
                         </a>
-
-                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">'.
-                                // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
-                                    style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
-                                    onclick="
-                                        getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';
-                                " />';
-
-                    // Select field
-                        echo '<div class="container-fluid">';
-
-
-                $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
-                    FROM `space` s, `user` u, `space_membership` sm
-                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`AND u.`username` = \'mesbah\'', [
-                ])->queryAll();
-
-                if (count($sql) > 0) {
-                    foreach ($sql as $value) {
-                        $share_id = $value['id'];
-                        $share_name = $value['name'];
-                        $share_guid = $value['guid'];
-
-                        echo '<div class="row" style="border: 1px solid #0a0a0a;" onmouseover="this.style.background=\'white\';" onmouseout="this.style.background=\'#eee\';">
-                                      <a href="#" class="more_a" >
-                                        <div class="col-sm-10">'.$share_name.'</div>
-                                        </a>
-                                      </div>';
-                    }
-                }
-
-                            echo '</div>
                     </td>'.
                     // Output more options icon (folders)
                     '<td style="position: relative; padding: 5px;">';
@@ -2280,12 +2186,11 @@ else {
                                         ]);
 
                                         echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
-                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => urldecode($path)));
+                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $path));
                                         echo Html::ActiveHiddenInput($model_sciebo_delete, 'dk', array('value' => $drive_key));
 
                                         echo '<div class="form-group">
-                                            <div class="col-lg-offset-1 col-lg-5 more_del_confirm">';
-                                                echo 'Deleting here will also remove from Sciebo/Google Drive!';
+                                            <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
                                                 echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), [
                                                     'class' => 'btn-danger',
                                                 ]);
@@ -2382,27 +2287,27 @@ else {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24) {
                     $diff = floor($diff / (60 * 60));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 hour} other{# hours}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 7) {
                     $diff = floor($diff / (60 * 60 * 24));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 day} other{# days}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 31) {
                     $diff = floor($diff / (60 * 60 * 24 * 7));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 week} other{# weeks}} ago', ['diff' => $diff]);
                 }
                 else {
                     $diff = floor($diff / (60 * 60 * 24 * 31));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 month} other{# months}} ago', ['diff' => $diff]);
                 }
 
                 // Exact modified time
@@ -2509,13 +2414,8 @@ else {
                         if ($fav <> 0) { echo ' <span class="glyphicon glyphicon-star fav_brown"></span>'; }
                     echo '</td>
                     <td style="padding: 5px;">
-                        <a href="'.$download_link.'" target="_blank">'.$name.'</a> ';
-                        if ($download_link != '') {
-                            echo '<a href="'.$download_link.'" target="_blank">
-                                        <span class="glyphicon glyphicon-download-alt" style="font-size: 12px;"></span>
-                                    </a>';
-                        }
-                    echo '</td>
+                        <a href="'.$web_view_link.'" target="_blank">'.$name.'</a>
+                    </td>
                     <td class="shownone">'.$modified_time.'</td>
                     <td style="padding: 5px;">
                         <span title="'.$time_title.'">'.$modified_time_txt.'</span>
@@ -2562,13 +2462,13 @@ else {
                     */
                     // Output service icon (files)
                     '<td>
-                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
+                        <img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" />
                     </td>'.
                     // Output download link (only in files)
                     '<td>';
                         if ($download_link != '') {
                             echo '<a href="'.$download_link.'" target="_blank">
-                                <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
+                                <span class="glyphicon glyphicon-download-alt" style="font-size: 20px;"></span>
                             </a>';
                         }
                     echo '</td>'.

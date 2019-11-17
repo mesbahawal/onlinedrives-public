@@ -85,7 +85,7 @@ class BrowseController extends BaseController
 
                 if (count($sql) > 0) {
                     // Error message
-                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Already App User Exit!');
+                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Already app user exit.');
                 }
                 else {
                     $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
@@ -183,7 +183,7 @@ class BrowseController extends BaseController
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfuly.');
                     }
                     else{
-                        $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Google Client Add Failed.');
+                        $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Google client add failed.');
                     }
                 }
             }
@@ -249,13 +249,13 @@ class BrowseController extends BaseController
                                     unlink($path);
 
                                     // Success msg
-                                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Datei wurde erfolgreich in Sciebo hochgeladen.');
+                                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'File is successfuly uploaded in Sciebo.');
                                 }
                             }
                         }
                         else {
                             // Error msg
-                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Die Berechtigung für diesen Ordner fehlt.');
+                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'The permission for this folder is missing.');
                         }
                     }
                     elseif ($cloud == 'gd') {
@@ -264,7 +264,7 @@ class BrowseController extends BaseController
                 }
                 else {
                     // Error msg
-                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Datei wurde nicht hochgeladen, weil die Berechtigung dazu fehlt.');
+                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'File was not uploaded because the permission is missing.');
                 }
             }
         }
@@ -355,7 +355,7 @@ class BrowseController extends BaseController
                         //echo $delete_file_id.'-- has to be deleted of-'.$path_to_dir;
 
                         // Success message
-                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Sciebo war erfolgreich.');
+                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Deletion from Sciebo was successful.');
                     }
                 }
                 // Google Drive delete function
@@ -368,7 +368,7 @@ class BrowseController extends BaseController
                     $gd_service->files->delete($delete_file_id);
 
                     // Success message
-                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Löschung aus Google Drive war erfolgreich.');
+                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Deletion from Google Drive was successful.');
                 }
                 else {
                     $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
