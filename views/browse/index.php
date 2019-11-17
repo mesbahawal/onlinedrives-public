@@ -585,7 +585,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
 
                             $check_same_folder = '';
                             // Success msg
-                            $success_msg = Yii::t('OnlinedrivesModule.new', 'Ordner wurde erfolgreich in Sciebo erstellt.');
+                            $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Sciebo.');
                         }
                         else {
                             $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
@@ -613,7 +613,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     $response = $sciebo_client->request('PUT', $path_to_dir, $content);
 
                     // Success msg
-                    $success_msg = Yii::t('OnlinedrivesModule.new', 'Datei wurde erfolgreich in Sciebo erstellt.');
+                    $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Sciebo.');
                 }
             }
         }
@@ -659,7 +659,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                 $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
 
                 // Success msg
-                $success_msg = Yii::t('OnlinedrivesModule.new', 'Ordner wurde erfolgreich in Google Drive erstellt.');
+                $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Google Drive.');
             }
             elseif ($do == 'create_file') {
                 // https://stackoverflow.com/questions/26919709/google-drive-php-api-insert-file-to-drive
@@ -686,7 +686,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
 
                     // Success msg
-                    $success_msg = Yii::t('OnlinedrivesModule.new', 'Datei wurde erfolgreich in Google Drive erstellt.');
+                    $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Google Drive.');
                 }
             }
         }
@@ -2054,27 +2054,27 @@ else {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunden', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24) {
                     $diff = floor($diff / (60 * 60));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 hour} other{# hours}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 7) {
                     $diff = floor($diff / (60 * 60 * 24));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 day} other{# days}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 31) {
                     $diff = floor($diff / (60 * 60 * 24 * 7));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 week} other{# weeks}} ago', ['diff' => $diff]);
                 }
                 else {
                     $diff = floor($diff / (60 * 60 * 24 * 31));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 month} other{# months}} ago', ['diff' => $diff]);
                 }
 
                 // Exact modified time
@@ -2382,27 +2382,27 @@ else {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24) {
                     $diff = floor($diff / (60 * 60));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 hour} other{# hours}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 7) {
                     $diff = floor($diff / (60 * 60 * 24));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 day} other{# days}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24 * 31) {
                     $diff = floor($diff / (60 * 60 * 24 * 7));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 week} other{# weeks}} ago', ['diff' => $diff]);
                 }
                 else {
                     $diff = floor($diff / (60 * 60 * 24 * 31));
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 month} other{# months}} ago', ['diff' => $diff]);
                 }
 
                 // Exact modified time

@@ -812,27 +812,27 @@ if ($app_user_id <> '') {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunden', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 3600) { // 60s * 60m
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 86400) { // 60s * 60m * 24h
                     $diff = floor($diff / 3600); // 60s * 60m
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 hour} other{# hours}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 604800) { // 60s * 60m * 24h * 7d
                     $diff = floor($diff / 86400); // 60s * 60m * 24h
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 day} other{# days}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 2678400) { // 60s * 60m * 24h * 31d
                     $diff = floor($diff / 604800); // 60s * 60m * 24h * 7d
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 week} other{# weeks}} ago', ['diff' => $diff]);
                 }
                 else {
                     $diff = floor($diff / 2678400); // 60s * 60m * 24h * 31d
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 month} other{# months}} ago', ['diff' => $diff]);
                 }
 
                 // Exact modified time
@@ -1116,27 +1116,27 @@ if ($app_user_id <> '') {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Sekunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 3600) { // 60s * 60m
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Minute', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 86400) { // 60s * 60m * 24h
                     $diff = floor($diff / 3600); // 60s * 60m
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Stunde', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 hour} other{# hours}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 604800) { // 60s * 60m * 24h * 7d
                     $diff = floor($diff / 86400); // 60s * 60m * 24h
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Tag', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 day} other{# days}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 2678400) { // 60s * 60m * 24h * 31d
                     $diff = floor($diff / 604800); // 60s * 60m * 24h * 7d
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Woche', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 week} other{# weeks}} ago', ['diff' => $diff]);
                 }
                 else {
                     $diff = floor($diff / 2678400); // 60s * 60m * 24h * 31d
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'vor {diff} Monat', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 month} other{# months}} ago', ['diff' => $diff]);
                 }
 
                 // Exact modified time
