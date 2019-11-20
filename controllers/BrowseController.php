@@ -329,14 +329,14 @@ class BrowseController extends BaseController
 
                     // http://sabre.io/dav/davclient
                     // Will do a DELETE request with a condition
-                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$delete_file_id;
+                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.urldecode(urldecode($delete_file_id));
 
                     $client = $model_gd_delete->getScieboClient($app_user_id,$app_password);
 
                     // Rework
                     $path_to_dir = str_replace(' ', '%20', $path_to_dir);
 
-                    if ($client->request('DELETE', $path_to_dir, null)) {
+                    if ($client->request('DELETE', urldecode($path_to_dir), null)) {
 
                         $search_file_id = $delete_file_id;
 

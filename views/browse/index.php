@@ -735,7 +735,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
 
                     foreach ($keys as $values) {
 
-                        echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
+                       // echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
 
                         $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
 
