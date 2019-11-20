@@ -362,6 +362,8 @@ if ($username <> '' && !isset($_GET['op'])) {
             $arr_app_user_detail[$k]['app_password'] = $app_password;
             $arr_app_user_detail[$k]['drive_key'] = $drive_key;
             $arr_app_user_detail[$k]['user_id'] = $user_id;
+            $arr_app_user_detail[$k]['uid'] = $uid;
+            $arr_app_user_detail[$k]['pid'] = $pid;
             $k++;
         }
         else {
@@ -400,6 +402,8 @@ if ($username <> '' && !isset($_GET['op'])) {
             $arr_app_user_detail[$k]['app_password'] = $app_password;
             $arr_app_user_detail[$k]['drive_key'] = $drive_key;
             $arr_app_user_detail[$k]['user_id'] = $user_id;
+            $arr_app_user_detail[$k]['uid'] = $uid;
+            $arr_app_user_detail[$k]['pid'] = $pid;
             $k++;
         }
         else {
@@ -432,12 +436,192 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['app_detail_id'])) 
                 ':app_detail_id' => $app_detail_id,
             ])->execute();
 
+            $sql1 = $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                SET share_status=\'D\',update_date = CURRENT_TIMESTAMP
+                WHERE onlinedrives_app_detail_id=:app_detail_id AND share_status=\'Y\'', [
+                ':app_detail_id' => $app_detail_id,
+            ])->execute();
+
             $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
 
-            (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+            if($sql && $sql1){
+                (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+            }
+            else{
+                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
+            }
         }
         else {
-            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Un-authorized Action!');
+            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Un-authorized action.');
+        }
+    }
+}
+elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['space_id']) {
+    if ($_GET['op'] == 'share_to' && $_GET['dk'] != '' &&  $_GET['space_id'] != '') {
+
+        $dk = $_GET['dk'];
+
+        if($_GET['sciebo_path'] != ''){
+            $drive_path = $_GET['sciebo_path'];
+            $drive_name = 'sciebo';
+        }
+        elseif($_GET['gd_folder_id'] != ''){
+            $drive_path = $_GET['gd_folder_id'];
+            $drive_name = 'gd';
+        }
+        else{
+            $drive_path = '';
+            $drive_name = '';
+        }
+
+        // Before share check all data;
+
+        // Get data of Space guid
+
+        $from_guid = $_GET['cguid'];
+
+        $to_space_id = $_GET['space_id'];
+
+        $to_space_guid = '';
+
+        $sql_space_data = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
+                    FROM `space` s, `user` u, `space_membership` sm
+                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`
+                    AND u.`username` = :username AND s.`guid` <> :guid
+                    AND s.`id`=:space_id', [
+            ':username' => $username, ':guid' => $from_guid, ':space_id' => $to_space_id,
+        ])->queryAll();
+
+        foreach ($sql_space_data as $value) {
+            $to_space_guid = $value['guid'];
+        }
+
+        // Get data for online drives according to dk
+        $sql_onlinedrives_data = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p 
+                ON d.id = p.onlinedrives_app_detail_id
+                WHERE drive_key = :drive_key
+                AND user_id=:user_id
+                AND d.`if_shared`<>\'D\'
+                AND p.`share_status`=\'Y\';', [
+            ':drive_key' => $dk,
+            ':user_id' => $username,
+        ])->queryAll();
+
+        if (count($sql_onlinedrives_data) > 0 && $drive_path!='' && $to_space_guid!='') {
+
+            $existing_app_user_id = '';
+            $transfer_acc_if_shared = '';
+            $permission_items = '';
+            $new_app_user_id = '';
+            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+
+            // Get data
+            foreach ($sql_onlinedrives_data as $value) {
+                $permission_items = $value['permission'];
+                $app_user_id = $value['app_user_id'];
+                $app_password = $value['app_password'];
+                $uid = $value['uid'];
+                $pid = $value['pid'];
+                $if_shared = $value['if_shared'];
+                $share_status = $value['share_status'];
+                $user_id = $value['user_id'];
+                $email = $value['email'];
+            }
+
+            // Check if already account exist? if not then insert
+            $sql_check_account = $db->createCommand('SELECT * FROM onlinedrives_app_detail 
+                            WHERE app_user_id = :app_user_id AND space_id = :space_id AND if_shared <> \'D\'
+                            AND user_id=:user_id AND drive_name = :drive_name ', [
+                ':space_id' => $to_space_guid,
+                ':drive_name' => $drive_name,
+                ':app_user_id' => $app_user_id,
+                ':user_id' => $username,
+            ])->queryAll();
+
+            foreach ($sql_check_account as $value) {
+                $existing_app_user_id = $value['id'];
+                $transfer_acc_if_shared = $value['if_shared'];
+            }
+
+
+            if(count($sql_check_account)==0){
+                // Insert user account detail
+                $sql_add_user = $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
+                                    VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date, :if_shared)', [
+                    ':space_id' => $to_space_guid,
+                    ':user_id' => $username,
+                    ':email' => $email,
+                    ':drive_name' => $drive_name,
+                    ':app_user_id' => $app_user_id,
+                    ':app_password' => $app_password,
+                    ':create_date' => time(),
+                    ':if_shared' => 'Y',
+                ])->execute();
+            }
+            elseif($transfer_acc_if_shared=='N'){
+                $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = "Y" WHERE id = :existing_app_detail_id', [
+                    ':existing_app_detail_id' => $existing_app_user_id,
+                ])->execute();
+            }
+
+
+            // Insert drive path detail
+            if(count($sql_check_account)>0 || $sql_add_user){
+                // Get new app detail id
+                $sql_new_app_user = $db->createCommand('SELECT * FROM onlinedrives_app_detail 
+                                        WHERE app_user_id = :app_user_id AND space_id = :space_id AND drive_name = :drive_name 
+                                        AND user_id = :username AND if_shared =\'Y\'', [
+                    ':app_user_id' => $app_user_id, ':space_id' => $to_space_guid,
+                    ':drive_name' => $drive_name, ':username' => $username,
+                ])->queryAll();
+
+                foreach ($sql_new_app_user as $value) {
+                    $new_app_user_id = $value['id'];
+                }
+
+                if($new_app_user_id!=''){
+
+                    // Check if already shared same content?
+                    $sql_check_drive_path = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail 
+                            WHERE `onlinedrives_app_detail_id`=:new_app_user_id AND share_status=\'Y\' AND drive_path = :drive_path', [
+                        ':new_app_user_id' => $new_app_user_id,
+                        ':drive_path' => $drive_path,
+                    ])->queryAll();
+
+                    if(count($sql_check_drive_path)>0){
+                        $error_msg= Yii::t('OnlinedrivesModule.new', 'Content already exist in the space.');
+                        (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+                    }
+                    else{
+                        $sql_add_drive_path = $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
+                                    (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
+                                    VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
+                            ':drive_path' => $drive_path,
+                            ':permission' => $permission_items,
+                            ':onlinedrives_app_detail_id' => $new_app_user_id,
+                            ':drive_key' => md5(microtime()),
+                        ])->execute();
+
+                        if($sql_add_user && $sql_add_drive_path){
+                            $success_msg = Yii::t('OnlinedrivesModule.new', 'Content has been shared successfully.');
+                            (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+                        }
+                        else{
+                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
+                        }
+                    }
+                }
+                else{
+                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation. Found no registered user account.');
+                }
+            }
+            else{
+                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation. Failed to register user account.');
+            }
+        }
+        else {
+            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Un-authorized action.');
         }
     }
 }
@@ -1033,10 +1217,16 @@ $arr_app_user_admin = array();
 $adm = 0;
 
 if ($username <> '') {
+
+    /* echo "SELECT d.id AS uid, p.id AS pid, d.*, p.*
+        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+        WHERE d.space_id = '$space_id' AND d.user_id = '$username'
+        GROUP BY d.app_user_id,d.`if_shared`"; */
+
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
         WHERE d.space_id = :space_id AND d.user_id = :user_id
-        GROUP BY d.app_user_id', [
+        GROUP BY d.app_user_id, d.`if_shared`', [
         ':space_id' => $space_id,
         ':user_id' => $username,
     ])->queryAll();
@@ -2201,8 +2391,16 @@ else {
                         $share_name = $value['name'];
                         $share_guid = $value['guid'];
 
+                        if ($cloud == 'sciebo') {
+                            $path = urlencode($path);
+                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path.'&dk='.$drive_key;
+                        }
+                        elseif ($cloud == 'gd') {
+                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                        }
+
                         echo '<div class="row" style="border: 1px solid #0a0a0a;" onmouseover="this.style.background=\'white\';" onmouseout="this.style.background=\'#eee\';">
-                                      <a href="#" class="more_a" >
+                                      <a href="'.$url_share_to_space.'" class="more_a" >
                                         <div class="col-sm-10">'.$share_name.'</div>
                                         </a>
                                       </div>';
@@ -2311,6 +2509,7 @@ else {
 
                                         echo '<div class="form-group">
                                             <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
+                                                echo 'Deleting here will also remove from Sciebo/Google Drive!';
                                                 echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), [
                                                     'class' => 'btn-danger',
                                                 ]);
@@ -2651,6 +2850,7 @@ else {
 
                                             echo '<div class="form-group">
                                                 <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
+                                                    echo 'Deleting here will also remove from Sciebo/Google Drive!';
                                                     echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
                                                 echo '</div>
                                             </div>';
@@ -2671,6 +2871,7 @@ else {
 
                                             echo '<div class="form-group">
                                                 <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
+                                                    echo 'Deleting here will also remove from Sciebo/Google Drive!';
                                                     echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
                                                 echo '</div>
                                             </div>';

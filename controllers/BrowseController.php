@@ -79,8 +79,9 @@ class BrowseController extends BaseController
 
                 // Check path is already exist in share
 
-                $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE app_user_id = :app_user_id AND if_shared <> \'D\'', [
-                    ':app_user_id' => $app_user_id,
+                $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail 
+                            WHERE app_user_id = :app_user_id AND space_id = :space_id AND if_shared <> \'D\'', [
+                            ':app_user_id' => $app_user_id, ':space_id' => $space_id,
                 ])->queryAll();
 
                 if (count($sql) > 0) {
@@ -98,10 +99,9 @@ class BrowseController extends BaseController
                         ':app_password' => $app_password,
                         ':create_date' => time(),
                     ])->execute();
+                    // Success message
+                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
                 }
-
-                // Success message
-                $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
             }
             else {
                 $error = '';
@@ -346,7 +346,8 @@ class BrowseController extends BaseController
 
                         echo $sql_qry;*/
 
-                        $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
+                        $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
                                                 WHERE drive_path=:drive_path
                                                 AND share_status=\'Y\' ', [
                             ':drive_path' => $search_file_id,
@@ -532,7 +533,8 @@ class BrowseController extends BaseController
                                     $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
                                                         SET `drive_path`=:drive_path, 
                                                         `permission`=:permission, 
-                                                        `onlinedrives_app_detail_id`=:onlinedrives_app_detail_id
+                                                        `onlinedrives_app_detail_id`=:onlinedrives_app_detail_id,
+                                                        `update_date` = CURRENT_TIMESTAMP
                                                         WHERE id = :drive_path_detail_id', [
                                         ':drive_path_detail_id' => $drive_path_detail_id,
                                         ':drive_path' => $drive_path,
@@ -625,7 +627,8 @@ class BrowseController extends BaseController
 
                             echo $qry;*/
 
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
                                                 WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
                                                 AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
                                                 AND share_status=\'Y\' '.$id_not_in_str, [
@@ -650,7 +653,8 @@ class BrowseController extends BaseController
 
                             echo $qry;*/
 
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
                                                 WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
                                                 AND share_status=\'Y\' '.$qry_drive_path.$id_not_in_str, [
                                 ':onlinedrives_app_detail_id' => $app_detail_id,
