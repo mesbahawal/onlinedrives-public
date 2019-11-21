@@ -586,7 +586,7 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
                     $sql_check_drive_path = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail 
                             WHERE `onlinedrives_app_detail_id`=:new_app_user_id AND share_status=\'Y\' AND drive_path = :drive_path', [
                         ':new_app_user_id' => $new_app_user_id,
-                        ':drive_path' => $drive_path,
+                        ':drive_path' => urldecode(urldecode($drive_path)),
                     ])->queryAll();
 
                     if(count($sql_check_drive_path)>0){
@@ -597,13 +597,13 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
                         $sql_add_drive_path = $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
                                     (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
                                     VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
-                            ':drive_path' => $drive_path,
+                            ':drive_path' => urldecode(urldecode($drive_path)),
                             ':permission' => $permission_items,
                             ':onlinedrives_app_detail_id' => $new_app_user_id,
                             ':drive_key' => md5(microtime()),
                         ])->execute();
 
-                        if($sql_add_user && $sql_add_drive_path){
+                        if($sql_add_drive_path){
                             $success_msg = Yii::t('OnlinedrivesModule.new', 'Content has been shared successfully.');
                             (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
                         }
@@ -2013,7 +2013,8 @@ if ($count_gd_files > 0) {
                 $temp_min = substr($temp, 14, 2);
                 $temp_s = substr($temp, 17, 2);
                 $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
-                $modified_time += 7200; // 60m * 60m * 2h, European time zone
+                //$modified_time += 7200; // 60m * 60m * 2h, European time zone
+                //$modified_time = $temp;
 
                 // Folder list, file list
                 if ($type == 'folder') {
@@ -2248,7 +2249,8 @@ else {
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 minute} other{# minutes}} ago', ['diff' => $diff]);
+                    $modified_time_txt = $modified_time;
                 }
                 elseif ($diff < 60 * 60 * 24) {
                     $diff = floor($diff / (60 * 60));
@@ -2588,7 +2590,7 @@ else {
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 }minute other{# minutes}} ago', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 minute} other{# minutes}} ago', ['diff' => $diff]);
                 }
                 elseif ($diff < 60 * 60 * 24) {
                     $diff = floor($diff / (60 * 60));
