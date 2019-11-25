@@ -514,7 +514,7 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
             $transfer_acc_if_shared = '';
             $permission_items = '';
             $new_app_user_id = '';
-            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$to_space_guid;
 
             // Get data
             foreach ($sql_onlinedrives_data as $value) {
@@ -940,6 +940,8 @@ if ($count_sciebo_files > 0) {
             //$download_link = $home_url.'/protected/modules/onlinedrives/views/browse/downloader.php?file='.urlencode($path);
             $download_link = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Fdownloader&'.$guid.'&dk='.$drive_key.'&file='.urlencode($path);
 
+            $unshare_file_path = urlencode($path);
+
             // Mime type
             // Type (folder or file)
             // Open link
@@ -1019,6 +1021,7 @@ if ($count_sciebo_files > 0) {
                     $all_folders[$afo]['web_content_link'] = '';          // Sciebo hasn't?
                     $all_folders[$afo]['web_view_link'] = $open_link;
                     $all_folders[$afo]['download_link'] = $download_link;
+                    $all_folders[$afo]['unshare_file_path'] = $unshare_file_path;
                     $all_folders[$afo]['parents'] = '';                   // TODO Sciebo hasn't?
                     $all_folders[$afo]['fav'] = $fav;
                     $all_folders[$afo]['file_owner'] = $file_owner;
@@ -1043,6 +1046,7 @@ if ($count_sciebo_files > 0) {
                     $all_files[$afi]['web_content_link'] = '';          // Sciebo hasn't?
                     $all_files[$afi]['web_view_link'] = $open_link;
                     $all_files[$afi]['download_link'] = $download_link;
+                    $all_files[$afi]['unshare_file_path'] = $unshare_file_path;
                     $all_files[$afi]['parents'] = '';                   // TODO Sciebo hasn't?
                     $all_files[$afi]['fav'] = $fav;
                     $all_files[$afi]['file_owner'] = $file_owner;
@@ -2055,6 +2059,7 @@ if ($count_gd_files > 0) {
                     $all_files[$afi]['web_content_link'] = $file->getWebContentLink(); // Only Google Drive at the moment
                     $all_files[$afi]['web_view_link'] = $file->getWebViewLink();       // Only Google Drive at the moment
                     $all_files[$afi]['download_link'] = '';
+                    $all_files[$afi]['unshare_file_path'] = '';
                     $all_files[$afi]['parents'] = $file->getParents();                 // TODO Only Google Drive at the moment!
                     $all_files[$afi]['fav'] = 0;
                     $all_files[$afi]['file_owner'] = '';
@@ -2357,11 +2362,7 @@ else {
                     '<td>
                         <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
                     </td>'.
-                    // Output open link (folders)
-                        // TODO: Space Sharing
-                        // Query: SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `user` u, `space_membership` sm WHERE s.`id`=sm.`space_id` AND u.`id`=sm.`user_id`AND u.`username`='mesbah';
-
-
+                    // Output space sharing (folders)
                         '<td style="position: relative;">
                         <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
                             <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
@@ -2460,69 +2461,61 @@ else {
                                 '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
                                     <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
                                     <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
-                                </a>'.
+                                </a>';
 
-                                // Delete function
-                                '<a href="#" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Delete').'" title="'.Yii::t('OnlinedrivesModule.new', 'Delete').'"
-                                    onclick="
-                                        getElementById(\'delete'.$no.'\').classList.toggle(\'showblock\');
+                            // Share settings link (Folders)
 
-                                        return false;
-                                ">
-                                    <span class="glyphicon glyphicon-floppy-remove" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Delete').'</span>
-                                </a>
-                                <div id="delete'.$no.'" class="shownone">';
-                                    // Sciebo delete function
-                                    if ($cloud == 'sciebo') {
-                                        $model_sciebo_delete = new DeleteFileForm();
-                                        $form2 = ActiveForm::begin([
-                                            'id' => 'sciebo_delete_file',
-                                            'method' => 'post',
-                                            'options' => ['class' => 'form-horizontal'],
-                                        ]);
+                            $share_setting_url = ''; $app_detail_id_unshare =''; $db_drive_path='';
 
-                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
-                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => urldecode($path)));
-                                        echo Html::ActiveHiddenInput($model_sciebo_delete, 'dk', array('value' => $drive_key));
+                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*,p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
+                                AND p.`drive_key` = :dk
+                                AND d.`user_id` = :username
+                                AND p.`share_status`=\'Y\'
+                                AND d.if_shared=\'Y\'', [
+                                ':username' => $logged_username, ':dk' => $drive_key,
+                            ])->queryAll();
 
-                                        echo '<div class="form-group">
-                                            <div class="col-lg-offset-1 col-lg-5 more_del_confirm">';
-                                                echo 'Deleting here will also remove from Sciebo/Google Drive!';
-                                                echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), [
-                                                    'class' => 'btn-danger',
-                                                ]);
-                                            echo '</div>
-                                        </div>';
+                            if (count($sql) > 0) {
+                                foreach ($sql as $value) {
+                                    $app_detail_id_unshare = $value['u_id'];
+                                    $db_drive_path = $value['drive_path'];
+                                }
 
-                                        ActiveForm::end();
-                                    }
-                                    // Google Drive delete function
-                                    elseif ($cloud == 'gd' && $parents[0] != '') {
-                                        $model_gd_delete = new DeleteFileForm();
-                                        $form2 = ActiveForm::begin([
-                                            'id' => 'gd_delete_file',
-                                            'method' => 'post',
-                                            'options' => ['class' => 'form-horizontal'],
-                                        ]);
+                                if ($cloud == 'sciebo') {
+                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
+                                    $path = urldecode($path);
 
-                                        echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
-                                        echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
+                                    $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
+                                    $pos = strrpos($parent_path, '/');
+                                    $parent_path = substr($parent_path, 0, $pos);
 
-                                        echo '<div class="form-group">
-                                            <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                echo 'Deleting here will also remove from Sciebo/Google Drive!';
-                                                echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), [
-                                                    'class' => 'btn-danger',
-                                                ]);
-                                            echo '</div>
-                                        </div>';
-
-                                        ActiveForm::end();
+                                    if($parent_path<>''){
+                                        $parent_path .= '/';
                                     }
 
-                                echo '</div>
-                            </div>';
+                                    //echo "-$parent_path-";
+
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path='.urlencode($parent_path);
+                                }
+                                elseif ($cloud == 'gd') {
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                }
+
+                               if(urldecode($path)==$db_drive_path){
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
+                                    <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
+                                </a>';
+
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
+                                    <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
+                                </a>';
+                                }
+                            }
+
+                            echo '</div>';
                         }
                     echo '</td>
                 </tr>';
@@ -2545,6 +2538,7 @@ else {
             $web_content_link = $all_files[$i]['web_content_link'];
             $web_view_link = $all_files[$i]['web_view_link'];
             $download_link = $all_files[$i]['download_link'];
+            $unshare_file_path = $all_files[$i]['unshare_file_path'];
             $parents = $all_files[$i]['parents'];
             $fav = $all_files[$i]['fav'];
             $file_owner = $all_files[$i]['file_owner'];
@@ -2768,14 +2762,56 @@ else {
                     '<td>
                         <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
                     </td>'.
-                    // Output download link (only in files)
-                    '<td>';
-                        if ($download_link != '') {
-                            echo '<a href="'.$download_link.'" target="_blank">
-                                <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
-                            </a>';
+                        // Output space sharing (files)
+                        '<td style="position: relative;">
+                        <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
+                            <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
+                        </a>
+
+                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">'.
+                        // Cross icon (more options menu)
+                        '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
+                                    style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
+                                    onclick="
+                                        getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';
+                                " />';
+
+                // Select field
+                echo '<div class="container-fluid">';
+
+                $logged_username =  Yii::$app->user->identity->username;
+                $space_guid = $_GET['cguid'];
+                $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
+                    FROM `space` s, `user` u, `space_membership` sm
+                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`
+                    AND u.`username` = :username AND s.`guid` <> :guid', [
+                    ':username' => $logged_username, ':guid' => $space_guid,
+                ])->queryAll();
+
+                if (count($sql) > 0) {
+                    foreach ($sql as $value) {
+                        $share_id = $value['id'];
+                        $share_name = $value['name'];
+                        $share_guid = $value['guid'];
+
+                        if ($cloud == 'sciebo') {
+                            $path_for_space_sharing = $unshare_file_path;
+                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key;
                         }
-                    echo '</td>'.
+                        elseif ($cloud == 'gd') {
+                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                        }
+
+                        echo '<div class="row" style="border: 1px solid #0a0a0a;" onmouseover="this.style.background=\'white\';" onmouseout="this.style.background=\'#eee\';">
+                                      <a href="'.$url_share_to_space.'" class="more_a" >
+                                        <div class="col-sm-10">'.$share_name.'</div>
+                                        </a>
+                                      </div>';
+                    }
+                }
+
+                echo '</div>
+                    </td>'.
                     // Output more options icon (files)
                     '<td style="position: relative; padding: 5px;">';
 
@@ -2825,64 +2861,60 @@ else {
                                 '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
                                     <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
                                     <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
-                                </a>'.
+                                </a>';
 
-                                // Delete function
-                                '<a href="#" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Delete').'" title="'.Yii::t('OnlinedrivesModule.new', 'Delete').'"
-                                    onclick="
-                                        getElementById(\'delete'.$no.'\').classList.toggle(\'showblock\');
-                                        return false;
-                                    "
-                                >
-                                    <span class="glyphicon glyphicon-floppy-remove" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Delete').'</span>
-                                </a>
-                                <div id="delete'.$no.'" class="shownone">';
-                                    // Sciebo delete function
-                                    if ($cloud == 'sciebo') {
-                                        $model_sciebo_delete = new DeleteFileForm();
-                                        $form2 = ActiveForm::begin([
-                                            'id' => 'gd_delete_file',
-                                            'method' => 'post',
-                                            'options' => ['class' => 'form-horizontal'],
-                                        ]);
-                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
-                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => urldecode($path)));
-                                            echo Html::ActiveHiddenInput($model_sciebo_delete, 'dk', array('value' => $drive_key));
+                            // Share settings link for files
 
-                                            echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                    echo 'Deleting here will also remove from Sciebo/Google Drive!';
-                                                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
-                                                echo '</div>
-                                            </div>';
+                            $share_setting_url = ''; $app_detail_id_unshare =''; $db_drive_path='';
 
-                                        ActiveForm::end();
-                                    }
-                                    // Google Drive delete function
-                                    elseif ($cloud == 'gd' && $parents[0] != '') {
-                                        $model_gd_delete = new DeleteFileForm();
-                                        $form2 = ActiveForm::begin([
-                                            'id' => 'gd_delete_file',
-                                            'method' => 'post',
-                                            'options' => ['class' => 'form-horizontal'],
-                                        ]);
-                                            echo Html::ActiveHiddenInput($model_gd_delete, 'cloud', array('value' => $cloud));
-                                            echo Html::ActiveHiddenInput($model_gd_delete, 'delete_file_id', array('value' => $id));
-                                            echo Html::ActiveHiddenInput($model_gd_delete, 'dk', array('value' => $drive_key));
+                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*,p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
+                                AND p.`drive_key` = :dk
+                                AND d.`user_id` = :username
+                                AND p.`share_status`=\'Y\'
+                                AND d.if_shared=\'Y\'', [
+                                ':username' => $logged_username, ':dk' => $drive_key,
+                            ])->queryAll();
 
-                                            echo '<div class="form-group">
-                                                <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                    echo 'Deleting here will also remove from Sciebo/Google Drive!';
-                                                    echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
-                                                echo '</div>
-                                            </div>';
+                            if (count($sql) > 0) {
+                                foreach ($sql as $value) {
+                                    $app_detail_id_unshare = $value['u_id'];
+                                    $db_drive_path = $value['drive_path'];
+                                }
 
-                                        ActiveForm::end();
+                                if ($cloud == 'sciebo') {
+                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
+                                    $path = $unshare_file_path;
+
+                                    $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
+                                    $pos = strrpos($parent_path, '/');
+                                    $parent_path = substr($parent_path, 0, $pos);
+
+                                    if($parent_path<>''){
+                                        $parent_path .= '/';
                                     }
 
-                                echo '</div>
-                            </div>';
+                                    //echo "-$parent_path-";
+
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path='.urlencode($parent_path);
+                                }
+                                elseif ($cloud == 'gd') {
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                }
+
+                                if(urldecode($unshare_file_path)==$db_drive_path){
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
+                                    <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
+                                </a>';
+
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
+                                    <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
+                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
+                                </a>';
+                                }
+                            }
+                            echo '</div>';
                         }
                     echo '</td>
                 </tr>';
