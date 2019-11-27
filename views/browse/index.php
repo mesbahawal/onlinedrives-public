@@ -2419,14 +2419,32 @@ else {
                          * More options menu (folders)
                          */
                         if ($cloud == 'sciebo' || $cloud == 'gd' && $parents[0] != '') {
+                            // Share settings link (Part 1) (Folders)
+                            $share_setting_url = '';
+                            $app_detail_id_unshare = '';
+                            $db_drive_path = '';
+                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*, p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
+                                AND p.`drive_key` = :dk
+                                AND d.`user_id` = :username
+                                AND p.`share_status` = \'Y\'
+                                AND d.if_shared = \'Y\'', [
+                                ':username' => $logged_username, ':dk' => $drive_key,
+                            ])->queryAll();
+                            $class = '';
+                            if (count($sql) > 0) {
+                                $class = ' more_menu_owner';
+                            }
+
+                            // Output
                             echo '<a href="#" onclick="';
                                 for ($i2 = 0; $i2 < $count_all; $i2++) {
                                     echo 'if (getElementById(\'more'.$i2.'\')) {
-                                        getElementById(\'more'.$i2.'\').className = \'shownone more_menu\';
+                                        getElementById(\'more'.$i2.'\').className = \'shownone\';
                                         getElementById(\'tr'.$i2.'\').className = \'\';
                                     }';
                                 }
-                                echo 'getElementById(\'more'.$no.'\').className = \'showblock more_menu\';
+                                echo 'getElementById(\'more'.$no.'\').className = \'showblock more_menu'.$class.'\';
                                 getElementById(\'tr'.$no.'\').className = \'bgyellow\';
                                 return false;
                             ">
@@ -2434,10 +2452,10 @@ else {
                             </a>'.
 
                             // Wrapper container
-                            '<div id="more'.$no.'" class="shownone more_menu">'.
+                            '<div id="more'.$no.'" class="shownone">'.
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
+                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="' . Yii::t('OnlinedrivesModule.new', 'Close') . '"
                                     style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
                                     onclick="
                                         getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
@@ -2445,37 +2463,13 @@ else {
                                         getElementById(\'delete'.$no.'\').className = \'shownone\';
                                 " />'.
 
-                                // Rename function
-                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Rename').'" title="'.Yii::t('OnlinedrivesModule.new', 'Rename').'">
-                                    <span class="glyphicon glyphicon-pencil" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Rename').'</span>
-                                </a>'.
-
-                                // Move function
-                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Move').'" title="'.Yii::t('OnlinedrivesModule.new', 'Move').'">
-                                    <span class="glyphicon glyphicon-move" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Move').'</span>
-                                </a>'.
-
                                 // Copy function
-                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
+                                '<a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
                                     <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
+                                    <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
                                 </a>';
 
-                            // Share settings link (Folders)
-
-                            $share_setting_url = ''; $app_detail_id_unshare =''; $db_drive_path='';
-
-                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*,p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
-                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
-                                AND p.`drive_key` = :dk
-                                AND d.`user_id` = :username
-                                AND p.`share_status`=\'Y\'
-                                AND d.if_shared=\'Y\'', [
-                                ':username' => $logged_username, ':dk' => $drive_key,
-                            ])->queryAll();
-
+                            // Share settings link (Part 2) (Folders)
                             if (count($sql) > 0) {
                                 foreach ($sql as $value) {
                                     $app_detail_id_unshare = $value['u_id'];
@@ -2490,28 +2484,26 @@ else {
                                     $pos = strrpos($parent_path, '/');
                                     $parent_path = substr($parent_path, 0, $pos);
 
-                                    if($parent_path<>''){
+                                    if ($parent_path <> '') {
                                         $parent_path .= '/';
                                     }
 
-                                    //echo "-$parent_path-";
-
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path='.urlencode($parent_path);
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
                                 }
                                 elseif ($cloud == 'gd') {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                                 }
 
-                               if(urldecode($path)==$db_drive_path){
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
-                                    <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
-                                </a>';
+                                if (urldecode($path) == $db_drive_path) {
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
+                                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
+                                    </a>';
 
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
-                                    <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
-                                </a>';
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
+                                        <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
+                                    </a>';
                                 }
                             }
 
@@ -2819,14 +2811,32 @@ else {
                          * More options menu (files)
                          */
                         if ($cloud == 'sciebo' || $cloud == 'gd' && $parents[0] != '') {
+                            // Share settings link (Part 1) (Files)
+                            $share_setting_url = '';
+                            $app_detail_id_unshare = '';
+                            $db_drive_path = '';
+                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*, p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
+                                AND p.`drive_key` = :dk
+                                AND d.`user_id` = :username
+                                AND p.`share_status` = \'Y\'
+                                AND d.if_shared = \'Y\'', [
+                                ':username' => $logged_username, ':dk' => $drive_key,
+                            ])->queryAll();
+                            $class = '';
+                            if (count($sql) > 0) {
+                                $class = ' more_menu_owner';
+                            }
+
+                            // Output
                             echo '<a href="#" onclick="';
                                 for ($i2 = 0; $i2 < $count_all; $i2++) {
                                     echo 'if (getElementById(\'more'.$i2.'\')) {
-                                        getElementById(\'more'.$i2.'\').className = \'shownone more_menu\';
+                                        getElementById(\'more'.$i2.'\').className = \'shownone\';
                                         getElementById(\'tr'.$i2.'\').className = \'\';
                                     }';
                                 }
-                                echo 'getElementById(\'more'.$no.'\').className = \'showblock more_menu\';
+                                echo 'getElementById(\'more'.$no.'\').className = \'showblock more_menu'.$class.'\';
                                 getElementById(\'tr'.$no.'\').className = \'bgyellow\';
                                 return false;
                             ">
@@ -2834,10 +2844,10 @@ else {
                             </a>'.
 
                             // Wrapper container
-                            '<div id="more'.$no.'" class="shownone more_menu">'.
+                            '<div id="more'.$no.'" class="shownone">'.
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
+                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="' . Yii::t('OnlinedrivesModule.new', 'Close') . '"
                                     style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
                                     onclick="
                                         getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
@@ -2845,37 +2855,13 @@ else {
                                         getElementById(\'delete'.$no.'\').className = \'shownone\';
                                 " />'.
 
-                                // Rename function
-                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Rename').'" title="'.Yii::t('OnlinedrivesModule.new', 'Rename').'">
-                                    <span class="glyphicon glyphicon-pencil" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Rename').'</span>
-                                </a>'.
-
-                                // Move function
-                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Move').'" title="'.Yii::t('OnlinedrivesModule.new', 'Move').'">
-                                    <span class="glyphicon glyphicon-move" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Move').'</span>
-                                </a>'.
-
                                 // Copy function
-                                '<a href="" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Copy').'" title="'.Yii::t('OnlinedrivesModule.new', 'Copy').'">
+                                '<a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
                                     <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Copy').'</span>
+                                    <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
                                 </a>';
 
-                            // Share settings link for files
-
-                            $share_setting_url = ''; $app_detail_id_unshare =''; $db_drive_path='';
-
-                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*,p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
-                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
-                                AND p.`drive_key` = :dk
-                                AND d.`user_id` = :username
-                                AND p.`share_status`=\'Y\'
-                                AND d.if_shared=\'Y\'', [
-                                ':username' => $logged_username, ':dk' => $drive_key,
-                            ])->queryAll();
-
+                            // Share settings link (Part 2) (Files)
                             if (count($sql) > 0) {
                                 foreach ($sql as $value) {
                                     $app_detail_id_unshare = $value['u_id'];
@@ -2890,28 +2876,26 @@ else {
                                     $pos = strrpos($parent_path, '/');
                                     $parent_path = substr($parent_path, 0, $pos);
 
-                                    if($parent_path<>''){
+                                    if ($parent_path <> '') {
                                         $parent_path .= '/';
                                     }
 
-                                    //echo "-$parent_path-";
-
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path='.urlencode($parent_path);
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
                                 }
                                 elseif ($cloud == 'gd') {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                                 }
 
-                                if(urldecode($unshare_file_path)==$db_drive_path){
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
-                                    <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
-                                </a>';
+                                if (urldecode($unshare_file_path) == $db_drive_path) {
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
+                                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
+                                    </a>';
 
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.Yii::t('OnlinedrivesModule.new', 'Permissions').'" title="'.Yii::t('OnlinedrivesModule.new', 'Recheck permissions').'">
-                                    <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
-                                    <span class="more_txt">'.Yii::t('OnlinedrivesModule.new', 'Permissions').'</span>
-                                </a>';
+                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
+                                        <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
+                                    </a>';
                                 }
                             }
                             echo '</div>';
