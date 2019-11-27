@@ -2419,7 +2419,7 @@ else {
                          * More options menu (folders)
                          */
                         if ($cloud == 'sciebo' || $cloud == 'gd' && $parents[0] != '') {
-                            // Share settings link (Part 1) (Folders)
+                            // Share settings link (folders)
                             $share_setting_url = '';
                             $app_detail_id_unshare = '';
                             $db_drive_path = '';
@@ -2431,9 +2431,45 @@ else {
                                 AND d.if_shared = \'Y\'', [
                                 ':username' => $logged_username, ':dk' => $drive_key,
                             ])->queryAll();
-                            $class = '';
                             if (count($sql) > 0) {
+                                foreach ($sql as $value) {
+                                    $app_detail_id_unshare = $value['u_id'];
+                                    $db_drive_path = $value['drive_path'];
+                                }
+
+                                if ($cloud == 'sciebo') {
+                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
+                                    $path = urldecode($path);
+
+                                    $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
+                                    $pos = strrpos($parent_path, '/');
+                                    $parent_path = substr($parent_path, 0, $pos);
+
+                                    if ($parent_path <> '') {
+                                        $parent_path .= '/';
+                                    }
+
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                }
+                                elseif ($cloud == 'gd') {
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                }
+echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
+                                // Set flag if user is owner (folders)
+                                if (urldecode(urldecode($path)) == $db_drive_path) {
+                                    $flag_owner = 1;
+                                }
+                                else {
+                                    $flag_owner = 0;
+                                }
+                            }
+
+                            // If user is owner the more menu gets a further class to be wider
+                            if ($flag_owner == 1) {
                                 $class = ' more_menu_owner';
+                            }
+                            else {
+                                $class = '';
                             }
 
                             // Output
@@ -2469,32 +2505,8 @@ else {
                                     <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
                                 </a>';
 
-                            // Share settings link (Part 2) (Folders)
-                            if (count($sql) > 0) {
-                                foreach ($sql as $value) {
-                                    $app_detail_id_unshare = $value['u_id'];
-                                    $db_drive_path = $value['drive_path'];
-                                }
-
-                                if ($cloud == 'sciebo') {
-                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
-                                    $path = urldecode($path);
-
-                                    $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
-                                    $pos = strrpos($parent_path, '/');
-                                    $parent_path = substr($parent_path, 0, $pos);
-
-                                    if ($parent_path <> '') {
-                                        $parent_path .= '/';
-                                    }
-
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
-                                }
-                                elseif ($cloud == 'gd') {
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
-                                }
-
-                                if (urldecode($path) == $db_drive_path) {
+                                // Permission links (folders)
+                                if ($flag_owner == 1) {
                                     echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
                                         <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
                                         <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
@@ -2505,8 +2517,6 @@ else {
                                         <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
                                     </a>';
                                 }
-                            }
-
                             echo '</div>';
                         }
                     echo '</td>
@@ -2811,7 +2821,7 @@ else {
                          * More options menu (files)
                          */
                         if ($cloud == 'sciebo' || $cloud == 'gd' && $parents[0] != '') {
-                            // Share settings link (Part 1) (Files)
+                            // Share settings link (files)
                             $share_setting_url = '';
                             $app_detail_id_unshare = '';
                             $db_drive_path = '';
@@ -2823,9 +2833,45 @@ else {
                                 AND d.if_shared = \'Y\'', [
                                 ':username' => $logged_username, ':dk' => $drive_key,
                             ])->queryAll();
-                            $class = '';
                             if (count($sql) > 0) {
+                                foreach ($sql as $value) {
+                                    $app_detail_id_unshare = $value['u_id'];
+                                    $db_drive_path = $value['drive_path'];
+                                }
+
+                                if ($cloud == 'sciebo') {
+                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
+                                    $path = $unshare_file_path;
+
+                                    $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
+                                    $pos = strrpos($parent_path, '/');
+                                    $parent_path = substr($parent_path, 0, $pos);
+
+                                    if ($parent_path <> '') {
+                                        $parent_path .= '/';
+                                    }
+
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                }
+                                elseif ($cloud == 'gd') {
+                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                }
+
+                                // Set flag if user is owner (files)
+                                if (urldecode($unshare_file_path) == $db_drive_path) {
+                                    $flag_owner = 1;
+                                }
+                                else {
+                                    $flag_owner = 0;
+                                }
+                            }
+
+                            // If user is owner the more menu gets a further class to be wider
+                            if ($flag_owner == 1) {
                                 $class = ' more_menu_owner';
+                            }
+                            else {
+                                $class = '';
                             }
 
                             // Output
@@ -2861,32 +2907,8 @@ else {
                                     <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
                                 </a>';
 
-                            // Share settings link (Part 2) (Files)
-                            if (count($sql) > 0) {
-                                foreach ($sql as $value) {
-                                    $app_detail_id_unshare = $value['u_id'];
-                                    $db_drive_path = $value['drive_path'];
-                                }
-
-                                if ($cloud == 'sciebo') {
-                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
-                                    $path = $unshare_file_path;
-
-                                    $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
-                                    $pos = strrpos($parent_path, '/');
-                                    $parent_path = substr($parent_path, 0, $pos);
-
-                                    if ($parent_path <> '') {
-                                        $parent_path .= '/';
-                                    }
-
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
-                                }
-                                elseif ($cloud == 'gd') {
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
-                                }
-
-                                if (urldecode($unshare_file_path) == $db_drive_path) {
+                                // Permission links (files)
+                                if ($flag_owner == 1) {
                                     echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
                                         <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
                                         <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
@@ -2897,7 +2919,6 @@ else {
                                         <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
                                     </a>';
                                 }
-                            }
                             echo '</div>';
                         }
                     echo '</td>
