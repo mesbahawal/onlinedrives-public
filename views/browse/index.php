@@ -2454,9 +2454,15 @@ else {
                                 elseif ($cloud == 'gd') {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                                 }
-echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
+
+                                // Workaround for potential doubled url-decoding
+                                if (strpos($path, '%25') !== false) {
+                                    $path = urldecode($path);
+                                    // echo "-".urldecode($path)."-<br>-".$db_drive_path."-<br>";
+                                }
+
                                 // Set flag if user is owner (folders)
-                                if (urldecode(urldecode($path)) == $db_drive_path) {
+                                if (urldecode($path) == $db_drive_path) {
                                     $flag_owner = 1;
                                 }
                                 else {
@@ -2500,22 +2506,28 @@ echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
                                 " />'.
 
                                 // Copy function
-                                '<a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
-                                    <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
-                                </a>';
+                                '<div class="more_menu_div">
+                                    <a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
+                                        <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
+                                    </a>
+                                </div>';
 
                                 // Permission links (folders)
                                 if ($flag_owner == 1) {
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    echo '<div class="more_menu_div">
+                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '">
+                                            <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '</span>
+                                        </a>
+                                    </div>
 
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    <div class="more_menu_div">
+                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '">
+                                            <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '</span>
+                                        </a>
+                                    </div>';
                                 }
                             echo '</div>';
                         }
@@ -2902,22 +2914,28 @@ echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
                                 " />'.
 
                                 // Copy function
-                                '<a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
-                                    <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
-                                </a>';
+                                '<div class="more_menu_div">
+                                    <a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
+                                        <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
+                                    </a>
+                                </div>';
 
-                                // Permission links (files)
+                                // Permission links (folders)
                                 if ($flag_owner == 1) {
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    echo '<div class="more_menu_div">
+                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '">
+                                            <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '</span>
+                                        </a>
+                                    </div>
 
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    <div class="more_menu_div">
+                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '">
+                                            <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '</span>
+                                        </a>
+                                    </div>';
                                 }
                             echo '</div>';
                         }

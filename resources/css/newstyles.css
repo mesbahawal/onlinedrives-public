@@ -181,19 +181,20 @@ div.required label::after { content: ''; }
     border: 3px solid #bbb;
     border-radius: 10px;
     width: 90px;
-    min-height: 75px;
+    height: 80px;
     background: #eee;
 }
-.more_menu_owner { width: 230px !important; }
-.more_a {
-    position: relative;
-    margin-right: 40px;
+.more_menu_owner { width: 330px !important; }
+.more_menu_div {
+    float: left;
+    margin: 5px;
+    width: 80px;
+    height: 55px;
+    text-align: center;
+    line-height: 1;
 }
 .more_txt {
-    position: absolute;
-    top: 30px;
-    left: -10px;
-    margin-right: 40px;
+    position: relative;
     font-size: 10px;
 }
 .more_del_confirm {
