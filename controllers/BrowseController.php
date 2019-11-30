@@ -509,7 +509,8 @@ class BrowseController extends BaseController
                             }
 
                             $drive_path = urldecode($val[0]);
-
+                            
+echo "-".$val_fileid."-";
                             // Check path is already exist in share
 
                             $sql = $db->createCommand('SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.* 
