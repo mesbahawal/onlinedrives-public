@@ -13,6 +13,7 @@ use yii\base\Model;
 class AddFilesForm extends \yii\base\Model
 {
     public $drive_path;
+    public $fileid;
     public $permission;
     public $app_detail_id;
 
@@ -20,6 +21,7 @@ class AddFilesForm extends \yii\base\Model
     {
         return [
             [['drive_path'], 'required', 'message' => 'Please choose a drive path.'],
+            [['fileid'], 'required'],
             [['permission'], 'required'],
             ['app_detail_id', 'string'],
         ];

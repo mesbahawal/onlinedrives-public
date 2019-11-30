@@ -144,8 +144,8 @@ if (!file_exists($path_tokens)) {
     mkdir($path_tokens, 0700);
 }
 
-function getGoogleClient($db, $space_id, $home_url, $guid) {
-    $logged_username =  Yii::$app->user->identity->username;
+function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
+    $logged_username =  $loginuser;
     $client = false ;
     // Check for database entries for Google Drive and this space
     $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
@@ -305,7 +305,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 $session = Yii::$app->session;
 
 // Get the API client and construct the service object
-$gd_client = getGoogleClient($db, $space_id, $home_url, $guid);
+$gd_client = getGoogleClient($db, $space_id, $home_url, $guid, $username);
 if ($gd_client !== false) {
     $gd_service = new Google_Service_Drive($gd_client);
 
@@ -419,7 +419,7 @@ if ($username <> '' && !isset($_GET['op'])) {
     }
 }
 // Disable app detail ID
-elseif ($username <> '' && isset($_GET['op']) && isset($_GET['app_detail_id'])) {
+elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'disable' && isset($_GET['app_detail_id'])) {
     if ($_GET['op'] == 'disable' && $_GET['app_detail_id'] != '') {
         $app_detail_id = $_GET['app_detail_id'];
 
@@ -456,6 +456,63 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['app_detail_id'])) 
         }
     }
 }
+// Unshare content (file/folder)
+elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'unshare_content' && isset($_GET['p_id'])) {
+
+    if ($_GET['app_detail_id'] != '' && $_GET['p_id'] != '') {
+        $app_detail_id = $_GET['app_detail_id'];
+        $p_id = $_GET['p_id'];
+
+
+        echo 'SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p 
+                ON d.`id` = p.`onlinedrives_app_detail_id`
+                WHERE d.`id` = '.$app_detail_id.'
+                AND p.`id` = '.$p_id.'
+                AND d.`user_id` = '.$username.'
+                AND d.`if_shared`<>\'D\'
+                AND p.`share_status`=\'Y\'';
+
+        // Before update check user id and authority;
+        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p 
+                ON d.`id` = p.`onlinedrives_app_detail_id`
+                WHERE d.`id` = :app_detail_id
+                AND p.`id` = :p_id
+                AND d.`user_id` = :user_id
+                AND d.`if_shared`<>\'D\'
+                AND p.`share_status`=\'Y\'', [
+            ':app_detail_id' => $app_detail_id,
+            ':p_id' => $p_id,
+            ':user_id' => $username,
+        ])->queryAll();
+
+        if (count($sql) > 0) {
+echo 'UPDATE onlinedrives_app_drive_path_detail 
+                SET share_status=\'D\',update_date = CURRENT_TIMESTAMP
+                WHERE id='.$p_id.' AND share_status=\'Y\'';
+
+            $sql1 = $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                SET share_status=\'D\',update_date = CURRENT_TIMESTAMP
+                WHERE id=:p_id AND share_status=\'Y\'', [
+                ':p_id' => $p_id,
+            ])->execute();
+
+            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+
+            if($sql1){
+                (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+            }
+            else{
+                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
+            }
+        }
+        else {
+            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Un-authorized action.');
+        }
+    }
+}
+// Sharing to another space
 elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['space_id']) {
     if ($_GET['op'] == 'share_to' && $_GET['dk'] != '' &&  $_GET['space_id'] != '') {
 
@@ -2423,6 +2480,7 @@ else {
                             $share_setting_url = '';
                             $app_detail_id_unshare = '';
                             $db_drive_path = '';
+                            $id_path_unshare = '';
                             $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*, p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
                                 WHERE d.`id` = p.`onlinedrives_app_detail_id`
                                 AND p.`drive_key` = :dk
@@ -2434,8 +2492,12 @@ else {
                             if (count($sql) > 0) {
                                 foreach ($sql as $value) {
                                     $app_detail_id_unshare = $value['u_id'];
+                                    $id_path_unshare = $value['p_id'];
                                     $db_drive_path = $value['drive_path'];
                                 }
+
+                                $url_unshare_content = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
+
 
                                 if ($cloud == 'sciebo') {
                                     // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
@@ -2449,14 +2511,16 @@ else {
                                         $parent_path .= '/';
                                     }
 
+                                    // unshare-xx
+
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
                                 }
                                 elseif ($cloud == 'gd') {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                                 }
-echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
+
                                 // Set flag if user is owner (folders)
-                                if (urldecode(urldecode($path)) == $db_drive_path) {
+                                if (urldecode($path) == $db_drive_path) {
                                     $flag_owner = 1;
                                 }
                                 else {
@@ -2500,22 +2564,28 @@ echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
                                 " />'.
 
                                 // Copy function
-                                '<a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
-                                    <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
-                                </a>';
+                                '<div class="more_menu_div">
+                                    <a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
+                                        <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
+                                    </a>
+                                </div>';
 
                                 // Permission links (folders)
                                 if ($flag_owner == 1) {
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    echo '<div class="more_menu_div">
+                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '">
+                                            <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '</span>
+                                        </a>
+                                    </div>
 
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    <div class="more_menu_div">
+                                        <a href="'.$url_unshare_content.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '">
+                                            <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '</span>
+                                        </a>
+                                    </div>';
                                 }
                             echo '</div>';
                         }
@@ -2834,10 +2904,14 @@ echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
                                 ':username' => $logged_username, ':dk' => $drive_key,
                             ])->queryAll();
                             if (count($sql) > 0) {
+
                                 foreach ($sql as $value) {
                                     $app_detail_id_unshare = $value['u_id'];
+                                    $id_path_unshare = $value['p_id'];
                                     $db_drive_path = $value['drive_path'];
                                 }
+
+                                $url_unshare_content = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
 
                                 if ($cloud == 'sciebo') {
                                     // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
@@ -2902,22 +2976,28 @@ echo "-".urldecode(urldecode($path))."-<br>-".$db_drive_path."-<br>";
                                 " />'.
 
                                 // Copy function
-                                '<a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
-                                    <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span>
-                                    <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
-                                </a>';
+                                '<div class="more_menu_div">
+                                    <a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
+                                        <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
+                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
+                                    </a>
+                                </div>';
 
                                 // Permission links (files)
                                 if ($flag_owner == 1) {
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    echo '<div class="more_menu_div">
+                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '">
+                                            <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '</span>
+                                        </a>
+                                    </div>
 
-                                    echo '<a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Recheck permissions') . '">
-                                        <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span>
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Permissions') . '</span>
-                                    </a>';
+                                    <div class="more_menu_div">
+                                        <a href="'.$url_unshare_content.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '">
+                                            <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
+                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '</span>
+                                        </a>
+                                    </div>';
                                 }
                             echo '</div>';
                         }

@@ -37,6 +37,8 @@ return array (
   'Cloud storage is added successfully.' => 'Der Cloud-Service wurde erfolgreich hinzugefügt.',
   'JSON file' => 'JSON-Datei',
   'Google Drive client add failed.' => 'Der Google-Drive-Client wurde nicht hinzugefügt.',
+  'Change permissions' => 'Berechtigungen ändern',
+  'Unshare' => 'Freigabe aufheben',
   '' => '',
 );
 ?>

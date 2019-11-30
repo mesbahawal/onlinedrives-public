@@ -928,6 +928,9 @@ if ($app_user_id <> '') {
                             }
                         }
 
+                        // File ID
+                        echo Html::ActiveHiddenInput($model_addfiles, 'fileid['.$i.']', array('value' => $id));
+
                         // Output
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
                             urlencode($path_chunk) => '',
@@ -1294,6 +1297,9 @@ if ($app_user_id <> '') {
                                 $model_addfiles->drive_path[$checkbox_index] = $id;
                             }
                         }
+
+                        // File ID
+                        echo Html::ActiveHiddenInput($model_addfiles, 'fileid['.$checkbox_index.']', array('value' => $id));
 
                         // Output
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([

@@ -474,6 +474,7 @@ class BrowseController extends BaseController
                     $i = 0;
 
                     $arr_drive_path = $model_addfiles->drive_path;
+                    $arr_fileid =  $model_addfiles->fileid;
                     $app_detail_id =  $model_addfiles->app_detail_id;
                     $permission =  $model_addfiles->permission;
 
@@ -489,7 +490,17 @@ class BrowseController extends BaseController
                     for ($i = 0; $i < count($arr_drive_path); $i++) {
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
+                        
                         if ($val <> '') {
+
+							if ($arr_fileid[$key] <> '') {
+                                $val_fileid = $arr_fileid[$key];
+                            }
+                            else {
+                                $val_fileid = '';
+                            }
+
+
                             if ($permission[$key] <> '') {
                                 $permission_items = implode('|', $permission[$key]);
                             }
@@ -518,9 +529,10 @@ class BrowseController extends BaseController
                             if (count($sql) == 0) { // if there is no such drive path then create new row. else update existing row.
 
                                 $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
-                                    (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
-                                    VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
+                                    (`drive_path`, `fileid`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
+                                    VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key)', [
                                     ':drive_path' => $drive_path,
+                                    ':fileid' => $val_fileid,
                                     ':permission' => $permission_items,
                                     ':onlinedrives_app_detail_id' => $app_detail_id,
                                     ':drive_key' => md5(microtime()),
