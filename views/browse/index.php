@@ -2592,7 +2592,6 @@ else {
                                     '<div id="unshare'.$no.'" class="shownone">';
                                         // Sciebo unshare function
                                         if ($cloud == 'sciebo') {
-/*
                                             $model_sciebo_delete = new DeleteFileForm();
                                             $form2 = ActiveForm::begin([
                                                 'id' => 'gd_delete_file',
@@ -2610,7 +2609,6 @@ else {
                                                 </div>';
 
                                             ActiveForm::end();
-*/
                                         }
                                         // Google Drive unshare function
                                         elseif ($cloud == 'gd' && $parents[0] != '') {
@@ -3065,7 +3063,6 @@ else {
                                     '<div id="unshare'.$no.'" class="shownone">';
                                         // Sciebo unshare function
                                         if ($cloud == 'sciebo') {
-/*
                                             $model_sciebo_delete = new DeleteFileForm();
                                             $form2 = ActiveForm::begin([
                                                 'id' => 'gd_delete_file',
@@ -3083,7 +3080,6 @@ else {
                                                 </div>';
 
                                             ActiveForm::end();
-*/
                                         }
                                         // Google Drive unshare function
                                         elseif ($cloud == 'gd' && $parents[0] != '') {
