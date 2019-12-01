@@ -17,6 +17,12 @@
 .valign_m { vertical-align: middle !important; }
 .valign_b { vertical-align: bottom !important; }
 
+/* Links properties */
+.pointer { cursor: pointer !important; }
+.b { font-style: bold !important; }
+.i { font-style: italic !important; }
+.u { text-decoration: underline !important; }
+
 .box {
     margin-bottom: 15px;
     border: 1px solid #f0f0f0;

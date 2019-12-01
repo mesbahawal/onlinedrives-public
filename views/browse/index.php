@@ -464,14 +464,14 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'unshare_content
         $p_id = $_GET['p_id'];
 
 
-        echo 'SELECT d.id AS uid, p.id AS pid, d.*, p.*
+        /* echo 'SELECT d.id AS uid, p.id AS pid, d.*, p.*
                 FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p 
                 ON d.`id` = p.`onlinedrives_app_detail_id`
                 WHERE d.`id` = '.$app_detail_id.'
                 AND p.`id` = '.$p_id.'
                 AND d.`user_id` = '.$username.'
                 AND d.`if_shared`<>\'D\'
-                AND p.`share_status`=\'Y\'';
+                AND p.`share_status`=\'Y\''; */
 
         // Before update check user id and authority;
         $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
@@ -489,9 +489,9 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'unshare_content
 
         if (count($sql) > 0) {
             //TODO why output?
-            echo 'UPDATE onlinedrives_app_drive_path_detail 
+            /* echo 'UPDATE onlinedrives_app_drive_path_detail
             SET share_status = \'D\', update_date = CURRENT_TIMESTAMP
-            WHERE id = '.$p_id.' AND share_status = \'Y\'';
+            WHERE id = '.$p_id.' AND share_status = \'Y\''; */
 
             $sql1 = $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
                 SET share_status=\'D\',update_date = CURRENT_TIMESTAMP
@@ -1316,8 +1316,38 @@ if (count($arr_app_user_admin) > 0) {
     ?>
 
     <div class="box">
-        <table class="table table-responsive">
-            <thead>
+        <span class="pointer">
+            <?php
+            // Heading
+            echo '<span id="connected_drives_heading"
+                    onclick="
+                        getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
+
+                        if (getElementById(\'connected_drives_arrow\').className == \'pointer glyphicon glyphicon-chevron-down\') {
+                            getElementById(\'connected_drives_arrow\').className = \'pointer glyphicon glyphicon-chevron-up\';
+                        }
+                        else {
+                            getElementById(\'connected_drives_arrow\').className = \'pointer glyphicon glyphicon-chevron-down\';
+                        }
+            ">Connected drives</span>'.
+                // Arrow
+                '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
+                    onclick="
+                        getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
+
+                        if (this.className == \'pointer glyphicon glyphicon-chevron-down\') {
+                            this.className = \'pointer glyphicon glyphicon-chevron-up\';
+                        }
+                        else {
+                            this.className = \'pointer glyphicon glyphicon-chevron-down\';
+                        }
+            "></span>';
+            ?>
+        </span>
+
+        <div id="connected_drives_table" class="shownone">
+            <table class="table table-responsive">
+                <thead>
                 <?php
                 for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j)
                     $drive_path = $arr_app_user_admin[$j]['drive_path'];
@@ -1332,7 +1362,7 @@ if (count($arr_app_user_admin) > 0) {
                     $drive_name = $arr_app_user_admin[$j]['drive_name'];
 
                     if ($username == $logged_username && $if_shared != 'D' && $if_shared != 'T') {
-                    ?>
+                        ?>
                         <!-- Table for selecting path -->
                         <tr>
                             <td class="valign_m">
@@ -1346,8 +1376,8 @@ if (count($arr_app_user_admin) > 0) {
                                 }
                                 $src = 'protected/modules/onlinedrives/resources/'.$drive_name.'20.png';
                                 echo '<a href="'.$ref.'" target="_blank">
-                                    <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-                                </a>';
+                                        <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
+                                    </a>';
                                 ?>
 
                                 <b>
@@ -1358,8 +1388,8 @@ if (count($arr_app_user_admin) > 0) {
                             <td>
                                 <?php
                                 echo '<a class="btn btn-success" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">
-                                    Select Files
-                                </a>';
+                                        Select Files
+                                    </a>';
                                 ?>
                             </td>
 
@@ -1367,9 +1397,9 @@ if (count($arr_app_user_admin) > 0) {
                                 <?php
                                 if ($if_shared == 'Y') {
                                     /*
-                                    echo '<a class="btn btn-default" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">'.
-                                        'Update'.
-                                    '</a>';
+                                    echo '<a class="btn btn-default" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">
+                                        Update
+                                    </a>';
                                     */
                                 }
                                 ?>
@@ -1379,18 +1409,19 @@ if (count($arr_app_user_admin) > 0) {
                                 <?php
                                 if ($if_shared != 'D') {
                                     echo '<a class="btn btn-danger" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">
-                                        Disable
-                                    </a>';
+                                            Disable
+                                        </a>';
                                 }
                                 ?>
                             </td>
                         </tr>
-                    <?php
+                        <?php
                     }
                 }
                 ?>
-            </thead>
-        </table>
+                </thead>
+            </table>
+        </div>
     </div>
 <?php
 }
@@ -2599,12 +2630,13 @@ else {
                                                 'options' => ['class' => 'form-horizontal'],
                                             ]);
                                                 echo Html::ActiveHiddenInput($model_sciebo_delete, 'cloud', array('value' => $cloud));
-                                                echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => $name));
+                                                echo Html::ActiveHiddenInput($model_sciebo_delete, 'delete_file_id', array('value' => urldecode($path)));
                                                 echo Html::ActiveHiddenInput($model_sciebo_delete, 'dk', array('value' => $drive_key));
 
                                                 echo '<div class="form-group">
                                                     <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
+                                                        // echo "Unshare will not delete the content.";
+                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn btn-warning btn-sm']);
                                                     echo '</div>
                                                 </div>';
 
@@ -3075,7 +3107,8 @@ else {
 
                                                 echo '<div class="form-group">
                                                     <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn-danger']);
+                                                        //echo "Unshare will not delete the content.";
+                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn btn-warning btn-sm']);
                                                     echo '</div>
                                                 </div>';
 
@@ -3149,7 +3182,7 @@ if (1) {
 
     $count_guide_sciebo = 8;
 
-    $gd_guide_txt1 = 'Please go on <a href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.';
+    $gd_guide_txt1 = 'Please go on <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.';
     $gd_guide_txt2 = 'This could be your view after login:';
     $gd_guide_txt3 = 'Click on "Credentials" / "Anmeldedaten" on the left sight (3rd point).';
     $gd_guide_txt4 = 'Click on "" / "Anmeldedaten erstellen". Then click on "OAuth-Client-ID:';

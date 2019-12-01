@@ -310,7 +310,7 @@ class BrowseController extends BaseController
             if (!empty($model_gd_delete->delete_file_id)) {
                 $cloud = $model_gd_delete->cloud;
                 $delete_file_id = $model_gd_delete->delete_file_id;
-                $permission_pos = strpos($permission, 'D');
+                $permission_pos = strpos($permission, 'D'); // permission = D , means Un-share, not Delete.
 
                 if (isset(Yii::$app->user->identity->username)) {
                     $username = Yii::$app->user->identity->username;
@@ -325,48 +325,28 @@ class BrowseController extends BaseController
 
                 // Sciebo delete function
                 if ($cloud == 'sciebo' && ($username == $user_id || $permission_pos !== false)) {
-                    $delete_file_id = str_replace(' ', '%20', $delete_file_id);
-
-                    // http://sabre.io/dav/davclient
-                    // Will do a DELETE request with a condition
-                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.urldecode(urldecode($delete_file_id));
-
-                    $client = $model_gd_delete->getScieboClient($app_user_id,$app_password);
-
-                    // Rework
-                    $path_to_dir = str_replace(' ', '%20', $path_to_dir);
-
-                    if ($client->request('DELETE', urldecode($path_to_dir), null)) {
-
-                        $search_file_id = $delete_file_id;
-
-                        /*$sql_qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status = \"D\"
-                                                WHERE drive_path= '$search_file_id'
-                                                AND share_status='Y' ";
-
-                        echo $sql_qry;*/
 
                         $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
                                                 SET share_status = "D",update_date = CURRENT_TIMESTAMP
-                                                WHERE drive_path=:drive_path
+                                                WHERE drive_key = :drive_key
                                                 AND share_status=\'Y\' ', [
-                            ':drive_path' => $search_file_id,
+                                                ':drive_key' => $get_dk,
                         ])->execute();
-
-                        //echo $delete_file_id.'-- has to be deleted of-'.$path_to_dir;
 
                         // Success message
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Deletion from Sciebo was successful.');
-                    }
+
                 }
                 // Google Drive delete function
-                elseif ($cloud == 'gd' && $permission_pos !== false) {
+                elseif ($cloud == 'gd' && ($username == $user_id || $permission_pos !== false)) {
                     // Get the API client and construct the service object
-                    $gd_client = $model_gd_delete->getGoogleClient($db, $get_dk, $home_url, $guid);
-                    $gd_service = new Google_Service_Drive($gd_client);
 
-                    // Implement Google Drive delete here
-                    $gd_service->files->delete($delete_file_id);
+                    $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
+                                                WHERE drive_key = :drive_key
+                                                AND share_status=\'Y\' ', [
+                        ':drive_key' => $get_dk,
+                    ])->execute();
 
                     // Success message
                     $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Deletion from Google Drive was successful.');
@@ -509,8 +489,7 @@ class BrowseController extends BaseController
                             }
 
                             $drive_path = urldecode($val[0]);
-                            
-echo "-".$val_fileid."-";
+
                             // Check path is already exist in share
 
                             $sql = $db->createCommand('SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.* 
@@ -675,6 +654,10 @@ echo "-".$val_fileid."-";
 
                         }
                     }
+
+                    $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+
+                    (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
 
                     return $this->render('index', [
                         'contentContainer' => $this->contentContainer,
