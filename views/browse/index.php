@@ -1316,6 +1316,7 @@ if (count($arr_app_user_admin) > 0) {
     ?>
 
     <div class="box">
+        <div>
         <span class="pointer">
             <?php
             // Heading
@@ -1323,29 +1324,30 @@ if (count($arr_app_user_admin) > 0) {
                     onclick="
                         getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
 
-                        if (getElementById(\'connected_drives_arrow\').className == \'pointer glyphicon glyphicon-chevron-down\') {
-                            getElementById(\'connected_drives_arrow\').className = \'pointer glyphicon glyphicon-chevron-up\';
+                        if (getElementById(\'connected_drives_arrow\').className == \'glyphicon glyphicon-chevron-down\') {
+                            getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-up\';
                         }
                         else {
-                            getElementById(\'connected_drives_arrow\').className = \'pointer glyphicon glyphicon-chevron-down\';
+                            getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-down\';
                         }
             ">Connected drives</span>'.
-                // Arrow
-                '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
-                    onclick="
-                        getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
+            // Arrow
+            '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
+                onclick="
+                    getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
 
-                        if (this.className == \'pointer glyphicon glyphicon-chevron-down\') {
-                            this.className = \'pointer glyphicon glyphicon-chevron-up\';
-                        }
-                        else {
-                            this.className = \'pointer glyphicon glyphicon-chevron-down\';
-                        }
+                    if (this.className == \'glyphicon glyphicon-chevron-down\') {
+                        this.className = \'glyphicon glyphicon-chevron-up\';
+                    }
+                    else {
+                        this.className = \'glyphicon glyphicon-chevron-down\';
+                    }
             "></span>';
             ?>
         </span>
+        </div>
 
-        <div id="connected_drives_table" class="shownone">
+        <div id="connected_drives_table" class="shownone" style="margin-top: 20px;">
             <table class="table table-responsive">
                 <thead>
                 <?php
@@ -1377,17 +1379,15 @@ if (count($arr_app_user_admin) > 0) {
                                 $src = 'protected/modules/onlinedrives/resources/'.$drive_name.'20.png';
                                 echo '<a href="'.$ref.'" target="_blank">
                                         <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-                                    </a>';
+                                    </a> ';
                                 ?>
 
-                                <b>
-                                    <?php echo $app_user_id; ?>
-                                </b>
+                                <?php echo $app_user_id; ?>
                             </td>
 
-                            <td>
+                            <td align="right">
                                 <?php
-                                echo '<a class="btn btn-success" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">
+                                echo '<a class="btn btn-success btn-sm" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">
                                         Select Files
                                     </a>';
                                 ?>
@@ -1395,20 +1395,8 @@ if (count($arr_app_user_admin) > 0) {
 
                             <td>
                                 <?php
-                                if ($if_shared == 'Y') {
-                                    /*
-                                    echo '<a class="btn btn-default" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">
-                                        Update
-                                    </a>';
-                                    */
-                                }
-                                ?>
-                            </td>
-
-                            <td>
-                                <?php
                                 if ($if_shared != 'D') {
-                                    echo '<a class="btn btn-danger" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">
+                                    echo '<a class="btn btn-danger btn-sm" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">
                                             Disable
                                         </a>';
                                 }
@@ -2248,19 +2236,17 @@ else {
         		<span id="col_modified"></span>
         	</span>
         </th>
-        <!-- 5 Properties -->
-        <th>
-            <?php echo Yii::t('OnlinedrivesModule.new', 'Properties'); ?>
-        </th>
-        <!-- 6 Info, only for development -->
-        <!-- <th></th> -->
-        <!-- 6 Service icon -->
-        <th onclick="change_order_icon('service', 6, 'T');">
+        <!-- 5 Service icon -->
+        <th onclick="change_order_icon('service', 5, 'T');">
             <span class="rel" style="cursor: pointer;">
                 Service
                 <span id="col_service"></span>
             </span>
         </th>
+        <!-- 6 Info, only for development -->
+        <!-- <th></th> -->
+        <!-- 7 Properties -->
+        <th></th>
         <!-- 8 Open link / download link -->
         <th></th>
         <!-- 9 -->
@@ -2400,6 +2386,16 @@ else {
                     <td style="padding: 5px;">
                         <span title="'.$time_title.'">'.$modified_time_txt.'</span>
                     </td>'.
+                    // Output service icon (folders)
+                    '<td>
+                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
+                    </td>'.
+                    // Output info (folders), only for development
+                    /*
+                    '<td>
+                        <img src="protected/modules/onlinedrives/resources/info.png" alt="" title="'.$info.'" />
+                    </td>'.
+                    */
                     // Output owner, shared, comments (folders)
                     '<td>';
                         if ($cloud == 'sciebo') {
@@ -2434,16 +2430,6 @@ else {
                             echo '</div>';
                         }
                     echo '</td>'.
-                    // Output info (folders), only for development
-                    /*
-                    '<td>
-                        <img src="protected/modules/onlinedrives/resources/info.png" alt="" title="'.$info.'" />
-                    </td>'.
-                    */
-                    // Output service icon (folders)
-                    '<td>
-                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
-                    </td>'.
                     // Output space sharing (folders)
                         '<td style="position: relative;">
                         <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
@@ -2636,7 +2622,7 @@ else {
                                                 echo '<div class="form-group">
                                                     <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
                                                         // echo "Unshare will not delete the content.";
-                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn btn-warning btn-sm']);
+                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn btn-info btn-sm']);
                                                     echo '</div>
                                                 </div>';
 
@@ -2871,6 +2857,16 @@ else {
                     <td style="padding: 5px;">
                         <span title="'.$time_title.'">'.$modified_time_txt.'</span>
                     </td>'.
+                    // Output service icon (files)
+                    '<td>
+                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
+                    </td>'.
+                    // Output info (files), only for development
+                    /*
+                    '<td>
+                        <img src="protected/modules/onlinedrives/resources/info.png" alt="" title="'.$info.'" />
+                    </td>'.
+                    */
                     // Output owner, shared, comments (files)
                     '<td>';
                         if ($cloud == 'sciebo') {
@@ -2909,16 +2905,6 @@ else {
                         echo '</div>';
                         }
                     echo '</td>'.
-                    // Output info (files), only for development
-                    /*
-                    '<td>
-                        <img src="protected/modules/onlinedrives/resources/info.png" alt="" title="'.$info.'" />
-                    </td>'.
-                    */
-                    // Output service icon (files)
-                    '<td>
-                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
-                    </td>'.
                         // Output space sharing (files)
                         '<td style="position: relative;">
                         <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
@@ -3083,7 +3069,7 @@ else {
                                         <a href="#" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '"
                                             onclick="
                                                 getElementById(\'unshare'.$no.'\').classList.toggle(\'showblock\');
-                                                getElementById(\'more'.$no.'\').style.height = \'150px\';
+                                                getElementById(\'more'.$no.'\').classList.toggle(\'h125\');
                                                 return false;
                                         ">
                                             <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
@@ -3108,7 +3094,7 @@ else {
                                                 echo '<div class="form-group">
                                                     <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
                                                         //echo "Unshare will not delete the content.";
-                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn btn-warning btn-sm']);
+                                                        echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn btn-info btn-sm']);
                                                     echo '</div>
                                                 </div>';
 
@@ -3160,8 +3146,6 @@ else {
  * Sciebo and Google Drive guide
  */
 if (1) {
-    $guide_h = '<span style="font-size: 20px; font-weight: bold;">Access configuration guide</span>';
-
     $sciebo_guide_link = '<a href="#sciebo_guide">How to connect with your Sciebo account</a>';
     $gd_guide_link = '<a href="#gd_guide">How to connect with your Google Drive account</a>';
 
@@ -3200,16 +3184,27 @@ if (1) {
     $count_guide_gd = 5;
 
     // Output box opening
-    echo '<div class="box">'.
+    echo '<div class="box">';
 
-    // Outout guide heading
-    '<p>'.
-        $guide_h;
+    // Output guide heading
+    if ($check == 1) {
+        $class = ' class="shownone"';
 
-        $temp_class = '';
-        if ($check == 1) {
-            $temp_class = ' class="shownone"';
-            echo '<span class="glyphicon glyphicon-chevron-down" style="margin-left: 10px; font-size: 15px; cursor: pointer;"
+        echo '<span class="pointer">'.
+            // Heading
+            '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;"
+                onclick="
+                    getElementById(\'guide\').classList.toggle(\'showblock\');
+
+                    if (getElementById(\'guide_arrow\').className == \'glyphicon glyphicon-chevron-down\') {
+                        getElementById(\'guide_arrow\').className = \'glyphicon glyphicon-chevron-up\';
+                    }
+                    else {
+                        getElementById(\'guide_arrow\').className = \'glyphicon glyphicon-chevron-down\';
+                    }
+            ">Access configuration guide</span>'.
+            // Arrow
+            '<span id="guide_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 10px; font-size: 15px;"
                 onclick="
                     getElementById(\'guide\').classList.toggle(\'showblock\');
 
@@ -3220,11 +3215,18 @@ if (1) {
                         this.className = \'glyphicon glyphicon-chevron-down\';
                     }
             "></span>';
-        }
-    echo '</p>'.
+        echo '</span>';
+    }
+    else {
+        $class = '';
+
+        echo '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;">
+            Access configuration guide
+        </span>';
+    }
 
     // Output hidden-able wrapper opening
-    '<div id="guide"'.$temp_class.'>'.
+    echo '<div id="guide"'.$class.'>'.
 
     // Output Sciebo anchor
     $sciebo_guide_a.

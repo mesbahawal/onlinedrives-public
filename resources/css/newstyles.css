@@ -7,6 +7,10 @@
 .rel { position: relative !important; }
 .abs { position: absolute !important; }
 
+/* Height properties */
+.h100 { height: 100px !important; }
+.h125 { height: 125px !important; }
+
 /* Alignment properties */
 .align_l { text-align: left !important; }
 .align_r { text-align: right !important; }
@@ -204,8 +208,11 @@ div.required label::after { content: ''; }
     font-size: 10px;
 }
 .more_del_confirm {
-    margin-top: 30px;
-    margin-left: 170px;
+    margin-top: 5px;
+    margin-left: 200px;
+    padding: 0 !important;
+    width: 80px;
+    text-align: center;
 }
 
 .space_sharing_menu {
