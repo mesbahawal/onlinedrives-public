@@ -338,85 +338,96 @@ if (count($sql) > 0) {
 
 // DB check
 if ($username <> '' && !isset($_GET['op'])) {
-    // Load Sciebo entries
-    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-        WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared <> \'D\'', [
+
+$sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `user` u, `space_membership` sm 
+                        WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id` AND u.`username` = :username AND s.`guid` = :space_id', [
         ':space_id' => $space_id,
-        ':drive_name' => 'sciebo',
+        ':username' => $username,
     ])->queryAll();
-    foreach ($sql as $value) {
-        $drive_path = $value['drive_path'];
-        $app_user_id = $value['app_user_id'];
-        $app_password = $value['app_password'];
-        $drive_key = $value['drive_key'];
-        $uid = $value['uid'];
-        $pid = $value['pid'];
-        $if_shared = $value['if_shared'];
-        $share_status = $value['share_status'];
-        $user_id = $value['user_id'];
 
-        if ($if_shared == 'Y' && $share_status == 'Y') {
-            $arr_app_user_detail[$k]['drive_path'] = $drive_path;
-            $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
-            $arr_app_user_detail[$k]['app_password'] = $app_password;
-            $arr_app_user_detail[$k]['drive_key'] = $drive_key;
-            $arr_app_user_detail[$k]['user_id'] = $user_id;
-            $arr_app_user_detail[$k]['uid'] = $uid;
-            $arr_app_user_detail[$k]['pid'] = $pid;
-            $k++;
-        }
-        else {
-            $arr_app_user_detail_with_no_share[$n]['drive_path'] = $drive_path;
-            $arr_app_user_detail_with_no_share[$n]['app_user_id'] = $app_user_id;
-            $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
-            $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
-            $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
-            $arr_app_user_detail_with_no_share[$n]['if_shared'] = $if_shared;
-            $arr_app_user_detail_with_no_share[$n]['share_status'] = $share_status;
-            $n++;
-        }
-    }
-
-    // Load Google Drive entries
-    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-        WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared <> \'D\'', [
+    if(count($sql)>0){
+            
+            // Load Sciebo entries
+            $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+            WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared <> \'D\'', [
             ':space_id' => $space_id,
-            ':drive_name' => 'gd',
-        ])->queryAll();
-    foreach ($sql as $value) {
-        $drive_path = $value['drive_path'];
-        $app_user_id = $value['app_user_id'];
-        $app_password = $value['app_password'];
-        $drive_key = $value['drive_key'];
-        $uid = $value['uid'];
-        $pid = $value['pid'];
-        $if_shared = $value['if_shared'];
-        $share_status = $value['share_status'];
-        $user_id = $value['user_id'];
+            ':drive_name' => 'sciebo',
+            ])->queryAll();
+            
+            foreach ($sql as $value) {
+            $drive_path = $value['drive_path'];
+            $app_user_id = $value['app_user_id'];
+            $app_password = $value['app_password'];
+            $drive_key = $value['drive_key'];
+            $uid = $value['uid'];
+            $pid = $value['pid'];
+            $if_shared = $value['if_shared'];
+            $share_status = $value['share_status'];
+            $user_id = $value['user_id'];
 
-        if ($gd_client !== false) {
-            $arr_app_user_detail[$k]['drive_path'] = $drive_path;
-            $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
-            $arr_app_user_detail[$k]['app_password'] = $app_password;
-            $arr_app_user_detail[$k]['drive_key'] = $drive_key;
-            $arr_app_user_detail[$k]['user_id'] = $user_id;
-            $arr_app_user_detail[$k]['uid'] = $uid;
-            $arr_app_user_detail[$k]['pid'] = $pid;
-            $k++;
+            if ($if_shared == 'Y' && $share_status == 'Y') {
+                $arr_app_user_detail[$k]['drive_path'] = $drive_path;
+                $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
+                $arr_app_user_detail[$k]['app_password'] = $app_password;
+                $arr_app_user_detail[$k]['drive_key'] = $drive_key;
+                $arr_app_user_detail[$k]['user_id'] = $user_id;
+                $arr_app_user_detail[$k]['uid'] = $uid;
+                $arr_app_user_detail[$k]['pid'] = $pid;
+                $k++;
+            }
+            else {
+                $arr_app_user_detail_with_no_share[$n]['drive_path'] = $drive_path;
+                $arr_app_user_detail_with_no_share[$n]['app_user_id'] = $app_user_id;
+                $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
+                $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
+                $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
+                $arr_app_user_detail_with_no_share[$n]['if_shared'] = $if_shared;
+                $arr_app_user_detail_with_no_share[$n]['share_status'] = $share_status;
+                $n++;
+            }
         }
-        else {
-            $arr_app_user_detail_with_no_share[$n]['drive_path'] = $drive_path;
-            $arr_app_user_detail_with_no_share[$n]['app_user_id'] = $app_user_id;
-            $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
-            $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
-            $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
-            $arr_app_user_detail_with_no_share[$n]['if_shared'] = $if_shared;
-            $arr_app_user_detail_with_no_share[$n]['share_status'] = $share_status;
-            $n++;
+
+        // Load Google Drive entries
+        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+            WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared <> \'D\'', [
+                ':space_id' => $space_id,
+                ':drive_name' => 'gd',
+            ])->queryAll();
+        foreach ($sql as $value) {
+            $drive_path = $value['drive_path'];
+            $app_user_id = $value['app_user_id'];
+            $app_password = $value['app_password'];
+            $drive_key = $value['drive_key'];
+            $uid = $value['uid'];
+            $pid = $value['pid'];
+            $if_shared = $value['if_shared'];
+            $share_status = $value['share_status'];
+            $user_id = $value['user_id'];
+
+            if ($gd_client !== false) {
+                $arr_app_user_detail[$k]['drive_path'] = $drive_path;
+                $arr_app_user_detail[$k]['app_user_id'] = $app_user_id;
+                $arr_app_user_detail[$k]['app_password'] = $app_password;
+                $arr_app_user_detail[$k]['drive_key'] = $drive_key;
+                $arr_app_user_detail[$k]['user_id'] = $user_id;
+                $arr_app_user_detail[$k]['uid'] = $uid;
+                $arr_app_user_detail[$k]['pid'] = $pid;
+                $k++;
+            }
+            else {
+                $arr_app_user_detail_with_no_share[$n]['drive_path'] = $drive_path;
+                $arr_app_user_detail_with_no_share[$n]['app_user_id'] = $app_user_id;
+                $arr_app_user_detail_with_no_share[$n]['app_password'] = $app_password;
+                $arr_app_user_detail_with_no_share[$n]['drive_key'] = $drive_key;
+                $arr_app_user_detail_with_no_share[$n]['user_id'] = $user_id;
+                $arr_app_user_detail_with_no_share[$n]['if_shared'] = $if_shared;
+                $arr_app_user_detail_with_no_share[$n]['share_status'] = $share_status;
+                $n++;
+            }
         }
-    }
+    }          
 }
 // Disable app detail ID
 elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'disable' && isset($_GET['app_detail_id'])) {
@@ -2475,6 +2486,10 @@ else {
                                 ])->queryAll();
 
                                 if (count($sql) > 0) {
+                                    echo 'You can share this folder or file directly to another space which you\'re joined.
+
+                                    <table style="width: 100%">';
+
                                     foreach ($sql as $value) {
                                         $share_id = $value['id'];
                                         $share_name = $value['name'];
@@ -2488,15 +2503,19 @@ else {
                                             $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
                                         }
 
-                                        $style = 'background: #0a0a0a;';
-                                        $onmouseover = 'this.style.background=\'white\';';
-                                        $onmouseout = 'this.style.background=\'#0a0a0a;\';';
-                                        echo '<div class="row" style="'.$style.'" onmouseover="'.$onmouseover.'" onmouseout="'.$onmouseout.'">
-                                            <a class="more_a" href="'.$url_share_to_space.'">
-                                                <div class="col-sm-10" align="center">'.$share_name.'&nbsp<span class="glyphicon glyphicon-share-alt" style="font-size: 10px;"></span></div>
-                                            </a>
-                                        </div>';
+                                        echo '<tr>
+                                            <td>'.$share_name.'</td>
+
+                                            <td>';
+                                                $class = 'btn btn-success btn-sm';
+                                                echo '<a class="'.$class.'" href="'.$url_share_to_space.'">
+                                                    Share
+                                                </a>
+                                            </td>
+                                        </tr>';
                                     }
+
+                                    echo '</table>';
                                 }
 
                             echo '</div>
