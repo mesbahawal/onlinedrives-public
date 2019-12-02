@@ -2488,12 +2488,12 @@ else {
                                             $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
                                         }
 
-                                        $style = 'border: 1px solid #0a0a0a;';
-                                        $onmouseover = 'this.style.background = \'white\';';
-                                        $onmouseout = 'this.style.background = \'#eee\';';
+                                        $style = 'background: #0a0a0a;';
+                                        $onmouseover = 'this.style.background=\'white\';';
+                                        $onmouseout = 'this.style.background=\'#0a0a0a;\';';
                                         echo '<div class="row" style="'.$style.'" onmouseover="'.$onmouseover.'" onmouseout="'.$onmouseout.'">
                                             <a class="more_a" href="'.$url_share_to_space.'">
-                                                <div class="col-sm-10">'.$share_name.'</div>
+                                                <div class="col-sm-10" align="center">'.$share_name.'&nbsp<span class="glyphicon glyphicon-share-alt" style="font-size: 10px;"></span></div>
                                             </a>
                                         </div>';
                                     }
@@ -2550,6 +2550,11 @@ else {
                                 }
                                 elseif ($cloud == 'gd') {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                }
+
+                                $phpv = substr(phpversion(), 0, 1);
+                                if ($phpv >= 7) {
+                                    $path = urldecode($path);
                                 }
 
                                 // Set flag if user is owner (folders)
@@ -2989,12 +2994,12 @@ else {
                                             $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
                                         }
 
-                                        $style = 'border: 1px solid #0a0a0a;';
+                                        $style = 'background: #0a0a0a;';
                                         $onmouseover = 'this.style.background=\'white\';';
-                                        $onmouseout = 'this.style.background=\'#eee\';';
+                                        $onmouseout = 'this.style.background=\'#0a0a0a;\';';
                                         echo '<div class="row" style="'.$style.'" onmouseover="'.$onmouseover.'" onmouseout="'.$onmouseout.'">
                                             <a href="'.$url_share_to_space.'" class="more_a" >
-                                                <div class="col-sm-10">'.$share_name.'</div>
+                                                <div class="col-sm-10" align="center">'.$share_name.'&nbsp<span class="glyphicon glyphicon-share-alt" style="font-size: 10px;"></span></div>
                                           </a>
                                         </div>';
                                     }
