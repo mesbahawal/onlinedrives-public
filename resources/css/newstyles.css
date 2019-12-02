@@ -27,6 +27,12 @@
 .i { font-style: italic !important; }
 .u { text-decoration: underline !important; }
 
+/* Color properties */
+.black, .black a { color: black !important; }
+.gray, .gray a { color: gray !important; }
+.silver, .silver a { color: silver !important; }
+.white, .white a { color: white !important; }
+
 .box {
     margin-bottom: 15px;
     border: 1px solid #f0f0f0;

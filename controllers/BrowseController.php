@@ -334,7 +334,7 @@ class BrowseController extends BaseController
                         ])->execute();
 
                         // Success message
-                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Deletion from Sciebo was successful.');
+                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsharing was successful.');
 
                 }
                 // Google Drive delete function
@@ -349,7 +349,7 @@ class BrowseController extends BaseController
                     ])->execute();
 
                     // Success message
-                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Deletion from Google Drive was successful.');
+                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsharing was successful.');
                 }
                 else {
                     $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');

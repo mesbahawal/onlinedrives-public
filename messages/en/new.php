@@ -4,8 +4,7 @@ return array (
   'File is successfully created in Sciebo.' => 'File is successfully created in Sciebo.',
   'Folder is successfully created in Google Drive.' => 'Folder is successfully created in Google Drive.',
   'File is successfully created in Google Drive.' => 'File is successfully created in Google Drive.',
-  'Deletion from Sciebo was successful.' => 'Deletion from Sciebo was successful.',
-  'Deletion from Google Drive was successful.' => 'Deletion from Google Drive was successful.',
+  'Unsharing was successful.' => 'Unsharing was successful.',
   'All drives' => 'All drives',
   'AppID' => 'AppID',
   'Password' => 'Password',
@@ -39,6 +38,11 @@ return array (
   'Google Drive client add failed.' => 'Google Drive client add failed.',
   'Change permissions' => 'Change permissions',
   'Unshare' => 'Unshare',
+  '' => '',
+  '' => '',
+  '' => '',
+  '' => '',
+  '' => '',
   '' => '',
 );
 ?>

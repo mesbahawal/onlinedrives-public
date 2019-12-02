@@ -1145,11 +1145,11 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             ?>
 
 <!-- Breadcrumb navigation -->
-<div class="box">
+<div class="box gray">
     <?php
     // Output start of navigation
     $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
-    echo '<a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . '</a>';
+    echo 'Location: <a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . '</a>';
 
     // Output Sciebo navigation
     if ($get_sciebo_path != '') {
@@ -1315,8 +1315,7 @@ if (count($arr_app_user_admin) > 0) {
     $email = Yii::$app->user->identity->email;
     ?>
 
-    <div class="box">
-        <div>
+    <div class="box gray">
         <span class="pointer">
             <?php
             // Heading
@@ -1345,7 +1344,6 @@ if (count($arr_app_user_admin) > 0) {
             "></span>';
             ?>
         </span>
-        </div>
 
         <div id="connected_drives_table" class="shownone" style="margin-top: 20px;">
             <table class="table table-responsive">
@@ -1377,15 +1375,15 @@ if (count($arr_app_user_admin) > 0) {
                                     $ref = 'https://accounts.google.com/ServiceLogin';
                                 }
                                 $src = 'protected/modules/onlinedrives/resources/'.$drive_name.'20.png';
-                                echo '<a href="'.$ref.'" target="_blank">
+                                echo '<a style="position: relative; top: 2px; margin-right: 5px;" href="'.$ref.'" target="_blank">
                                         <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-                                    </a> ';
+                                    </a>';
                                 ?>
 
                                 <?php echo $app_user_id; ?>
                             </td>
 
-                            <td align="right">
+                            <td class="white" align="right">
                                 <?php
                                 echo '<a class="btn btn-success btn-sm" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">
                                         Select Files
@@ -1393,7 +1391,7 @@ if (count($arr_app_user_admin) > 0) {
                                 ?>
                             </td>
 
-                            <td>
+                            <td class="white">
                                 <?php
                                 if ($if_shared != 'D') {
                                     echo '<a class="btn btn-danger btn-sm" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">
@@ -2236,10 +2234,10 @@ else {
         		<span id="col_modified"></span>
         	</span>
         </th>
-        <!-- 5 Service icon -->
+        <!-- 5 Drive icon -->
         <th onclick="change_order_icon('service', 5, 'T');">
             <span class="rel" style="cursor: pointer;">
-                Service
+                Drive
                 <span id="col_service"></span>
             </span>
         </th>
@@ -2367,10 +2365,12 @@ else {
                 // Output all folders
                 echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
                     <td class="shownone">'.$type.'</td>
+
                     <td style="padding: 5px;">
                         <span class="glyphicon glyphicon-folder-close"></span>';
                         if ($fav <> 0) { echo ' <span class="glyphicon glyphicon-star fav_brown"></span>'; }
                     echo '</td>
+
                     <td style="padding: 5px;">';
                         if ($cloud == 'sciebo') {
                             $path = urlencode($path);
@@ -2382,104 +2382,127 @@ else {
                             echo '<a href="'.$url.'">'.$name.'</a>';
                         }
                     echo '</td>
+
                     <td class="shownone">'.$modified_time.'</td>
+
                     <td style="padding: 5px;">
                         <span title="'.$time_title.'">'.$modified_time_txt.'</span>
                     </td>'.
+
                     // Output service icon (folders)
                     '<td>
-                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
+                        <a href="'.$web_view_link.'" target="_blank">
+                            <img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" title="'.$cloud_name.'" />
+                        </a>
                     </td>'.
+
                     // Output info (folders), only for development
                     /*
                     '<td>
-                        <img src="protected/modules/onlinedrives/resources/info.png" alt="" title="'.$info.'" />
+                        <img src="protected/modules/onlinedrives/resources/info.png" title="'.$info.'" />
                     </td>'.
                     */
+
                     // Output owner, shared, comments (folders)
                     '<td>';
                         if ($cloud == 'sciebo') {
-                        echo '<div>
-                            <div class="col-sm-1 float-left">
-                                <div class="round round-sm hollow">
-                                    <span title="'.$file_owner.'">';
-                                        $words = explode(',', $file_owner);
-                                        $result1 = $words[0][0];
-                                        if (count($words) > 1) { $result2 = $words[1][1]; }
-                                        else { $result2 = ''; }
-                                        echo '<b>'.$result2.$result1.'</b>'.
-                                    '</span>
-                                </div>
-                            </div>';
-                            if (is_array($file_shared) && count($file_shared) > 0) {
-                                echo '<div id="ex2" class="float-left">
-                                    <span class="fa-stack fa-1x has-badge" data-count="yes">
-                                        <i class="fa fa-circle fa-stack-2x"></i>
-                                        <i class="fa fa-share fa-stack-1x fa-inverse"></i>
-                                    </span>
+                            echo '<div>
+
+                                <div class="col-sm-1 float-left">
+                                    <div class="round round-sm hollow">
+                                        <span title="'.$file_owner.'">';
+                                            $words = explode(',', $file_owner);
+                                            $result1 = $words[0][0];
+                                            if (count($words) > 1) {
+                                                $result2 = $words[1][1];
+                                            }
+                                            else {
+                                                $result2 = '';
+                                            }
+                                            echo '<span class="b">'.$result2.$result1.'</span>
+                                        </span>
+                                    </div>
                                 </div>';
-                            }
-                            if ($file_comment > 0) {
-                                echo '<div id="ex2" class="float-left">
-                                    <span class="fa-stack fa-1x has-badge" data-count="'.$file_comment.'">
-                                        <i class="fa fa-circle fa-stack-2x"></i>
-                                        <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
-                                    </span>
-                                </div>';
-                            }
+
+                                if (is_array($file_shared) && count($file_shared) > 0) {
+                                    echo '<div id="ex2" class="float-left">
+                                        <span class="fa-stack fa-1x has-badge" data-count="yes">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-share fa-stack-1x fa-inverse"></i>
+                                        </span>
+                                    </div>';
+                                }
+
+                                if ($file_comment > 0) {
+                                    echo '<div id="ex2" class="float-left">
+                                        <span class="fa-stack fa-1x has-badge" data-count="'.$file_comment.'">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
+                                        </span>
+                                    </div>';
+                                }
+
                             echo '</div>';
                         }
                     echo '</td>'.
+
                     // Output space sharing (folders)
-                        '<td style="position: relative;">
+                    '<td style="position: relative;">
                         <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
                             <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
                         </a>
 
-                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">'.
+                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">';
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
-                                    style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
-                                    onclick="
-                                        getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';
-                                " />';
+                                $class = 'abs pointer';
+                                $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
+                                $src = 'protected/modules/onlinedrives/resources/cross.png';
+                                $title = Yii::t('OnlinedrivesModule.new', 'Close');
+                                $onclick = 'getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';';
+                                echo '<img class="'.$class.'" style="'.$style.'" src="'.$src.'" alt="X" title="'.$title.'" onclick="'.$onclick.'" />';
 
-                    // Select field
-                        echo '<div class="container-fluid">';
+                            // Select field
+                            echo '<div class="container-fluid">';
+                                $logged_username =  Yii::$app->user->identity->username;
+                                $space_guid = $_GET['cguid'];
+                                $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
+                                    FROM `space` s, `user` u, `space_membership` sm
+                                    WHERE s.`id` = sm.`space_id`
+                                    AND u.`id` = sm.`user_id`
+                                    AND u.`username` = :username
+                                    AND s.`guid` <> :guid', [
+                                    ':username' => $logged_username, ':guid' => $space_guid,
+                                ])->queryAll();
 
-                $logged_username =  Yii::$app->user->identity->username;
-                $space_guid = $_GET['cguid'];
-                $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
-                    FROM `space` s, `user` u, `space_membership` sm
-                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`
-                    AND u.`username` = :username AND s.`guid` <> :guid', [
-                    ':username' => $logged_username, ':guid' => $space_guid,
-                ])->queryAll();
+                                if (count($sql) > 0) {
+                                    foreach ($sql as $value) {
+                                        $share_id = $value['id'];
+                                        $share_name = $value['name'];
+                                        $share_guid = $value['guid'];
 
-                if (count($sql) > 0) {
-                    foreach ($sql as $value) {
-                        $share_id = $value['id'];
-                        $share_name = $value['name'];
-                        $share_guid = $value['guid'];
+                                        if ($cloud == 'sciebo') {
+                                            $path = urlencode($path);
+                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path.'&dk='.$drive_key;
+                                        }
+                                        elseif ($cloud == 'gd') {
+                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                        }
 
-                        if ($cloud == 'sciebo') {
-                            $path = urlencode($path);
-                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path.'&dk='.$drive_key;
-                        }
-                        elseif ($cloud == 'gd') {
-                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
-                        }
-
-                        echo '<div class="row" style="border: 1px solid #0a0a0a;" onmouseover="this.style.background=\'white\';" onmouseout="this.style.background=\'#eee\';">
-                                      <a href="'.$url_share_to_space.'" class="more_a" >
-                                        <div class="col-sm-10">'.$share_name.'</div>
-                                        </a>
-                                      </div>';
-                    }
-                }
+                                        $style = 'border: 1px solid #0a0a0a;';
+                                        $onmouseover = 'this.style.background = \'white\';';
+                                        $onmouseout = 'this.style.background = \'#eee\';';
+                                        echo '<div class="row" style="'.$style.'" onmouseover="'.$onmouseover.'" onmouseout="'.$onmouseout.'">
+                                            <a class="more_a" href="'.$url_share_to_space.'">
+                                                <div class="col-sm-10">'.$share_name.'</div>
+                                            </a>
+                                        </div>';
+                                    }
+                                }
 
                             echo '</div>
+                        </div>
                     </td>'.
+
                     // Output more options icon (folders)
                     '<td style="position: relative; padding: 5px;">';
 
@@ -2508,7 +2531,6 @@ else {
                                 }
 
                                 $url_unshare_content = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
-
 
                                 if ($cloud == 'sciebo') {
                                     // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
@@ -2549,7 +2571,7 @@ else {
 
                             // Output
                             echo '<a href="#" onclick="';
-                                for ($i2 = 0; $i2 < $count_all; $i2++) {
+                                for ($i2 = 0; $i2 <= $count_all; $i2++) {
                                     echo 'if (getElementById(\'more'.$i2.'\')) {
                                         getElementById(\'more'.$i2.'\').className = \'shownone\';
                                         getElementById(\'tr'.$i2.'\').className = \'\';
@@ -2563,45 +2585,47 @@ else {
                             </a>'.
 
                             // Wrapper container
-                            '<div id="more'.$no.'" class="shownone">'.
+                            '<div id="more'.$no.'" class="shownone">';
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="' . Yii::t('OnlinedrivesModule.new', 'Close') . '"
-                                    style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
-                                    onclick="
-                                        getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
+                                $class = 'abs pointer';
+                                $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
+                                $src = 'protected/modules/onlinedrives/resources/cross.png';
+                                $title = Yii::t('OnlinedrivesModule.new', 'Close');
+                                $onclick = 'getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
                                         getElementById(\'tr'.$no.'\').className = \'\';
-                                        getElementById(\'delete'.$no.'\').className = \'shownone\';
-                                " />'.
+                                        getElementById(\'delete'.$no.'\').className = \'shownone\';';
+                                echo '<img class="'.$class.'" style="'.$style.'" src="'.$src.'" alt="X" title="'.$title.'" onclick="'.$onclick.'" />'.
 
                                 // Copy function
-                                '<div class="more_menu_div">
-                                    <a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
+                                '<div class="more_menu_div">';
+                                    $copy = Yii::t('OnlinedrivesModule.new', 'Copy');
+                                    echo '<a href="" class="more_a" alt="'.$copy.'" title="'.$copy.'">
                                         <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
+                                        <span class="more_txt">'.$copy.'</span>
                                     </a>
                                 </div>';
 
                                 // Permission links (folders)
                                 if ($flag_owner == 1) {
                                     // Change permission
-                                    echo '<div class="more_menu_div">
-                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '">
+                                    echo '<div class="more_menu_div">';
+                                        $permissions = Yii::t('OnlinedrivesModule.new', 'Change permissions');
+                                        echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.$permissions.'" title="'.$permissions.'">
                                             <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span><br />
-                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '</span>
+                                            <span class="more_txt">'.$permissions.'</span>
                                         </a>
                                     </div>'.
 
                                     // Unshare
-                                    '<div class="more_menu_div">
-                                        <a href="#" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '"
-                                            onclick="
-                                                getElementById(\'unshare'.$no.'\').classList.toggle(\'showblock\');
-                                                getElementById(\'more'.$no.'\').style.height = \'150px\';
-                                                return false;
-                                        ">
+                                    '<div class="more_menu_div">';
+                                        $unshare = Yii::t('OnlinedrivesModule.new', 'Unshare');
+                                        $onclick = 'getElementById(\'unshare'.$no.'\').classList.toggle(\'showblock\');
+                                            getElementById(\'more'.$no.'\').style.height = \'150px\';
+                                            return false;';
+                                        echo '<a href="#" class="more_a" alt="'.$unshare.'" title="'.$unshare.'" onclick="'.$onclick.'">
                                             <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
-                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '</span>
+                                            <span class="more_txt">'.$unshare.'</span>
                                         </a>
                                     </div>'.
 
@@ -2630,7 +2654,7 @@ else {
                                         }
                                         // Google Drive unshare function
                                         elseif ($cloud == 'gd' && $parents[0] != '') {
-/*
+                                            /*
                                             $model_gd_delete = new DeleteFileForm();
                                             $form2 = ActiveForm::begin([
                                                 'id' => 'gd_delete_file',
@@ -2648,7 +2672,7 @@ else {
                                                 </div>';
 
                                             ActiveForm::end();
-*/
+                                            */
                                         }
                                     echo '</div>';
                                 }
@@ -2832,129 +2856,153 @@ else {
                         $icon = ''; break;
                     default:
                         $icon = ''; break;
-                } //echo $mime_type_icon;
+                }
+                // echo $mime_type_icon;
                 $img = '<img src="protected/modules/onlinedrives/resources/type/'.$icon.'.png" alt="'.'" title="'.'" />';
 
 
                 // Output all files
                 echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
                     <td class="shownone">'.$type.'</td>
-                    <td style="padding: 5px;">
-                        '.$img;
+
+                    <td style="padding: 5px;">'.
+                        $img;
                         if ($fav <> 0) {
                             echo ' <span class="glyphicon glyphicon-star fav_brown"></span>';
                         }
                     echo '</td>
+
                     <td style="padding: 5px;">
                         <a href="'.$download_link.'" target="_blank">'.$name.'</a> ';
                         if ($download_link != '') {
                             echo '<a href="'.$download_link.'" target="_blank">
-                                        <span class="glyphicon glyphicon-download-alt" style="font-size: 12px;"></span>
-                                    </a>';
+                                <span class="glyphicon glyphicon-download-alt" style="font-size: 12px;"></span>
+                            </a>';
                         }
                     echo '</td>
+
                     <td class="shownone">'.$modified_time.'</td>
+
                     <td style="padding: 5px;">
                         <span title="'.$time_title.'">'.$modified_time_txt.'</span>
                     </td>'.
+
                     // Output service icon (files)
                     '<td>
-                        <a href="'.$web_view_link.'" target="_blank"><img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" alt="" title="'.$cloud_name.'" /></a>
+                        <a href="'.$web_view_link.'" target="_blank">
+                            <img src="protected/modules/onlinedrives/resources/'.$cloud.'20.png" title="'.$cloud_name.'" />
+                        </a>
                     </td>'.
+
                     // Output info (files), only for development
                     /*
                     '<td>
                         <img src="protected/modules/onlinedrives/resources/info.png" alt="" title="'.$info.'" />
                     </td>'.
                     */
+
                     // Output owner, shared, comments (files)
                     '<td>';
                         if ($cloud == 'sciebo') {
-                        echo '<div>
-                            <div class="col-sm-1 float-left">
-                                <div class="round round-sm hollow">
-                                    <span title="'.$file_owner.'">';
-                                        $words = explode(',', $file_owner);
-                                        $result1 = $words[0][0];
-                                        if (count($words) > 1) {
-                                            $result2 = $words[1][1];
-                                        }
-                                        else {
-                                            $result2 = '';
-                                        }
-                                        echo '<b>'.$result2.$result1.'</b>'.
-                                    '</span>
-                                </div>
-                            </div>';
-                            if (is_array($file_shared) && count($file_shared) > 0) {
-                                echo '<div id="ex2" class="float-left">
-                                    <span class="fa-stack fa-1x has-badge" data-count="yes">
-                                        <i class="fa fa-circle fa-stack-2x"></i>
-                                        <i class="fa fa-share fa-stack-1x fa-inverse"></i>
-                                    </span>
+                            echo '<div>
+
+                                <div class="col-sm-1 float-left">
+                                    <div class="round round-sm hollow">
+                                        <span title="'.$file_owner.'">';
+                                            $words = explode(',', $file_owner);
+                                            $result1 = $words[0][0];
+                                            if (count($words) > 1) {
+                                                $result2 = $words[1][1];
+                                            }
+                                            else {
+                                                $result2 = '';
+                                            }
+                                            echo '<b>'.$result2.$result1.'</b>'.
+                                        '</span>
+                                    </div>
                                 </div>';
-                            }
-                            if ($file_comment > 0) {
-                                echo '<div id="ex2" class="float-left">
-                                    <span class="fa-stack fa-1x has-badge" data-count="'.$file_comment.'">
-                                        <i class="fa fa-circle fa-stack-2x"></i>
-                                        <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
-                                    </span>
-                                </div>';
-                            }
-                        echo '</div>';
+
+                                if (is_array($file_shared) && count($file_shared) > 0) {
+                                    echo '<div id="ex2" class="float-left">
+                                        <span class="fa-stack fa-1x has-badge" data-count="yes">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-share fa-stack-1x fa-inverse"></i>
+                                        </span>
+                                    </div>';
+                                }
+
+                                if ($file_comment > 0) {
+                                    echo '<div id="ex2" class="float-left">
+                                        <span class="fa-stack fa-1x has-badge" data-count="'.$file_comment.'">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
+                                        </span>
+                                    </div>';
+                                }
+
+                            echo '</div>';
                         }
                     echo '</td>'.
-                        // Output space sharing (files)
-                        '<td style="position: relative;">
-                        <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
+
+                    // Output space sharing (files)
+                    '<td style="position: relative;">
+                        <a href="#" onclick="
+                            getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\';
+                            return false;
+                        ">
                             <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
                         </a>
 
-                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">'.
-                        // Cross icon (more options menu)
-                        '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="'.Yii::t('OnlinedrivesModule.new', 'Close').'"
-                                    style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
-                                    onclick="
-                                        getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';
-                                " />';
+                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">';
+                            // Cross icon (more options menu)
+                            $class = 'abs pointer';
+                            $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
+                            $src = 'protected/modules/onlinedrives/resources/cross.png';
+                            $title = Yii::t('OnlinedrivesModule.new', 'Close');
+                            $onclick = 'getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';';
+                            echo '<img class="'.$class.'" style="'.$style.'" src="'.$src.'" alt="X" title="'.$title.'" onclick="'.$onclick.'" />';
 
-                // Select field
-                echo '<div class="container-fluid">';
+                            // Select field
+                            echo '<div class="container-fluid">';
+                                $logged_username =  Yii::$app->user->identity->username;
+                                $space_guid = $_GET['cguid'];
+                                $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
+                                    FROM `space` s, `user` u, `space_membership` sm
+                                    WHERE s.`id` = sm.`space_id`
+                                    AND u.`id` = sm.`user_id`
+                                    AND u.`username` = :username
+                                    AND s.`guid` <> :guid', [
+                                    ':username' => $logged_username, ':guid' => $space_guid,
+                                ])->queryAll();
 
-                $logged_username =  Yii::$app->user->identity->username;
-                $space_guid = $_GET['cguid'];
-                $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
-                    FROM `space` s, `user` u, `space_membership` sm
-                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`
-                    AND u.`username` = :username AND s.`guid` <> :guid', [
-                    ':username' => $logged_username, ':guid' => $space_guid,
-                ])->queryAll();
+                                if (count($sql) > 0) {
+                                    foreach ($sql as $value) {
+                                        $share_id = $value['id'];
+                                        $share_name = $value['name'];
+                                        $share_guid = $value['guid'];
 
-                if (count($sql) > 0) {
-                    foreach ($sql as $value) {
-                        $share_id = $value['id'];
-                        $share_name = $value['name'];
-                        $share_guid = $value['guid'];
+                                        if ($cloud == 'sciebo') {
+                                            $path_for_space_sharing = $unshare_file_path;
+                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key;
+                                        }
+                                        elseif ($cloud == 'gd') {
+                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                        }
 
-                        if ($cloud == 'sciebo') {
-                            $path_for_space_sharing = $unshare_file_path;
-                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key;
-                        }
-                        elseif ($cloud == 'gd') {
-                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
-                        }
-
-                        echo '<div class="row" style="border: 1px solid #0a0a0a;" onmouseover="this.style.background=\'white\';" onmouseout="this.style.background=\'#eee\';">
-                                      <a href="'.$url_share_to_space.'" class="more_a" >
-                                        <div class="col-sm-10">'.$share_name.'</div>
-                                        </a>
-                                      </div>';
-                    }
-                }
-
-                echo '</div>
+                                        $style = 'border: 1px solid #0a0a0a;';
+                                        $onmouseover = 'this.style.background=\'white\';';
+                                        $onmouseout = 'this.style.background=\'#eee\';';
+                                        echo '<div class="row" style="'.$style.'" onmouseover="'.$onmouseover.'" onmouseout="'.$onmouseout.'">
+                                            <a href="'.$url_share_to_space.'" class="more_a" >
+                                                <div class="col-sm-10">'.$share_name.'</div>
+                                          </a>
+                                        </div>';
+                                    }
+                                }
+                            echo '</div>
+                        </div>
                     </td>'.
+
                     // Output more options icon (files)
                     '<td style="position: relative; padding: 5px;">';
 
@@ -2966,7 +3014,8 @@ else {
                             $share_setting_url = '';
                             $app_detail_id_unshare = '';
                             $db_drive_path = '';
-                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*, p.* FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                            $sql = $db->createCommand('SELECT d.`id` AS u_id, p.`id` AS p_id, d.*, p.*
+                                FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
                                 WHERE d.`id` = p.`onlinedrives_app_detail_id`
                                 AND p.`drive_key` = :dk
                                 AND d.`user_id` = :username
@@ -2975,7 +3024,6 @@ else {
                                 ':username' => $logged_username, ':dk' => $drive_key,
                             ])->queryAll();
                             if (count($sql) > 0) {
-
                                 foreach ($sql as $value) {
                                     $app_detail_id_unshare = $value['u_id'];
                                     $id_path_unshare = $value['p_id'];
@@ -3021,7 +3069,7 @@ else {
 
                             // Output
                             echo '<a href="#" onclick="';
-                                for ($i2 = 0; $i2 < $count_all; $i2++) {
+                                for ($i2 = 0; $i2 <= $count_all; $i2++) {
                                     echo 'if (getElementById(\'more'.$i2.'\')) {
                                         getElementById(\'more'.$i2.'\').className = \'shownone\';
                                         getElementById(\'tr'.$i2.'\').className = \'\';
@@ -3035,45 +3083,47 @@ else {
                             </a>'.
 
                             // Wrapper container
-                            '<div id="more'.$no.'" class="shownone">'.
+                            '<div id="more'.$no.'" class="shownone">';
 
                                 // Cross icon (more options menu)
-                                '<img src="protected/modules/onlinedrives/resources/cross.png" alt="X" title="' . Yii::t('OnlinedrivesModule.new', 'Close') . '"
-                                    style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; cursor: pointer;"
-                                    onclick="
-                                        getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
-                                        getElementById(\'tr'.$no.'\').className = \'\';
-                                        getElementById(\'delete'.$no.'\').className = \'shownone\';
-                                " />'.
+                                $class = 'abs pointer';
+                                $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
+                                $src = 'protected/modules/onlinedrives/resources/cross.png';
+                                $title = Yii::t('OnlinedrivesModule.new', 'Close');
+                                $onclick = 'getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
+                                    getElementById(\'tr'.$no.'\').className = \'\';
+                                    getElementById(\'delete'.$no.'\').className = \'shownone\';';
+                                echo '<img class="'.$class.'" style="'.$style.'" src="'.$src.'" alt="X" title="'.$title.'" onclick="'.$onclick.'" />'.
 
                                 // Copy function
-                                '<div class="more_menu_div">
-                                    <a href="" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Copy') . '">
+                                '<div class="more_menu_div">';
+                                    $copy = Yii::t('OnlinedrivesModule.new', 'Copy');
+                                    echo '<a class="more_a" href="" alt="'.$copy.'" title="'.$copy.'">
                                         <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
-                                        <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Copy') . '</span>
+                                        <span class="more_txt">'.$copy.'</span>
                                     </a>
                                 </div>';
 
                                 // Permission links (files)
                                 if ($flag_owner == 1) {
                                     // Change permission
-                                    echo '<div class="more_menu_div">
-                                        <a href="'.$share_setting_url.'" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '">
+                                    echo '<div class="more_menu_div">';
+                                        $permissions = Yii::t('OnlinedrivesModule.new', 'Change permissions');
+                                        echo '<a href="'.$share_setting_url.'" class="more_a" alt="'.$permissions.'" title="'.$permissions.'">
                                             <span class="glyphicon glyphicon-cog" style="font-size: 25px;"></span><br />
-                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Change permissions') . '</span>
+                                            <span class="more_txt">'.$permissions.'</span>
                                         </a>
                                     </div>'.
 
                                     // Unshare
-                                    '<div class="more_menu_div">
-                                        <a href="#" class="more_a" alt="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '" title="' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '"
-                                            onclick="
-                                                getElementById(\'unshare'.$no.'\').classList.toggle(\'showblock\');
-                                                getElementById(\'more'.$no.'\').classList.toggle(\'h125\');
-                                                return false;
-                                        ">
+                                    '<div class="more_menu_div">';
+                                        $unshare = Yii::t('OnlinedrivesModule.new', 'Unshare');
+                                        $onclick = 'getElementById(\'unshare'.$no.'\').classList.toggle(\'showblock\');
+                                            getElementById(\'more'.$no.'\').classList.toggle(\'h125\');
+                                            return false;';
+                                        echo '<a href="#" class="more_a" alt="'.$unshare.'" title="'.$unshare.'" onclick="'.$onclick.'">
                                             <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
-                                            <span class="more_txt">' . Yii::t('OnlinedrivesModule.new', 'Unshare') . '</span>
+                                            <span class="more_txt">'.$unshare.'</span>
                                         </a>
                                     </div>'.
 
@@ -3102,7 +3152,7 @@ else {
                                         }
                                         // Google Drive unshare function
                                         elseif ($cloud == 'gd' && $parents[0] != '') {
-/*
+                                            /*
                                             $model_gd_delete = new DeleteFileForm();
                                             $form2 = ActiveForm::begin([
                                                 'id' => 'gd_delete_file',
@@ -3120,7 +3170,7 @@ else {
                                                 </div>';
 
                                             ActiveForm::end();
-*/
+                                            */
                                         }
                                     echo '</div>';
                                 }
@@ -3145,129 +3195,127 @@ else {
 /**
  * Sciebo and Google Drive guide
  */
-if (1) {
-    $sciebo_guide_link = '<a href="#sciebo_guide">How to connect with your Sciebo account</a>';
-    $gd_guide_link = '<a href="#gd_guide">How to connect with your Google Drive account</a>';
+$sciebo_guide_link = '<a href="#sciebo_guide">How to connect with your Sciebo account</a>';
+$gd_guide_link = '<a href="#gd_guide">How to connect with your Google Drive account</a>';
 
-    $sciebo_guide_a = '<a name="sciebo_guide"></a>';
-    $gd_guide_a = '<a name="gd_guide"></a>';
+$sciebo_guide_a = '<a name="sciebo_guide"></a>';
+$gd_guide_a = '<a name="gd_guide"></a>';
 
-	$sciebo_guide_h = '<h1><b>How to connect with your Sciebo account</b></h1>';
-	$gd_guide_h = '<h1><b>How to connect with your Google Drive account</b></h1>';
+$sciebo_guide_h = '<h1><b>How to connect with your Sciebo account</b></h1>';
+$gd_guide_h = '<h1><b>How to connect with your Google Drive account</b></h1>';
 
-	$sciebo_guide_txt1 = 'Go in Sciebo, click on your name, click on "Settings" / "Einstellungen" (orange circle):';
-    $sciebo_guide_txt2 = 'Click on "Security" / "Sicherheit" (orange box):';
-    $sciebo_guide_txt3 = 'Scroll down to "App passwords / tokens" / "App-Passwörter / Token" (orange circle). Here you can insert an app name. Please confirm after that:';
-    $sciebo_guide_txt4 = 'Now new access data will be created and displayed. Copy them just now in the form above (which you\'ll see if you click on the burger menu in this module) because after refreshing the Sciebo page they won\t be longer visible:';
-    $sciebo_guide_txt5 = 'Here you see the opened burger menu with fulfilled Sciebo login form:';
-    $sciebo_guide_txt6 = 'After that you have a new box on your module homepage which makes it possible to share an existing folder or file of your Sciebo account with all the members in this space. Click on "Add":';
-    $sciebo_guide_txt7 = 'You can click on "Add". Then you have the possibility to add every folder and file from your cloud storage you want. After that please click on "Share":';
-    $sciebo_guide_txt8 = 'For example if there were selected all the folders and files in the foreign screenshot, then you would see the following list. This list will see all members of this space:';
+$sciebo_guide_txt1 = 'Go in Sciebo, click on your name, click on "Settings" / "Einstellungen" (orange circle):';
+$sciebo_guide_txt2 = 'Click on "Security" / "Sicherheit" (orange box):';
+$sciebo_guide_txt3 = 'Scroll down to "App passwords / tokens" / "App-Passwörter / Token" (orange circle). Here you can insert an app name. Please confirm after that:';
+$sciebo_guide_txt4 = 'Now new access data will be created and displayed. Copy them just now in the form above (which you\'ll see if you click on the burger menu in this module) because after refreshing the Sciebo page they won\t be longer visible:';
+$sciebo_guide_txt5 = 'Here you see the opened burger menu with fulfilled Sciebo login form:';
+$sciebo_guide_txt6 = 'After that you have a new box on your module homepage which makes it possible to share an existing folder or file of your Sciebo account with all the members in this space. Click on "Add":';
+$sciebo_guide_txt7 = 'You can click on "Add". Then you have the possibility to add every folder and file from your cloud storage you want. After that please click on "Share":';
+$sciebo_guide_txt8 = 'For example if there were selected all the folders and files in the foreign screenshot, then you would see the following list. This list will see all members of this space:';
 
-    $count_guide_sciebo = 8;
+$count_guide_sciebo = 8;
 
-    $gd_guide_txt1 = 'Please go on <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.';
-    $gd_guide_txt2 = 'This could be your view after login:';
-    $gd_guide_txt3 = 'Click on "Credentials" / "Anmeldedaten" on the left sight (3rd point).';
-    $gd_guide_txt4 = 'Click on "" / "Anmeldedaten erstellen". Then click on "OAuth-Client-ID:';
-    $gd_guide_txt5 = 'In the next view click on "" / "Webanwendungen" and choose a name of your OAuth-Client-ID. (This is not the shown name of your application.)';
-    $gd_guide_txt6 = '';
-    $gd_guide_txt7 = '';
-    $gd_guide_txt8 = '';
-    $gd_guide_txt9 = '';
-    $gd_guide_txt10 = '';
-    $gd_guide_txt11 = '';
-    $gd_guide_txt12 = '';
-    $gd_guide_txt13 = '';
-    $gd_guide_txt14 = '';
+$gd_guide_txt1 = 'Please go on <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.';
+$gd_guide_txt2 = 'This could be your view after login:';
+$gd_guide_txt3 = 'Click on "Credentials" / "Anmeldedaten" on the left sight (3rd point).';
+$gd_guide_txt4 = 'Click on "" / "Anmeldedaten erstellen". Then click on "OAuth-Client-ID:';
+$gd_guide_txt5 = 'In the next view click on "" / "Webanwendungen" and choose a name of your OAuth-Client-ID. (This is not the shown name of your application.)';
+$gd_guide_txt6 = '';
+$gd_guide_txt7 = '';
+$gd_guide_txt8 = '';
+$gd_guide_txt9 = '';
+$gd_guide_txt10 = '';
+$gd_guide_txt11 = '';
+$gd_guide_txt12 = '';
+$gd_guide_txt13 = '';
+$gd_guide_txt14 = '';
 
-    $count_guide_gd = 5;
+$count_guide_gd = 5;
 
-    // Output box opening
-    echo '<div class="box">';
+// Output box opening
+echo '<div class="box gray">';
 
-    // Output guide heading
-    if ($check == 1) {
-        $class = ' class="shownone"';
+// Output guide heading
+if ($check == 1) {
+    $class = ' class="shownone"';
 
-        echo '<span class="pointer">'.
-            // Heading
-            '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;"
-                onclick="
-                    getElementById(\'guide\').classList.toggle(\'showblock\');
+    echo '<span class="pointer">'.
+        // Heading
+        '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;"
+            onclick="
+                getElementById(\'guide\').classList.toggle(\'showblock\');
 
-                    if (getElementById(\'guide_arrow\').className == \'glyphicon glyphicon-chevron-down\') {
-                        getElementById(\'guide_arrow\').className = \'glyphicon glyphicon-chevron-up\';
-                    }
-                    else {
-                        getElementById(\'guide_arrow\').className = \'glyphicon glyphicon-chevron-down\';
-                    }
-            ">Access configuration guide</span>'.
-            // Arrow
-            '<span id="guide_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 10px; font-size: 15px;"
-                onclick="
-                    getElementById(\'guide\').classList.toggle(\'showblock\');
+                if (getElementById(\'guide_arrow\').className == \'glyphicon glyphicon-chevron-down\') {
+                    getElementById(\'guide_arrow\').className = \'glyphicon glyphicon-chevron-up\';
+                }
+                else {
+                    getElementById(\'guide_arrow\').className = \'glyphicon glyphicon-chevron-down\';
+                }
+        ">Access configuration guide</span>'.
+        // Arrow
+        '<span id="guide_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 10px; font-size: 15px;"
+            onclick="
+                getElementById(\'guide\').classList.toggle(\'showblock\');
 
-                    if (this.className == \'glyphicon glyphicon-chevron-down\') {
-                        this.className = \'glyphicon glyphicon-chevron-up\';
-                    }
-                    else {
-                        this.className = \'glyphicon glyphicon-chevron-down\';
-                    }
-            "></span>';
-        echo '</span>';
-    }
-    else {
-        $class = '';
-
-        echo '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;">
-            Access configuration guide
-        </span>';
-    }
-
-    // Output hidden-able wrapper opening
-    echo '<div id="guide"'.$class.'>'.
-
-    // Output Sciebo anchor
-    $sciebo_guide_a.
-
-    // Output guide links to anchors
-    '<p><ul>'.
-        '<li>'.$sciebo_guide_link.'</li>'.
-        '<li>'.$gd_guide_link.'</li>'.
-    '</ul></p><br />';
-
-    // Output Sciebo guide
-    echo
-    '<p>'.$sciebo_guide_h.'</p><br />';
-    for ($i = 1; $i <= $count_guide_sciebo; $i++) {
-        $txt = 'sciebo_guide_txt'.$i;
-        $pic = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/'.$i.'.png" />';
-    	echo '<p>Step '.$i.': ' . $$txt . '<p>'.
-        '<p>'.$pic.'<p><br />';
-    }
-
-    echo '<br />'.
-
-    // Output Google Drive anchor
-    $gd_guide_a.
-
-    // Output Google Drive output
-	'<p>'.$gd_guide_h.'</p><br />';
-
-    for ($i = 1; $i <= $count_guide_gd; $i++) {
-        $txt = 'gd_guide_txt'.$i;
-        $pic = '<img src="protected/modules/onlinedrives/resources/guide/gd/'.$i.'.png" />';
-        echo '<p>Step '.$i.': ' . $$txt . '<p>'.
-        '<p>'.$pic.'<p><br />';
-    }
-
-    // Output hidden-able wrapper ending
-    echo '</div>'.
-
-    // Output box ending
-    '</div>';
+                if (this.className == \'glyphicon glyphicon-chevron-down\') {
+                    this.className = \'glyphicon glyphicon-chevron-up\';
+                }
+                else {
+                    this.className = \'glyphicon glyphicon-chevron-down\';
+                }
+        "></span>';
+    echo '</span>';
 }
+else {
+    $class = '';
+
+    echo '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;">
+        Access configuration guide
+    </span>';
+}
+
+// Output hidden-able wrapper opening
+echo '<div id="guide"'.$class.'>'.
+
+// Output Sciebo anchor
+$sciebo_guide_a.
+
+// Output guide links to anchors
+'<p><ul>'.
+    '<li>'.$sciebo_guide_link.'</li>'.
+    '<li>'.$gd_guide_link.'</li>'.
+'</ul></p><br />';
+
+// Output Sciebo guide
+echo
+'<p>'.$sciebo_guide_h.'</p><br />';
+for ($i = 1; $i <= $count_guide_sciebo; $i++) {
+    $txt = 'sciebo_guide_txt'.$i;
+    $pic = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/'.$i.'.png" />';
+    echo '<p>Step '.$i.': ' . $$txt . '<p>'.
+    '<p>'.$pic.'<p><br />';
+}
+
+echo '<br />'.
+
+// Output Google Drive anchor
+$gd_guide_a.
+
+// Output Google Drive output
+'<p>'.$gd_guide_h.'</p><br />';
+
+for ($i = 1; $i <= $count_guide_gd; $i++) {
+    $txt = 'gd_guide_txt'.$i;
+    $pic = '<img src="protected/modules/onlinedrives/resources/guide/gd/'.$i.'.png" />';
+    echo '<p>Step '.$i.': ' . $$txt . '<p>'.
+    '<p>'.$pic.'<p><br />';
+}
+
+// Output hidden-able wrapper ending
+echo '</div>'.
+
+// Output box ending
+'</div>';
 ?>
 
         </div>
