@@ -444,7 +444,7 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'disable' && iss
 
             $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
 
-            if($sql && $sql1){
+            if($sql== true && $sql1 == true){
                 (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
             }
             else{
