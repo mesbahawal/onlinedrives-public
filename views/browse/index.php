@@ -2322,7 +2322,6 @@ else {
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{diff,plural,=1{1 minute} other{# minutes}} ago', ['diff' => $diff]);
-                    $modified_time_txt = $modified_time;
                 }
                 elseif ($diff < 60 * 60 * 24) {
                     $diff = floor($diff / (60 * 60));
