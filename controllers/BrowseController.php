@@ -162,7 +162,6 @@ class BrowseController extends BaseController
                     $path = Yii::$app->params['uploadPath'] . $model_login_gd_client->image_web_filename;
 
                     if ($image->saveAs($path)) {
-
                         $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
                             VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date, :if_shared)', [
                             ':space_id' => $space_id,
@@ -182,7 +181,7 @@ class BrowseController extends BaseController
                         // Success message
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
                     }
-                    else{
+                    else {
                         $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed.');
                     }
                 }
@@ -259,7 +258,7 @@ class BrowseController extends BaseController
                         }
                     }
                     elseif ($cloud == 'gd') {
-                        //TODO xx
+                        // TODO xx
                     }
                 }
                 else {
@@ -278,10 +277,12 @@ class BrowseController extends BaseController
                 'model' => $model,
             ]);
         }
-        // Delete file
+        // Unshare file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
             // Get params
-            $get_dk = ''; $permission =''; $user_id='';
+            $get_dk = '';
+            $permission = '';
+            $user_id = '';
             if (!empty($_GET['dk'])) {
                 $get_dk = $_GET['dk'];
             }
@@ -310,41 +311,37 @@ class BrowseController extends BaseController
             if (!empty($model_gd_delete->delete_file_id)) {
                 $cloud = $model_gd_delete->cloud;
                 $delete_file_id = $model_gd_delete->delete_file_id;
-                $permission_pos = strpos($permission, 'D'); // permission = D , means Un-share, not Delete.
+                $permission_pos = strpos($permission, 'D'); // permission = D, means Unshare/Disable, not Delete
 
                 if (isset(Yii::$app->user->identity->username)) {
                     $username = Yii::$app->user->identity->username;
                 }
                 else {
                     $username = '';
-
                     $home_url = Url::base(true);
 
                     return $this->redirect($home_url);
                 }
 
-                // Sciebo delete function
+                // Sciebo unshare function
                 if ($cloud == 'sciebo' && ($username == $user_id || $permission_pos !== false)) {
-
                         $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
-                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
-                                                WHERE drive_key = :drive_key
-                                                AND share_status=\'Y\' ', [
-                                                ':drive_key' => $get_dk,
+                            SET share_status = "D", update_date = CURRENT_TIMESTAMP
+                            WHERE drive_key = :drive_key AND share_status = \'Y\' ', [
+                            ':drive_key' => $get_dk,
                         ])->execute();
 
                         // Success message
                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsharing was successful.');
 
                 }
-                // Google Drive delete function
+                // Google Drive unshare function
                 elseif ($cloud == 'gd' && ($username == $user_id || $permission_pos !== false)) {
                     // Get the API client and construct the service object
 
                     $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
-                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
-                                                WHERE drive_key = :drive_key
-                                                AND share_status=\'Y\' ', [
+                        SET share_status = "D", update_date = CURRENT_TIMESTAMP
+                        WHERE drive_key = :drive_key AND share_status = \'Y\' ', [
                         ':drive_key' => $get_dk,
                     ])->execute();
 
@@ -458,11 +455,11 @@ class BrowseController extends BaseController
                     $app_detail_id =  $model_addfiles->app_detail_id;
                     $permission =  $model_addfiles->permission;
 
-                    if(isset($_GET['sciebo_path'])){
+                    if (isset($_GET['sciebo_path'])) {
                         $get_sciebo_path = $_GET['sciebo_path'];
                         $str_drive_path_check = ' AND ';
-                    }// TODO: XXX
-                    else{
+                    } // TODO: XXX
+                    else {
                         $get_sciebo_path = '';
                         $str_drive_path_check = '';
                     }
@@ -472,14 +469,12 @@ class BrowseController extends BaseController
                         $val = $arr_drive_path[$key];
                         
                         if ($val <> '') {
-
 							if ($arr_fileid[$key] <> '') {
                                 $val_fileid = $arr_fileid[$key];
                             }
                             else {
                                 $val_fileid = '';
                             }
-
 
                             if ($permission[$key] <> '') {
                                 $permission_items = implode('|', $permission[$key]);
@@ -499,15 +494,14 @@ class BrowseController extends BaseController
                                 AND d.`user_id` = :username
                                 AND p.`drive_path` = :drive_path
                                 AND d.`id` = :app_detail_id
-                                AND p.`share_status`=\'Y\'', [
+                                AND p.`share_status` = \'Y\'', [
                                 ':space_id' => $space_id,
                                 ':username' => $username,
                                 ':drive_path' => $drive_path,
                                 ':app_detail_id' => $app_detail_id,
                             ])->queryAll();
 
-                            if (count($sql) == 0) { // if there is no such drive path then create new row. else update existing row.
-
+                            if (count($sql) == 0) { // If there is no such drive path then create new row, else update existing row
                                 $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
                                     (`drive_path`, `fileid`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
                                     VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key)', [
@@ -518,16 +512,15 @@ class BrowseController extends BaseController
                                     ':drive_key' => md5(microtime()),
                                 ])->execute();
                             }
-                            else{ // Update existing row which are selected from the addfiles-form checkbox list.
-
-                                foreach($sql as $values){
+                            else { // Update existing row which are selected from the addfiles-form checkbox list
+                                foreach($sql as $values) {
                                     $drive_path_detail_id = $values['p_id'];
                                     $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
-                                                        SET `drive_path`=:drive_path, 
-                                                        `permission`=:permission, 
-                                                        `onlinedrives_app_detail_id`=:onlinedrives_app_detail_id,
-                                                        `update_date` = CURRENT_TIMESTAMP
-                                                        WHERE id = :drive_path_detail_id', [
+                                        SET `drive_path` = :drive_path, 
+                                        `permission` = :permission, 
+                                        `onlinedrives_app_detail_id` = :onlinedrives_app_detail_id,
+                                        `update_date` = CURRENT_TIMESTAMP
+                                        WHERE id = :drive_path_detail_id', [
                                         ':drive_path_detail_id' => $drive_path_detail_id,
                                         ':drive_path' => $drive_path,
                                         ':permission' => $permission_items,
@@ -539,8 +532,7 @@ class BrowseController extends BaseController
                         next($arr_drive_path);
                     } // DB insert done
 
-
-                    // get not in list
+                    // Get not in list
                     $not_in_list = array();
                     $arr_drive_path = $model_addfiles->drive_path;
 
@@ -548,7 +540,6 @@ class BrowseController extends BaseController
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
                         if ($val <> '') {
-
                             $drive_path = urldecode($val[0]);
 
                             // Check path is already exist in share
@@ -567,28 +558,26 @@ class BrowseController extends BaseController
                                 ':app_detail_id' => $app_detail_id,
                             ])->queryAll();
 
-                            if (count($sql) > 0) { // if there is drive path then push in array of ids where status needs to update.
-
-                                array_push($not_in_list,$sql[0]['p_id']);
+                            if (count($sql) > 0) { // If there is drive path then push in array of IDs where status needs to update
+                                array_push($not_in_list, $sql[0]['p_id']);
                             }
                         }
                         next($arr_drive_path);
                     }
 
-
-                    //print_r($not_in_list);
+                    // print_r($not_in_list);
 
                     $not_in = implode(',', $not_in_list);
 
-                    //echo $get_sciebo_path."--not in (".$not_in.")--";
+                    // echo $get_sciebo_path."--not in (".$not_in.")--";
 
-                    $sql = $db->createCommand('SELECT * FROM `onlinedrives_app_drive_path_detail` 
+                    $sql = $db->createCommand('SELECT * FROM `onlinedrives_app_drive_path_detail`
                         WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id AND share_status = "Y"', [
                         ':onlinedrives_app_detail_id' => $app_detail_id,
                     ])->queryAll();
 
                     if (count($sql) > 0) {
-                         // Update app_detail table and set status = Y for id=$app_detail_id
+                         // Update app_detail table and set status = Y for id = $app_detail_id
 
                          $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = "Y" WHERE id = :onlinedrives_app_detail_id', [
                              ':onlinedrives_app_detail_id' => $app_detail_id,
@@ -599,56 +588,58 @@ class BrowseController extends BaseController
                         // Step-1: Select all rows with same owner (onlinedrives_app_detail_id of table- onlinedrives_app_drive_path_detail)
                         // Step-1: also check if they are children of same parent drive path.
 
-                        // Step-2: Update share_status=D for unchecked values.
-                        if($get_sciebo_path!='') {
+                        // Step-2: Update share_status = D for unchecked values.
+                        if ($get_sciebo_path != '') {
                             $regular_exp1 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*/$';
                             $regular_exp2 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*.[.]+.[a-zA-Z0-9]*$';
-                            if(!empty($not_in)){
+                            if (!empty($not_in)) {
                                 $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
                             }
-                            else{
+                            else {
                                 $id_not_in_str = '';
                             }
 
-                            //echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
+                            // echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
 
-                            /*$qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status ='D'
-                                                WHERE onlinedrives_app_detail_id = ".$app_detail_id."
-                                                AND (drive_path REGEXP '".$regular_exp1."' OR drive_path REGEXP '".$regular_exp2."' )
-                                                AND share_status='Y' ".$id_not_in_str;
-
-                            echo $qry;*/
+                            /*
+                            $qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status ='D'
+                                WHERE onlinedrives_app_detail_id = ".$app_detail_id."
+                                AND (drive_path REGEXP '".$regular_exp1."' OR drive_path REGEXP '".$regular_exp2."')
+                                AND share_status='Y' ".$id_not_in_str;
+                            echo $qry;
+                            */
 
                             $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
-                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
-                                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
-                                                AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
-                                                AND share_status=\'Y\' '.$id_not_in_str, [
+                                SET share_status = "D", update_date = CURRENT_TIMESTAMP
+                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
+                                AND share_status = \'Y\' '.$id_not_in_str, [
                                 ':onlinedrives_app_detail_id' => $app_detail_id,
                                 ':regex1' => $regular_exp1,
                                 ':regex2' => $regular_exp2,
                             ])->execute();
                         }
-                        else{
-                            if(!empty($not_in)){
+                        else {
+                            if (!empty($not_in)) {
                                 $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
                             }
-                            else{
+                            else {
                                 $id_not_in_str = '';
                             }
 
-                            $qry_drive_path = ' AND (LENGTH(`drive_path`) - LENGTH(REPLACE(`drive_path`, \'/\', \'\')))=1 AND drive_path REGEXP \'/$\' ';
+                            $qry_drive_path = ' AND (LENGTH(`drive_path`) - LENGTH(REPLACE(`drive_path`, \'/\', \'\'))) = 1 AND drive_path REGEXP \'/$\' ';
 
-                            /*$qry = 'UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
-                                                WHERE onlinedrives_app_detail_id = '.$app_detail_id.'
-                                                AND share_status=\'Y\' '.$qry_drive_path.$id_not_in_str;
-
-                            echo $qry;*/
+                            /*
+                            $qry = 'UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
+                                WHERE onlinedrives_app_detail_id = '.$app_detail_id.'
+                                AND share_status = \'Y\' '.$qry_drive_path.$id_not_in_str;
+                            echo $qry;
+                            */
 
                             $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
-                                                SET share_status = "D",update_date = CURRENT_TIMESTAMP
-                                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
-                                                AND share_status=\'Y\' '.$qry_drive_path.$id_not_in_str, [
+                                SET share_status = "D", update_date = CURRENT_TIMESTAMP
+                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                AND share_status = \'Y\' '.$qry_drive_path.$id_not_in_str, [
                                 ':onlinedrives_app_detail_id' => $app_detail_id,
                             ])->execute();
 

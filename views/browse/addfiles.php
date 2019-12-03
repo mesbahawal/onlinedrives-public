@@ -310,16 +310,18 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 </a>';
 
                 /*
-                        // Test%201A/ins/
-                        // Check breadcrumb for shared location
-                        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-                                        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                                        ON d.id=p.onlinedrives_app_detail_id
-                                        WHERE drive_key = :drive_key', [':drive_key' => $get_dk])->queryAll();
-                        foreach ($sql as $value) {
-                            $drive_path = $value['drive_path'];
-                            $app_user_id = $value['app_user_id'];
-                        }
+                // Test%201A/ins/
+                // Check breadcrumb for shared location
+                $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                    FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                    ON d.id=p.onlinedrives_app_detail_id
+                    WHERE drive_key = :drive_key', [
+                    ':drive_key' => $get_dk,
+                ])->queryAll();
+                foreach ($sql as $value) {
+                    $drive_path = $value['drive_path'];
+                    $app_user_id = $value['app_user_id'];
+                }
                 */
 
                 // Build rest of Sciebo navigation
@@ -703,25 +705,13 @@ if ($app_user_id <> '') {
                                 if (checked == true) {
                                     <?php
                                     echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
-
-                                    if (document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3]) {
-                                        document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
-                                    }';
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;';
                                     ?>
                                 }
                                 else {
                                     <?php
                                     echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
-
-                                    if (document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3]) {
-                                        document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
-                                    }';
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;';
                                     ?>
                                 }
                             <?php
@@ -733,17 +723,13 @@ if ($app_user_id <> '') {
                                 if (checked == true) {
                                     <?php
                                     echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;';
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;';
                                     ?>
                                 }
                                 else {
-                                    <?php
+                                    <?php                                    
                                     echo 'document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;';
+                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;';
                                     ?>
                                 }
                             <?php
@@ -939,15 +925,9 @@ if ($app_user_id <> '') {
 
                                 if (checked == true) {
                                     document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = true;
                                 }
                                 else {
                                     document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked = false;
                                 }'
                         ]);
                     echo '</td>
@@ -962,10 +942,13 @@ if ($app_user_id <> '') {
                         ':drive_path' => $path_regex,
                     ])->queryAll();
 
-                    /*if ($has_share == 'Y') {
+                    /*
+                    if ($has_share == 'Y') {
                         $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #0b93d5"></span>';
                     }
-                    else*/if(count($sql) > 0){
+                    else
+                    */
+                    if(count($sql) > 0){
                         $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #f4d9f4"></span>';
                     }
                     else {
@@ -1036,18 +1019,15 @@ if ($app_user_id <> '') {
                             $model_addfiles->permission[$i] = ['U'];
                         }
                         echo $form_addfiles->field($model_addfiles, 'permission['.$i.']')->checkboxList([
-                            'Rn' => 'Rename',
-                            'Mv' => 'Move',
+                            // 'Rn' => 'Rename',
+                            // 'Mv' => 'Move',
                             // 'C' => 'Copy',
-                            'D' => 'Delete',
+                            // 'D' => 'Delete',
                             'U' => 'Upload',
                         ], [
                             'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked;
-                                checked_1 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[1].checked;
-                                checked_2 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[2].checked;
-                                checked_3 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[3].checked;
 
-                                if (checked_0 == true || checked_1 == true || checked_2 == true || checked_3 == true) {
+                                if (checked_0 == true) {
                                     document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
                                 }
                                 else {
@@ -1254,7 +1234,8 @@ if ($app_user_id <> '') {
                     $pos_rename = strpos($permission, 'Rn');
                     $pos_move = strpos($permission, 'Mv');
                     $pos_del = strpos($permission, 'D');
-                    if ($pos_rename !== false || $pos_move !== false || $pos_del !== false) {
+                    $pos_read = strpos($permission, 'Rd');
+                    if ($pos_rename !== false || $pos_move !== false || $pos_del !== false || $pos_read !== false) {
                         $pos_read = true;
                     }
                     else {
@@ -1309,13 +1290,9 @@ if ($app_user_id <> '') {
 
                                 if (checked == true) {
                                     document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = true;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = true;
                                 }
                                 else {
                                     document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[1].checked = false;
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[2].checked = false;
                                 }'
                         ]);
                     echo '</td>
@@ -1352,7 +1329,26 @@ if ($app_user_id <> '') {
                         elseif ($pos_del !== false) {
                             $model_addfiles->permission[$checkbox_index] = ['D'];
                         }
+                        elseif ($pos_read !== false) {
+                            $model_addfiles->permission[$checkbox_index] = ['Rd'];
+                        }
 
+                        echo '<div style="visibility: hidden;">';
+                        echo $form_addfiles->field($model_addfiles, 'permission['.$checkbox_index.']')->checkboxList([
+                            'Rd' => 'Read',
+                        ], [
+                            'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$checkbox_index.'][]\')[0].checked;
+
+                                if (checked_0 == true) {
+                                    document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = true;
+                                }
+                                else {
+                                    document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = false;
+                                }'
+                        ]);
+                        echo '</div>';
+
+                        /*
                         echo $form_addfiles->field($model_addfiles, 'permission['.$checkbox_index.']')->checkboxList([
                             'Rn' => 'Rename',
                             'Mv' => 'Move',
@@ -1370,6 +1366,7 @@ if ($app_user_id <> '') {
                                 document.getElementsByName(\'AddFilesForm[drive_path]['.$checkbox_index.'][]\')[0].checked = false;
                             }'
                         ]);
+                        */
                     echo '</td>
 
                     <td>

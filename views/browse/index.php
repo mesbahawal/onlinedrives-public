@@ -345,14 +345,13 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
         ':username' => $username,
     ])->queryAll();
 
-    if(count($sql)>0){
-            
+    if (count($sql) > 0) {
             // Load Sciebo entries
             $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
-            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-            WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared <> \'D\'', [
-            ':space_id' => $space_id,
-            ':drive_name' => 'sciebo',
+                FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+                WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared <> \'D\'', [
+                ':space_id' => $space_id,
+                ':drive_name' => 'sciebo',
             ])->queryAll();
             
             foreach ($sql as $value) {
@@ -394,7 +393,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
             WHERE d.space_id = :space_id AND d.drive_name = :drive_name AND if_shared <> \'D\'', [
                 ':space_id' => $space_id,
                 ':drive_name' => 'gd',
-            ])->queryAll();
+        ])->queryAll();
         foreach ($sql as $value) {
             $drive_path = $value['drive_path'];
             $app_user_id = $value['app_user_id'];
@@ -455,9 +454,8 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'disable' && iss
 
             $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
 
-            if(!$sql || !$sql1){
+            if (!$sql || !$sql1) {
                 $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
-
             }
             else{
                 (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
@@ -470,30 +468,30 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'disable' && iss
 }
 // Unshare content (file/folder)
 elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'unshare_content' && isset($_GET['p_id'])) {
-
     if ($_GET['app_detail_id'] != '' && $_GET['p_id'] != '') {
         $app_detail_id = $_GET['app_detail_id'];
         $p_id = $_GET['p_id'];
 
+        /*
+        echo 'SELECT d.id AS uid, p.id AS pid, d.*, p.*
+            FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p
+            ON d.`id` = p.`onlinedrives_app_detail_id`
+            WHERE d.`id` = '.$app_detail_id.'
+            AND p.`id` = '.$p_id.'
+            AND d.`user_id` = '.$username.'
+            AND d.`if_shared`<>\'D\'
+            AND p.`share_status` = \'Y\'';
+        */
 
-        /* echo 'SELECT d.id AS uid, p.id AS pid, d.*, p.*
-                FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p 
-                ON d.`id` = p.`onlinedrives_app_detail_id`
-                WHERE d.`id` = '.$app_detail_id.'
-                AND p.`id` = '.$p_id.'
-                AND d.`user_id` = '.$username.'
-                AND d.`if_shared`<>\'D\'
-                AND p.`share_status`=\'Y\''; */
-
-        // Before update check user id and authority;
+        // Before update check user id and authority
         $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-                FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p 
-                ON d.`id` = p.`onlinedrives_app_detail_id`
-                WHERE d.`id` = :app_detail_id
-                AND p.`id` = :p_id
-                AND d.`user_id` = :user_id
-                AND d.`if_shared`<>\'D\'
-                AND p.`share_status` = \'Y\'', [
+            FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p
+            ON d.`id` = p.`onlinedrives_app_detail_id`
+            WHERE d.`id` = :app_detail_id
+            AND p.`id` = :p_id
+            AND d.`user_id` = :user_id
+            AND d.`if_shared` <> \'D\'
+            AND p.`share_status` = \'Y\'', [
             ':app_detail_id' => $app_detail_id,
             ':p_id' => $p_id,
             ':user_id' => $username,
@@ -513,7 +511,7 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'unshare_content
 
             $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
 
-            if ($sql1){
+            if ($sql1) {
                 (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
             }
             else {
@@ -549,16 +547,16 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
         // Get data of Space guid
 
         $from_guid = $_GET['cguid'];
-
         $to_space_id = $_GET['space_id'];
-
         $to_space_guid = '';
 
         $sql_space_data = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid`
-                    FROM `space` s, `user` u, `space_membership` sm
-                    WHERE s.`id` = sm.`space_id` AND u.`id` = sm.`user_id`
-                    AND u.`username` = :username AND s.`guid` <> :guid
-                    AND s.`id` = :space_id', [
+            FROM `space` s, `user` u, `space_membership` sm
+            WHERE s.`id` = sm.`space_id`
+            AND u.`id` = sm.`user_id`
+            AND u.`username` = :username
+            AND s.`guid` <> :guid
+            AND s.`id` = :space_id', [
             ':username' => $username, ':guid' => $from_guid, ':space_id' => $to_space_id,
         ])->queryAll();
 
@@ -568,11 +566,11 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
 
         // Get data for online drives according to dk
         $sql_onlinedrives_data = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-            FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p 
+            FROM onlinedrives_app_detail d JOIN onlinedrives_app_drive_path_detail p
             ON d.id = p.onlinedrives_app_detail_id
             WHERE drive_key = :drive_key
             AND user_id = :user_id
-            AND d.`if_shared`<>\'D\'
+            AND d.`if_shared` <> \'D\'
             AND p.`share_status` = \'Y\';', [
             ':drive_key' => $dk,
             ':user_id' => $username,
@@ -600,8 +598,11 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
 
             // Check if already account exist? if not then insert
             $sql_check_account = $db->createCommand('SELECT * FROM onlinedrives_app_detail 
-                WHERE app_user_id = :app_user_id AND space_id = :space_id AND if_shared <> \'D\'
-                AND user_id = :user_id AND drive_name = :drive_name ', [
+                WHERE app_user_id = :app_user_id
+                AND space_id = :space_id
+                AND if_shared <> \'D\'
+                AND user_id = :user_id
+                AND drive_name = :drive_name ', [
                 ':space_id' => $to_space_guid,
                 ':drive_name' => $drive_name,
                 ':app_user_id' => $app_user_id,
@@ -615,7 +616,8 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
 
             if (count($sql_check_account) == 0) {
                 // Insert user account detail
-                $sql_add_user = $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
+                $sql_add_user = $db->createCommand('INSERT INTO onlinedrives_app_detail
+                    (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
                     VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date, :if_shared)', [
                     ':space_id' => $to_space_guid,
                     ':user_id' => $username,
@@ -636,9 +638,12 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
             // Insert drive path detail
             if (count($sql_check_account) > 0 || $sql_add_user) {
                 // Get new app detail id
-                $sql_new_app_user = $db->createCommand('SELECT * FROM onlinedrives_app_detail 
-                                        WHERE app_user_id = :app_user_id AND space_id = :space_id AND drive_name = :drive_name 
-                                        AND user_id = :username AND if_shared = \'Y\'', [
+                $sql_new_app_user = $db->createCommand('SELECT * FROM onlinedrives_app_detail
+                    WHERE app_user_id = :app_user_id
+                    AND space_id = :space_id
+                    AND drive_name = :drive_name
+                    AND user_id = :username
+                    AND if_shared = \'Y\'', [
                     ':app_user_id' => $app_user_id, ':space_id' => $to_space_guid,
                     ':drive_name' => $drive_name, ':username' => $username,
                 ])->queryAll();
@@ -648,10 +653,9 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
                 }
 
                 if ($new_app_user_id != '') {
-
                     // Check if already shared same content?
-                    $sql_check_drive_path = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail 
-                            WHERE `onlinedrives_app_detail_id` = :new_app_user_id AND share_status = \'Y\' AND drive_path = :drive_path', [
+                    $sql_check_drive_path = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
+                        WHERE `onlinedrives_app_detail_id` = :new_app_user_id AND share_status = \'Y\' AND drive_path = :drive_path', [
                         ':new_app_user_id' => $new_app_user_id,
                         ':drive_path' => urldecode(urldecode($drive_path)),
                     ])->queryAll();
@@ -662,8 +666,8 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
                     }
                     else {
                         $sql_add_drive_path = $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
-                                    (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
-                                    VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
+                            (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`)
+                            VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
                             ':drive_path' => urldecode(urldecode($drive_path)),
                             ':permission' => $permission_items,
                             ':onlinedrives_app_detail_id' => $new_app_user_id,
@@ -760,7 +764,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                 $db_app_user_id = '';
                 $permission_pos = false;
                 if ($get_drive_key != '') {
-                    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
+                    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
                         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
                         ON d.id = p.onlinedrives_app_detail_id
                         WHERE drive_key = :drive_key', [
@@ -775,11 +779,11 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     }
                 }
 
-                //echo "db_app_user_id =".$db_app_user_id."-- app_user_id=".$app_user_id."-- get drive key=".$get_drive_key."-- owner=".$user_id."-- logged-in user=".$username; die();
+                // echo "db_app_user_id =".$db_app_user_id."-- app_user_id=".$app_user_id."-- get drive key=".$get_drive_key."-- owner=".$user_id."-- logged-in user=".$username; die();
                 // if get_drive_key='' means in the root folder, then only owner can upload/create, but if get_drive_key has value then check permission from DB.
                 // got an error while create folder, so out-commented the line
-                //if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                //if (($get_drive_key == '' && $user_id == $username) || ($db_app_user_id == $app_user_id && $permission_pos !== false)) {
+                // if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
+                // if (($get_drive_key == '' && $user_id == $username) || ($db_app_user_id == $app_user_id && $permission_pos !== false)) {
 
                 //Check flag
                 $check_same_folder = '';
@@ -800,13 +804,13 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     $keys = array_keys((array)$sciebo_content);
 
                     foreach ($keys as $values) {
-                       // echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
+                        // echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
 
                         $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
 
                         $new_folder_path = $get_sciebo_path.$upload_list.'/';
 
-                        //echo '--new folder path='.$new_folder_path;
+                        // echo '--new folder path='.$new_folder_path;
 
                         if ($existing_folder_path === $new_folder_path)                 {
                             //echo '<br />File already exist! Please rename.'; //TODO No output at the moment?
@@ -818,16 +822,15 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                         }
 
                         $check_same_folder .= $check_same_folder;
-
                     }
 
                     if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
                         $flag_same_folder = strpos($check_same_folder,'y');
 
-                        //echo "<br>checksome=".$check_same_folder;
+                        // echo "<br>checksome=".$check_same_folder;
 
                         if (($user_id =  'mesbah' || $permission_pos !== false) && $flag_same_folder === false) {
-                            //echo "<br>--I am creating folder".$path_to_dir;
+                            // echo "<br>--I am creating folder".$path_to_dir;
 
                             $response = $sciebo_client->request('MKCOL', $path_to_dir); // For creating folder only
 
@@ -841,7 +844,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     }
                     $check_same_folder = '';
                 }
-                else{
+                else {
                     echo "handle for landing page. dpath=".$drive_path;
                 }
             }
@@ -853,7 +856,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
                     $name = str_replace(' ', '%20', $name);
 
                     $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.'/'.$name;
-                    //$content = 'New contents';
+                    // $content = 'New contents';
                     $content = '';
                     $response = $sciebo_client->request('PUT', $path_to_dir, $content);
 
@@ -865,27 +868,28 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
         // Google Drive
         elseif ($cloud == 'gd') {
             if ($do == 'upload_file') {
-            // TODO Google Drive UPLOAD file function
-/*
-            $content = file_get_contents('files/'.$upload);
+                // TODO Google Drive UPLOAD file function
 
-            $file_metadata = new Google_Service_Drive_DriveFile(array(
-                'data' => $content,
-                'name' => '22.txt',
-                'mimeType' => 'text/plain'));
+                /*
+                $content = file_get_contents('files/'.$upload);
 
-            // Parent folder ID.
-            if ($get_gd_folder_id == '') {
-            	$gd_parent_id = $gd_root_id;
-            }
-            else {
-            	$gd_parent_id = $get_gd_folder_id;
-            }
-            $file_metadata->setParents(array($gd_parent_id));
+                $file_metadata = new Google_Service_Drive_DriveFile(array(
+                    'data' => $content,
+                    'name' => '22.txt',
+                    'mimeType' => 'text/plain'));
 
-            $file = $gd_service->files->create($file_metadata, array(
-                'fields' => 'id'));
-*/
+                // Parent folder ID
+                if ($get_gd_folder_id == '') {
+                	$gd_parent_id = $gd_root_id;
+                }
+                else {
+                	$gd_parent_id = $get_gd_folder_id;
+                }
+                $file_metadata->setParents(array($gd_parent_id));
+
+                $file = $gd_service->files->create($file_metadata, array(
+                    'fields' => 'id'));
+                */
             }
             elseif ($do == 'create_folder') {
                 $file_metadata = new Google_Service_Drive_DriveFile(array(
@@ -903,7 +907,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
 
                 $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
 
-                // Success msg
+                // Success message
                 $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Google Drive.');
             }
             elseif ($do == 'create_file') {
@@ -930,7 +934,7 @@ if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
 
                     $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
 
-                    // Success msg
+                    // Success message
                     $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Google Drive.');
                 }
             }
@@ -1034,16 +1038,22 @@ if ($count_sciebo_files > 0) {
                 $open_link = 'https://uni-siegen.sciebo.de/apps/onlyoffice/'.$id.'?filePath=%2F'.$path;
             }
 
-/*
+            /*
             $parent = '';
             if ($path != $get_sciebo_path) {
-                if (substr($path, -1) == '/') { $temp_path = substr($path, 0, -1); }
-                else { $temp_path = $path; }
+                if (substr($path, -1) == '/') {
+                    $temp_path = substr($path, 0, -1);
+                }
+                else {
+                    $temp_path = $path;
+                }
                 $pos = strrpos($temp_path, '/');
                 $parent = substr($temp_path, 0, $pos + 1);
             }
-            else { $temp_path = $path; }
-*/
+            else {
+                $temp_path = $path;
+            }
+            */
 
             // Output check beause of ". entry" of current folder
             if ($path != $get_sciebo_path) {
@@ -1056,7 +1066,7 @@ if ($count_sciebo_files > 0) {
                 $temp_min = substr($temp, 20, 2);
                 $temp_s = substr($temp, 23, 2);
                 $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
-                $modified_time += 60*60*2; // European time zone
+                $modified_time += 60 * 60 * 2; // European time zone
 
                 // Favorite
                 $fav = $sciebo_content[$values]['{http://owncloud.org/ns}favorite'];
@@ -1161,16 +1171,17 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     <?php
     // Output start of navigation
     $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
-    echo 'Location: <a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . '</a>';
+    echo '<span class="silver">Location:</span>
+    <a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . '</a>';
 
     // Output Sciebo navigation
     if ($get_sciebo_path != '') {
         // Output Sciebo icon in navigation
         $ref = 'https://uni-siegen.sciebo.de/login';
-        $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
         echo ' /
-        <a href="'.$ref.'" target="_blank">
-            <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
+        <a href="'.$ref.'" target="_blank">';
+            $src = 'protected/modules/onlinedrives/resources/sciebo20.png';
+            echo '<img class="position: relative;" style="top: -2px;" src="'.$src.'" title="Sciebo" />
         </a>';
 /*
         // Test%201A/ins/
@@ -1282,11 +1293,12 @@ $arr_app_user_admin = array();
 $adm = 0;
 
 if ($username <> '') {
-
-    /* echo "SELECT d.id AS uid, p.id AS pid, d.*, p.*
+    /*
+    echo "SELECT d.id AS uid, p.id AS pid, d.*, p.*
         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
         WHERE d.space_id = '$space_id' AND d.user_id = '$username'
-        GROUP BY d.app_user_id,d.`if_shared`"; */
+        GROUP BY d.app_user_id,d.`if_shared`";
+    */
 
     $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
@@ -1322,7 +1334,7 @@ if ($username <> '') {
 }
 
 if (count($arr_app_user_admin) > 0) {
-    //echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
+    // echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
     $logged_username =  Yii::$app->user->identity->username;
     $email = Yii::$app->user->identity->email;
     ?>
@@ -2645,7 +2657,7 @@ else {
                                     '<div class="more_menu_div">';
                                         $unshare = Yii::t('OnlinedrivesModule.new', 'Unshare');
                                         $onclick = 'getElementById(\'unshare'.$no.'\').classList.toggle(\'showblock\');
-                                            getElementById(\'more'.$no.'\').style.height = \'150px\';
+                                            getElementById(\'more'.$no.'\').classList.toggle(\'h125\');
                                             return false;';
                                         echo '<a href="#" class="more_a" alt="'.$unshare.'" title="'.$unshare.'" onclick="'.$onclick.'">
                                             <span class="glyphicon glyphicon-minus-sign" style="font-size: 25px;"></span><br />
@@ -3167,7 +3179,7 @@ else {
 
                                                 echo '<div class="form-group">
                                                     <div class="col-lg-offset-1 col-lg-11 more_del_confirm">';
-                                                        //echo "Unshare will not delete the content.";
+                                                        // echo "Unshare will not delete the content.";
                                                         echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Confirm'), ['class' => 'btn btn-info btn-sm']);
                                                     echo '</div>
                                                 </div>';
