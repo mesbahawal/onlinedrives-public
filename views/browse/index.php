@@ -524,14 +524,15 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'unshare_content
     }
 }
 // Sharing to another space
-elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['space_id']) {
-    if ($_GET['op'] == 'share_to' && $_GET['dk'] != '' &&  $_GET['space_id'] != '') {
+elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'share_to' && isset($_GET['dk']) &&  $_GET['space_id']) {
+    if ($_GET['op'] == 'share_to' && $_GET['dk'] != '' &&  $_GET['space_id'] != '' && $_GET['fileid'] != '') {
 
         $dk = $_GET['dk'];
 
         if ($_GET['sciebo_path'] != ''){
-            $drive_path = $_GET['sciebo_path'];
+            $drive_path = urldecode($_GET['sciebo_path']);
             $drive_name = 'sciebo';
+            $fileid = $_GET['fileid'];
         }
         elseif ($_GET['gd_folder_id'] != ''){
             $drive_path = $_GET['gd_folder_id'];
@@ -540,6 +541,7 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
         else {
             $drive_path = '';
             $drive_name = '';
+            $fileid = '';
         }
 
         // Before share check all data;
@@ -653,11 +655,12 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
                 }
 
                 if ($new_app_user_id != '') {
+
                     // Check if already shared same content?
                     $sql_check_drive_path = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
                         WHERE `onlinedrives_app_detail_id` = :new_app_user_id AND share_status = \'Y\' AND drive_path = :drive_path', [
                         ':new_app_user_id' => $new_app_user_id,
-                        ':drive_path' => urldecode(urldecode($drive_path)),
+                        ':drive_path' => $drive_path,
                     ])->queryAll();
 
                     if (count($sql_check_drive_path) > 0) {
@@ -666,20 +669,21 @@ elseif ($username <> '' && isset($_GET['op']) && isset($_GET['dk']) &&  $_GET['s
                     }
                     else {
                         $sql_add_drive_path = $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
-                            (`drive_path`, `permission`, `onlinedrives_app_detail_id`, `drive_key`)
-                            VALUES (:drive_path, :permission, :onlinedrives_app_detail_id, :drive_key)', [
-                            ':drive_path' => urldecode(urldecode($drive_path)),
+                            (`drive_path`, `fileid`, `permission`, `onlinedrives_app_detail_id`, `drive_key`)
+                            VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key)', [
+                            ':drive_path' => $drive_path,
+                            ':fileid' => $fileid,
                             ':permission' => $permission_items,
                             ':onlinedrives_app_detail_id' => $new_app_user_id,
                             ':drive_key' => md5(microtime()),
                         ])->execute();
 
-                        if ($sql_add_drive_path) {
-                            $success_msg = Yii::t('OnlinedrivesModule.new', 'Content has been shared successfully.');
-                            (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+                        if (!$sql_add_drive_path) {
+                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
                         }
                         else {
-                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
+                            $success_msg = Yii::t('OnlinedrivesModule.new', 'Content has been shared successfully.');
+                            (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
                         }
                     }
                 }
@@ -1339,7 +1343,9 @@ if (count($arr_app_user_admin) > 0) {
     $email = Yii::$app->user->identity->email;
     ?>
 
+
     <div class="box gray">
+        <span class="glyphicon glyphicon-check"></span>
         <span class="pointer">
             <?php
             // Heading
@@ -1353,7 +1359,7 @@ if (count($arr_app_user_admin) > 0) {
                         else {
                             getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-down\';
                         }
-            ">Connected drives</span>'.
+            ">Connected drives</span></span>'.
             // Arrow
             '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
                 onclick="
@@ -1370,8 +1376,8 @@ if (count($arr_app_user_admin) > 0) {
         </span>
 
         <div id="connected_drives_table" class="shownone" style="margin-top: 20px;">
-            <table class="table table-responsive">
-                <thead>
+
+            <div class="container" style="margin-left: 20px;">
                 <?php
                 for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j)
                     $drive_path = $arr_app_user_admin[$j]['drive_path'];
@@ -1387,9 +1393,9 @@ if (count($arr_app_user_admin) > 0) {
 
                     if ($username == $logged_username && $if_shared != 'D' && $if_shared != 'T') {
                         ?>
-                        <!-- Table for selecting path -->
-                        <tr>
-                            <td class="valign_m">
+                        <div class="row" style="margin-bottom: 8px; margin-top: 8px;">
+                            <div class="col-sm-3">
+
                                 <?php
                                 // Output Sciebo icon in navigation
                                 if ($drive_name == 'sciebo') {
@@ -1399,38 +1405,45 @@ if (count($arr_app_user_admin) > 0) {
                                     $ref = 'https://accounts.google.com/ServiceLogin';
                                 }
                                 $src = 'protected/modules/onlinedrives/resources/'.$drive_name.'20.png';
-                                echo '<a style="position: relative; top: 2px; margin-right: 5px;" href="'.$ref.'" target="_blank">
+                                echo '<a href="'.$ref.'" target="_blank">
                                         <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
                                     </a>';
                                 ?>
 
                                 <?php echo $app_user_id; ?>
-                            </td>
 
-                            <td class="white" align="right">
+                            </div>
+                            <div class="col-sm-6">
                                 <?php
-                                echo '<a class="btn btn-success btn-sm" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid.'">
-                                        Select Files
-                                    </a>';
+                                $url_select_files = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid;
+                                $url_disable_account = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid;
                                 ?>
-                            </td>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="location.href='<?=$url_select_files?>'">
+                                    Select Files <span class="glyphicon glyphicon-edit"></span>
+                                </button>
+                                &nbsp; &nbsp;
 
-                            <td class="white">
                                 <?php
+
                                 if ($if_shared != 'D') {
-                                    echo '<a class="btn btn-danger btn-sm" href="'.$home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid.'">
-                                            Disable
-                                        </a>';
-                                }
+                                    ?>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="location.href='<?=$url_disable_account?>'">
+                                    Disable <span class="glyphicon glyphicon-remove">
+                                </button>
+
+
+                                   <?php
+                                   }
                                 ?>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
                         <?php
                     }
                 }
                 ?>
-                </thead>
-            </table>
+            </div>
+
+            <!--/// table chilo ekhane.-->
         </div>
     </div>
 <?php
@@ -2475,7 +2488,7 @@ else {
                             <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
                         </a>
 
-                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">';
+                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu" style="background: white;">';
                                 // Cross icon (more options menu)
                                 $class = 'abs pointer';
                                 $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
@@ -2498,9 +2511,9 @@ else {
                                 ])->queryAll();
 
                                 if (count($sql) > 0) {
-                                    echo 'You can share this folder or file directly to another space which you\'re joined.
 
-                                    <table style="width: 100%">';
+                                    echo '<ul class="media-list notLoaded" id="space-menu-spaces" style="overflow: hidden; outline: none;" tabindex="1">';
+                                    echo '<li class="divider"><p>Share to below space(s) directly.</p></li>';
 
                                     foreach ($sql as $value) {
                                         $share_id = $value['id'];
@@ -2509,28 +2522,30 @@ else {
 
                                         if ($cloud == 'sciebo') {
                                             $path = urlencode($path);
-                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path.'&dk='.$drive_key;
+                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path.'&dk='.$drive_key.'&fileid='.$id;
                                         }
                                         elseif ($cloud == 'gd') {
                                             $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
                                         }
 
-                                        echo '<tr>
-                                            <td>'.$share_name.'</td>
-
-                                            <td>';
-                                                $class = 'btn btn-success btn-sm';
-                                                echo '<a class="'.$class.'" href="'.$url_share_to_space.'">
-                                                    Share
+                                        echo '<li data-space-chooser-item="" data-space-member="" data-space-guid="'.$share_guid.'">
+                                                <a href="'.$url_share_to_space.'">
+                                                    <div class="media">
+                                                        <div class="pull-left space-profile-acronym-3 space-acronym" style=" background-color: #560a93; width: 24px; height: 24px; font-size: 10.56px; padding: 4.32px 0; border-radius: 2px;">'.strtoupper(substr($share_name,0,1)).'</div>
+                                                            <img class="pull-left space-profile-image-3 img-rounded profile-user-photo hidden" src="protected/modules/onlinedrives/resources/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
+                                                            <div class="media-body">
+                                                                <strong class="space-name">'.$share_name.'</strong>
+                                                                <i class="fa fa-share badge-space pull-right type tt" title="" aria-hidden="true" data-original-title="Share to this space"></i>                
+                                                        </div>
+                                                    </div>
                                                 </a>
-                                            </td>
-                                        </tr>';
+                                            </li>';
                                     }
-
-                                    echo '</table>';
+                                    echo '</ul>';
                                 }
 
                             echo '</div>
+
                         </div>
                     </td>'.
 
@@ -2583,13 +2598,13 @@ else {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                                 }
 
-                                $phpv = substr(phpversion(), 0, 1);
+                                /*$phpv = substr(phpversion(), 0, 1);
                                 if ($phpv >= 7) {
                                     $path = urldecode($path);
-                                }
+                                }*/
 
                                 // Set flag if user is owner (folders)
-                                if (urldecode($path) == $db_drive_path) {
+                                if (urldecode(urldecode($path)) == $db_drive_path) {
                                     $flag_owner = 1;
                                 }
                                 else {
@@ -2989,7 +3004,7 @@ else {
                             <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
                         </a>
 
-                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu">';
+                        <div id="space_sharing'.$no.'" class="shownone space_sharing_menu" style="background: white">';
                             // Cross icon (more options menu)
                             $class = 'abs pointer';
                             $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
@@ -3011,30 +3026,39 @@ else {
                                     ':username' => $logged_username, ':guid' => $space_guid,
                                 ])->queryAll();
 
-                                if (count($sql) > 0) {
-                                    foreach ($sql as $value) {
-                                        $share_id = $value['id'];
-                                        $share_name = $value['name'];
-                                        $share_guid = $value['guid'];
+                                    if (count($sql) > 0) {
 
-                                        if ($cloud == 'sciebo') {
-                                            $path_for_space_sharing = $unshare_file_path;
-                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key;
-                                        }
-                                        elseif ($cloud == 'gd') {
-                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
-                                        }
+                                        echo '<ul class="media-list notLoaded" id="space-menu-spaces" style="overflow: hidden; outline: none;" tabindex="1">';
+                                        echo '<li class="divider"><p>Share to below space(s) directly.</p></li>';
 
-                                        $style = 'background: #0a0a0a;';
-                                        $onmouseover = 'this.style.background=\'white\';';
-                                        $onmouseout = 'this.style.background=\'#0a0a0a;\';';
-                                        echo '<div class="row" style="'.$style.'" onmouseover="'.$onmouseover.'" onmouseout="'.$onmouseout.'">
-                                            <a href="'.$url_share_to_space.'" class="more_a" >
-                                                <div class="col-sm-10" align="center">'.$share_name.'&nbsp<span class="glyphicon glyphicon-share-alt" style="font-size: 10px;"></span></div>
-                                          </a>
-                                        </div>';
+                                        foreach ($sql as $value) {
+                                            $share_id = $value['id'];
+                                            $share_name = $value['name'];
+                                            $share_guid = $value['guid'];
+
+                                            if ($cloud == 'sciebo') {
+                                                $path_for_space_sharing = $unshare_file_path;
+                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.urlencode($path_for_space_sharing).'&dk='.$drive_key.'&fileid='.$id;
+                                            }
+                                            elseif ($cloud == 'gd') {
+                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                            }
+
+                                            echo '<li data-space-chooser-item="" data-space-member="" data-space-guid="'.$share_guid.'">
+                                                    <a href="'.$url_share_to_space.'">
+                                                        <div class="media">
+                                                            <div class="pull-left space-profile-acronym-3 space-acronym" style=" background-color: #560a93; width: 24px; height: 24px; font-size: 10.56px; padding: 4.32px 0; border-radius: 2px;">'.strtoupper(substr($share_name,0,1)).'</div>
+                                                                <img class="pull-left space-profile-image-3 img-rounded profile-user-photo hidden" src="protected/modules/onlinedrives/resources/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
+                                                                <div class="media-body">
+                                                                    <strong class="space-name">'.$share_name.'</strong>
+                                                                    <i class="fa fa-share badge-space pull-right type tt" title="" aria-hidden="true" data-original-title="Share to this space"></i>                
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                            </li>';
+                                        }
+                                        echo '</ul>';
                                     }
-                                }
                             echo '</div>
                         </div>
                     </td>'.
