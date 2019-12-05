@@ -530,7 +530,7 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'share_to' && is
         $dk = $_GET['dk'];
 
         if (isset($_GET['sciebo_path']) && $_GET['sciebo_path'] != ''){
-            $drive_path = urldecode($_GET['sciebo_path']);
+            $drive_path = $_GET['sciebo_path'];
             $drive_name = 'sciebo';
             $fileid = $_GET['fileid'];
         }
@@ -2410,8 +2410,8 @@ else {
 
                     <td style="padding: 5px;">';
                         if ($cloud == 'sciebo') {
-                            $path = urlencode($path);
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&sciebo_path='.$path.'&dk='.$drive_key;
+                            //$path = urlencode($path);
+                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&sciebo_path='.urlencode($path).'&dk='.$drive_key;
                             echo '<a href="'.$url.'">'.$name.'</a>';
                         }
                         elseif ($cloud == 'gd') {
@@ -2532,8 +2532,8 @@ else {
                                         echo '<li data-space-chooser-item="" data-space-member="" data-space-guid="'.$share_guid.'">
                                                 <a href="'.$url_share_to_space.'">
                                                     <div class="media">
-                                                        <div class="pull-left space-profile-acronym-3 space-acronym" style=" background-color: #560a93; width: 24px; height: 24px; font-size: 10.56px; padding: 4.32px 0; border-radius: 2px;">'.strtoupper(substr($share_name,0,1)).'</div>
-                                                            <img class="pull-left space-profile-image-3 img-rounded profile-user-photo hidden" src="protected/modules/onlinedrives/resources/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
+                                                        <div class="pull-left space-profile-acronym-1 space-acronym" style=" background-color: #6fdbe8; width: 24px; height: 24px; font-size: 10.56px; padding: 4.32px 0; border-radius: 2px;">'.strtoupper(substr($share_name,0,1)).'</div>
+                                                            <img class="pull-left space-profile-image-1 img-rounded profile-user-photo hidden" src="protected/modules/onlinedrives/resources/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
                                                             <div class="media-body">
                                                                 <strong class="space-name">'.$share_name.'</strong>
                                                                 <i class="fa fa-share badge-space pull-right type tt" title="" aria-hidden="true" data-original-title="Share to this space"></i>                
@@ -2581,7 +2581,7 @@ else {
 
                                 if ($cloud == 'sciebo') {
                                     // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
-                                    $path = urldecode($path);
+                                    //$path = urldecode($path);
 
                                     $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
                                     $pos = strrpos($parent_path, '/');
@@ -2599,13 +2599,17 @@ else {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                                 }
 
-                                $phpv = substr(phpversion(), 0, 1);
+                                //$full_sciebo_path = $path;
+
+                                /*$phpv = substr(phpversion(), 0, 1);
                                 if ($phpv >= 7) {
-                                    $path = urldecode($path);
-                                }
+                                    $full_sciebo_path = urldecode($path);
+                                }*/
+
+                                //echo "Full path=".$path."--drive=".$db_drive_path;
 
                                 // Set flag if user is owner (folders)
-                                if (urldecode(urldecode($path)) == $db_drive_path) {
+                                if ( $path== $db_drive_path) {
                                     $flag_owner = 1;
                                 }
                                 else {
@@ -3038,7 +3042,7 @@ else {
                                             $share_guid = $value['guid'];
 
                                             if ($cloud == 'sciebo') {
-                                                $path_for_space_sharing = urlencode($unshare_file_path);
+                                                $path_for_space_sharing = $unshare_file_path;
                                                 $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
                                             }
                                             elseif ($cloud == 'gd') {
