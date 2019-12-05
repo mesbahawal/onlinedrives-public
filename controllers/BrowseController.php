@@ -161,7 +161,7 @@ class BrowseController extends BaseController
                     Yii::$app->params['uploadPath'] = Yii::$app->basePath . '/modules/onlinedrives/upload_dir/google_client/';
                     $path = Yii::$app->params['uploadPath'] . $model_login_gd_client->image_web_filename;
 
-                    if ($image->saveAs($path)) {
+                    if ($image->saveAs($path) && !empty($app_user_id) && !empty($random_string)) {
                         $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
                             VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date, :if_shared)', [
                             ':space_id' => $space_id,
@@ -540,6 +540,13 @@ class BrowseController extends BaseController
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
                         if ($val <> '') {
+
+                            if ($arr_fileid[$key] <> '') {
+                                $val_fileid = $arr_fileid[$key];
+                            }
+                            else {
+                                $val_fileid = '';
+                            }
                             $drive_path = urldecode($val[0]);
 
                             // Check path is already exist in share
@@ -601,15 +608,15 @@ class BrowseController extends BaseController
 
                             // echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
 
-                            /*
+
                             $qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status ='D'
                                 WHERE onlinedrives_app_detail_id = ".$app_detail_id."
                                 AND (drive_path REGEXP '".$regular_exp1."' OR drive_path REGEXP '".$regular_exp2."')
                                 AND share_status='Y' ".$id_not_in_str;
                             echo $qry;
-                            */
 
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail
                                 SET share_status = "D", update_date = CURRENT_TIMESTAMP
                                 WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
                                 AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
@@ -626,20 +633,20 @@ class BrowseController extends BaseController
                             else {
                                 $id_not_in_str = '';
                             }
+                            // This checks if the path has only one '/' at the end or not. out commented due to having no use.
+                            //$qry_drive_path = ' AND (LENGTH(`drive_path`) - LENGTH(REPLACE(`drive_path`, \'/\', \'\'))) = 1 AND drive_path REGEXP \'/$\' ';
 
-                            $qry_drive_path = ' AND (LENGTH(`drive_path`) - LENGTH(REPLACE(`drive_path`, \'/\', \'\'))) = 1 AND drive_path REGEXP \'/$\' ';
 
-                            /*
-                            $qry = 'UPDATE onlinedrives_app_drive_path_detail SET share_status = "D"
+                            /*$qry = 'UPDATE onlinedrives_app_drive_path_detail SET share_status = "D", update_date = CURRENT_TIMESTAMP
                                 WHERE onlinedrives_app_detail_id = '.$app_detail_id.'
-                                AND share_status = \'Y\' '.$qry_drive_path.$id_not_in_str;
-                            echo $qry;
-                            */
+                                AND share_status = \'Y\' '.$id_not_in_str;
+                            echo $qry;*/
 
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+
+                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail
                                 SET share_status = "D", update_date = CURRENT_TIMESTAMP
                                 WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
-                                AND share_status = \'Y\' '.$qry_drive_path.$id_not_in_str, [
+                                AND share_status = \'Y\' '.$id_not_in_str, [
                                 ':onlinedrives_app_detail_id' => $app_detail_id,
                             ])->execute();
 

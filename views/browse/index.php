@@ -525,18 +525,19 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'unshare_content
 }
 // Sharing to another space
 elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'share_to' && isset($_GET['dk']) &&  $_GET['space_id']) {
-    if ($_GET['op'] == 'share_to' && $_GET['dk'] != '' &&  $_GET['space_id'] != '' && $_GET['fileid'] != '') {
+    if ($_GET['op'] == 'share_to' && $_GET['dk'] != '' &&  $_GET['space_id'] != '') {
 
         $dk = $_GET['dk'];
 
-        if ($_GET['sciebo_path'] != ''){
+        if (isset($_GET['sciebo_path']) && $_GET['sciebo_path'] != ''){
             $drive_path = urldecode($_GET['sciebo_path']);
             $drive_name = 'sciebo';
             $fileid = $_GET['fileid'];
         }
-        elseif ($_GET['gd_folder_id'] != ''){
+        elseif (isset($_GET['gd_folder_id']) && $_GET['gd_folder_id'] != ''){
             $drive_path = $_GET['gd_folder_id'];
             $drive_name = 'gd';
+            $fileid = $_GET['gd_folder_id'];
         }
         else {
             $drive_path = '';
@@ -2521,8 +2522,8 @@ else {
                                         $share_guid = $value['guid'];
 
                                         if ($cloud == 'sciebo') {
-                                            $path = urlencode($path);
-                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path.'&dk='.$drive_key.'&fileid='.$id;
+                                            $path_for_space_sharing = urlencode($path);
+                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
                                         }
                                         elseif ($cloud == 'gd') {
                                             $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
@@ -2598,10 +2599,10 @@ else {
                                     $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
                                 }
 
-                                /*$phpv = substr(phpversion(), 0, 1);
+                                $phpv = substr(phpversion(), 0, 1);
                                 if ($phpv >= 7) {
                                     $path = urldecode($path);
-                                }*/
+                                }
 
                                 // Set flag if user is owner (folders)
                                 if (urldecode(urldecode($path)) == $db_drive_path) {
@@ -3037,8 +3038,8 @@ else {
                                             $share_guid = $value['guid'];
 
                                             if ($cloud == 'sciebo') {
-                                                $path_for_space_sharing = $unshare_file_path;
-                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.urlencode($path_for_space_sharing).'&dk='.$drive_key.'&fileid='.$id;
+                                                $path_for_space_sharing = urlencode($unshare_file_path);
+                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
                                             }
                                             elseif ($cloud == 'gd') {
                                                 $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
