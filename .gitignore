@@ -40,8 +40,8 @@ testem.log
 Thumbs.db
 
 # Yii
-assets/*
-!assets/.gitignore
+#assets/*
+#!assets/.gitignore
 protected/runtime/*
 !protected/runtime/.gitignore
 protected/data/*.db
