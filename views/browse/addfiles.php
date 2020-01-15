@@ -13,6 +13,14 @@ include __DIR__ . '/../../vendor/autoload.php';
 
 $db = dbconnect();
 
+try{
+    $DB_open = $db->open();
+}
+catch (Exception $exception)
+{
+    die("Database Connection Error.");
+}
+
 // General vars
 $now = time();
 $home_url = Url::base(true);
@@ -33,6 +41,12 @@ $get_gd_folder_name = '';
 /**
  * Get params
  */
+
+// Read username
+$username = '';
+if (isset(Yii::$app->user->identity->username)) {
+    $username = Yii::$app->user->identity->username;
+}
 
 // Space ID
 $space_id = '';
@@ -149,7 +163,7 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
     }
 }
 
-
+/*
 function getGoogleClient($db, $space_id, $home_url, $guid) {
     $client = false ;
     // Check for database entries for Google Drive and this space
@@ -224,6 +238,124 @@ function getGoogleClient($db, $space_id, $home_url, $guid) {
     else {
         return false;
     }
+}*/
+
+
+
+function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
+    $now = time();
+
+    $logged_username =  $loginuser;
+    $client = false ;
+    // Check for database entries for Google Drive and this space
+    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
+        WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\') AND user_id = :user_id', [
+        ':space_id' => $space_id,
+        ':drive_name' => 'gd',
+        ':user_id' => $logged_username,
+    ])->queryAll();
+
+    if (count($sql) > 0) {
+        foreach ($sql as $value) {
+            $app_password = $value['app_password'];
+            $path_to_json = 'protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json';
+
+            if (file_exists($path_to_json)) {
+                $client = new Google_Client();
+                $client->setApplicationName('ResearchHub');
+                $client->addScope(Google_Service_Drive::DRIVE);
+                $client->setAuthConfig($path_to_json);
+                $client->setAccessType('offline'); // Offline access
+                $client->setPrompt('select_account consent');
+                $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+
+                $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
+                if (file_exists($tokenPath)) {
+                    $accessToken = json_decode(file_get_contents($tokenPath), true);
+                    $client->setAccessToken($accessToken);
+                }
+
+                // If there is no previous token or it's expired
+                if ($client->isAccessTokenExpired()) {
+                    // Refresh the token if possible, else fetch a new one
+                    if ($client->getRefreshToken()) {
+                        $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                    }
+                    else {
+                        // Request authorization from the user
+                        if (!isset($_GET['code'])) {
+                            // Disable tupels which has the if_shared value 'T'
+                            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                        WHERE space_id = :space_id
+                                        AND user_id = :user_id
+                                        AND drive_name = :drive_name
+                                        AND create_date < :now_minus_some_seconds
+                                        AND if_shared IN (\'T\')', [
+                                ':space_id' => $space_id,
+                                ':user_id' => $logged_username,
+                                ':drive_name' => 'gd',
+                                ':now_minus_some_seconds' => $now - 3,
+                            ])->execute();
+
+                            if (file_exists($path_to_json)) {
+                                $content = file_get_contents($path_to_json);
+                                if (strpos($content, 'research-hub.social') !== false) {
+                                    $authUrl = $client->createAuthUrl();
+                                    header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
+                                }
+                            }
+                        }
+                        // Hier Code übergeben
+                        if (isset($_GET['code'])) {
+                            $code = $_GET['code'];
+
+                            $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+                            $client->setAccessToken($accessToken);
+
+                            // Check to see if there was an error
+                            if (array_key_exists('error', $accessToken)) {
+                                //throw new Exception(join(', ', $accessToken));
+                                return false;
+                            }
+
+                            // Save the token to a file
+                            if (!file_exists(dirname($tokenPath))) {
+                                mkdir(dirname($tokenPath), 0700, true);
+                            }
+
+                            if (file_put_contents($tokenPath, json_encode($client->getAccessToken()))) {
+                                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'N\'
+                                            WHERE app_password = :app_password', [
+                                    ':app_password' => $app_password,
+                                ])->execute();
+                            }
+                            else {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                // Disable tupels which has the if_shared value 'T'
+                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                    WHERE space_id = :space_id
+                    AND user_id = :user_id
+                    AND drive_name = :drive_name
+                    AND create_date < :now_minus_some_seconds
+                    AND if_shared IN (\'T\')', [
+                    ':space_id' => $space_id,
+                    ':user_id' => $logged_username,
+                    ':drive_name' => 'gd',
+                    ':now_minus_some_seconds' => $now - 3,
+                ])->execute();
+            }
+        }
+        return $client;
+    }
+    else {
+        return false;
+    }
 }
 
 
@@ -248,14 +380,27 @@ if (!empty($_GET['app_detail_id'])) {
  */
 $session = Yii::$app->session;
 
-// Get the API client and construct the service object
-$gd_client = getGoogleClient($db, $space_id, $home_url, $guid);
-if ($gd_client !== false) {
-    $gd_service = new Google_Service_Drive($gd_client);
+// Check for database entries for Google Drive and this space
 
-    // Get root ID
-    // https://stackoverflow.com/questions/36763941/how-can-i-list-files-dirs-in-root-directory-with-google-drive-api-v3
-    $gd_root_id = $gd_service->files->get('root')->getId();
+$sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
+        WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\') AND user_id = :user_id', [
+    ':space_id' => $space_id,
+    ':drive_name' => 'gd',
+    ':user_id' => $username,
+])->queryAll();
+
+if (count($sql) > 0) {
+// Get the API client and construct the service object
+    $gd_client = getGoogleClient($db, $space_id, $home_url, $guid, $username);
+    if ($gd_client !== false) {
+        $gd_service = new Google_Service_Drive($gd_client);
+
+        // Get root ID
+        // https://stackoverflow.com/questions/36763941/how-can-i-list-files-dirs-in-root-directory-with-google-drive-api-v3
+        $gd_root_id = $gd_service->files->get('root')->getId();
+    }
+}else{
+    $gd_client = false;
 }
 
 
