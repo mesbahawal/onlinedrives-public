@@ -3405,41 +3405,16 @@ else {
 /**
  * Sciebo and Google Drive guide
  */
-$sciebo_guide_link = '<a href="#sciebo_guide">How to connect with your Sciebo account</a>';
-$gd_guide_link = '<a href="#gd_guide">How to connect with your Google Drive account</a>';
+$sciebo_guide_link = '<a href="#sciebo_guide">' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_h') . '</a>';
+$gd_guide_link = '<a href="#gd_guide">' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</a>';
 
 $sciebo_guide_a = '<a name="sciebo_guide"></a>';
 $gd_guide_a = '<a name="gd_guide"></a>';
 
-$sciebo_guide_h = '<h1><b>How to connect with your Sciebo account</b></h1>';
-$gd_guide_h = '<h1><b>How to connect with your Google Drive account</b></h1>';
-
-$sciebo_guide_txt1 = 'Go in Sciebo, click on your name, click on "Settings" / "Einstellungen" (orange circle):';
-$sciebo_guide_txt2 = 'Click on "Security" / "Sicherheit" (orange box):';
-$sciebo_guide_txt3 = 'Scroll down to "App passwords / tokens" / "App-Passwörter / Token" (orange circle). Here you can insert an app name. Please confirm after that:';
-$sciebo_guide_txt4 = 'Now new access data will be created and displayed. Copy them just now in the form above (which you\'ll see if you click on the burger menu in this module) because after refreshing the Sciebo page they won\t be longer visible:';
-$sciebo_guide_txt5 = 'Here you see the opened burger menu with fulfilled Sciebo login form:';
-$sciebo_guide_txt6 = 'After that you have a new box on your module homepage which makes it possible to share an existing folder or file of your Sciebo account with all the members in this space. Click on "Add":';
-$sciebo_guide_txt7 = 'You can click on "Add". Then you have the possibility to add every folder and file from your cloud storage you want. After that please click on "Share":';
-$sciebo_guide_txt8 = 'For example if there were selected all the folders and files in the foreign screenshot, then you would see the following list. This list will see all members of this space:';
+$sciebo_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_h') . '</b></h1>';
+$gd_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</b></h1>';
 
 $count_guide_sciebo = 8;
-
-$gd_guide_txt1 = 'Please go on <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.';
-$gd_guide_txt2 = 'This could be your view after login:';
-$gd_guide_txt3 = 'Click on "Credentials" / "Anmeldedaten" on the left sight (3rd point).';
-$gd_guide_txt4 = 'Click on "" / "Anmeldedaten erstellen". Then click on "OAuth-Client-ID:';
-$gd_guide_txt5 = 'In the next view click on "" / "Webanwendungen" and choose a name of your OAuth-Client-ID. (This is not the shown name of your application.)';
-$gd_guide_txt6 = '';
-$gd_guide_txt7 = '';
-$gd_guide_txt8 = '';
-$gd_guide_txt9 = '';
-$gd_guide_txt10 = '';
-$gd_guide_txt11 = '';
-$gd_guide_txt12 = '';
-$gd_guide_txt13 = '';
-$gd_guide_txt14 = '';
-
 $count_guide_gd = 5;
 
 // Output box opening
@@ -3478,10 +3453,7 @@ if ($check == 1) {
 }
 else {
     $class = '';
-
-    echo '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;">
-        Access configuration guide
-    </span>';
+    echo '<span id="guide_heading" style="margin-left: 10px; font-size: 20px;">' . Yii::t('OnlinedrivesModule.new', 'guide_h') . '</span>';
 }
 
 // Output hidden-able wrapper opening
@@ -3500,9 +3472,8 @@ $sciebo_guide_a.
 echo
 '<p>'.$sciebo_guide_h.'</p><br />';
 for ($i = 1; $i <= $count_guide_sciebo; $i++) {
-    $txt = 'sciebo_guide_txt'.$i;
-    $pic = '<img src="protected/modules/onlinedrives/assets/images/guide/sciebo/'.$i.'.png" />';
-    echo '<p>Step '.$i.': ' . $$txt . '<p>'.
+    $pic = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/'.$i.'.png" />';
+    echo '<p>Step '.$i.': ' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
 
@@ -3515,9 +3486,8 @@ $gd_guide_a.
 '<p>'.$gd_guide_h.'</p><br />';
 
 for ($i = 1; $i <= $count_guide_gd; $i++) {
-    $txt = 'gd_guide_txt'.$i;
-    $pic = '<img src="protected/modules/onlinedrives/assets/images/guide/gd/'.$i.'.png" />';
-    echo '<p>Step '.$i.': ' . $$txt . '<p>'.
+    $pic = '<img src="protected/modules/onlinedrives/resources/guide/gd/'.$i.'.png" />';
+    echo '<p>Step '.$i.': ' . Yii::t('OnlinedrivesModule.new', 'gd_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
 
