@@ -825,7 +825,7 @@ if ($app_user_id <> '') {
                 </td>
 
                 <td>
-                    User permissions
+                    <?php echo Yii::t('OnlinedrivesModule.new', 'User permissions'); ?>
                 </td>
 
                 <td>
@@ -881,7 +881,7 @@ if ($app_user_id <> '') {
                             }
                             ?>
                     " />
-                    Select all
+                    <?php echo Yii::t('OnlinedrivesModule.new', 'Select all'); ?>
                 </label>
             </td>
         </tr>

@@ -20,7 +20,7 @@ use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
 include_once __DIR__ . '/../../models/dbconnect.php';
 $db = dbconnect();
 
-try{
+try {
     $DB_open = $db->open();
 }
 catch (Exception $exception)
@@ -1502,7 +1502,7 @@ if (count($arr_app_user_admin) > 0) {
                         else {
                             getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-down\';
                         }
-            ">Connected drives</span></span>'.
+            ">' . Yii::t('OnlinedrivesModule.new', 'Connected drives') . '</span></span>'.
             // Arrow
             '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
                 onclick="
@@ -1562,7 +1562,10 @@ if (count($arr_app_user_admin) > 0) {
                                 $url_disable_account = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid;
                                 ?>
                                 <button type="button" class="btn btn-primary btn-sm" onclick="location.href='<?=$url_select_files?>'">
-                                    Select Files <span class="glyphicon glyphicon-edit"></span>
+                                    <?php
+                                    echo Yii::t('OnlinedrivesModule.new', 'Select files');
+                                    ?>
+                                    <span class="glyphicon glyphicon-edit"></span>
                                 </button>
                                 &nbsp; &nbsp;
 
@@ -1571,7 +1574,10 @@ if (count($arr_app_user_admin) > 0) {
                                 if ($if_shared != 'D') {
                                     ?>
                                 <button type="button" class="btn btn-danger btn-sm" onclick="location.href='<?=$url_disable_account?>'">
-                                    Disable <span class="glyphicon glyphicon-remove">
+                                    <?php
+                                    echo Yii::t('OnlinedrivesModule.new', 'Disable');
+                                    ?>
+                                    <span class="glyphicon glyphicon-remove"></span>
                                 </button>
 
 
@@ -3436,7 +3442,7 @@ if ($check == 1) {
                 else {
                     getElementById(\'guide_arrow\').className = \'glyphicon glyphicon-chevron-down\';
                 }
-        ">Access configuration guide</span>'.
+        ">' . Yii::t('OnlinedrivesModule.new', 'guide_h') . '</span>'.
         // Arrow
         '<span id="guide_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 10px; font-size: 15px;"
             onclick="
@@ -3469,11 +3475,12 @@ $sciebo_guide_a.
 '</ul></p><br />';
 
 // Output Sciebo guide
+$lang = Yii::t('OnlinedrivesModule.new', 'lang');
 echo
 '<p>'.$sciebo_guide_h.'</p><br />';
 for ($i = 1; $i <= $count_guide_sciebo; $i++) {
-    $pic = '<img src="protected/modules/onlinedrives/resources/guide/sciebo/'.$i.'.png" />';
-    echo '<p>Step '.$i.': ' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i) . '<p>'.
+    $pic = '<img src="protected/modules/onlinedrives/assets/images/guide/sciebo/'.$i.$lang.'.png" />';
+    echo '<p><b>' . Yii::t('OnlinedrivesModule.new', 'step') . ' '.$i.':</b> ' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
 
@@ -3486,8 +3493,8 @@ $gd_guide_a.
 '<p>'.$gd_guide_h.'</p><br />';
 
 for ($i = 1; $i <= $count_guide_gd; $i++) {
-    $pic = '<img src="protected/modules/onlinedrives/resources/guide/gd/'.$i.'.png" />';
-    echo '<p>Step '.$i.': ' . Yii::t('OnlinedrivesModule.new', 'gd_guide_txt'.$i) . '<p>'.
+    $pic = '<img src="protected/modules/onlinedrives/asstes/images/guide/gd/'.$i.'.png" />';
+    echo '<p><b>' . Yii::t('OnlinedrivesModule.new', 'step') . ' '.$i.':</b> ' . Yii::t('OnlinedrivesModule.new', 'gd_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
 
