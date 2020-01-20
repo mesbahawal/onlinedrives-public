@@ -1146,12 +1146,6 @@ if ($count_sciebo_files > 0) {
             // Path
             $path = str_replace($sciebo_path_to_replace, '', $values);
 
-            // Download link
-            //$download_link = 'https://uni-siegen.sciebo.de/remote.php/webdav/'.$path;
-            //http://localhost/humhub-1.3.14/index.php?r=onlinedrives%2Fbrowse%2Fdownloader&cguid=1da6ad03-ba87-429e-8797-46fa193a27be
-            //$download_link = $home_url.'/protected/modules/onlinedrives/views/browse/downloader.php?file='.urlencode($path);
-            $download_link = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Fdownloader&'.$guid.'&dk='.$drive_key.'&file='.urlencode($path);
-
             $unshare_file_path = urlencode($path);
 
             // Mime type
@@ -1181,8 +1175,21 @@ if ($count_sciebo_files > 0) {
                 $mime_type = $sciebo_content[$values]['{DAV:}getcontenttype'];
                 $type = 'file';
 
+                // Download link
+                $download_link = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Fdownloader&'.$guid.'&dk='.$drive_key.'&file='.urlencode($path);
+
+                // Read file type
+                $pos = strrpos($values, '.');
+                $file_type = substr($values, $pos + 1);
+
                 // Open link
-                $open_link = 'https://uni-siegen.sciebo.de/apps/onlyoffice/'.$id.'?filePath=%2F'.$path;
+                if ($file_type == 'txt' || $file_type == 'text' || $file_type == 'pdf' || $file_type == 'rtf' || $file_type == 'doc' || $file_type == 'docx' || $file_type == 'odt' || $file_type == 'xls' || $file_type == 'xlsx' || $file_type == 'ods' || $file_type == 'ppt' || $file_type == 'pptx' || $file_type == 'odp') {
+                    $open_link = 'https://uni-siegen.sciebo.de/apps/onlyoffice/'.$id.'?filePath=%2F'.$path;
+                }
+                else {
+                    $open_link = 'https://uni-siegen.sciebo.de/apps/files/?dir=/&fileid='.$id.'#/files_mediaviewer/'.$sciebo_file_name;
+;
+                }
             }
 
             /*
@@ -3079,7 +3086,7 @@ else {
                     echo '</td>
 
                     <td style="padding: 5px;">
-                        <a href="'.$download_link.'" target="_blank">'.$name.'</a> ';
+                        <a href="'.$web_view_link.'" target="_blank">'.$name.'</a> ';
                         if ($download_link != '') {
                             echo '<a href="'.$download_link.'" target="_blank">
                                 <span class="glyphicon glyphicon-download-alt" style="font-size: 12px;"></span>
