@@ -3500,7 +3500,7 @@ $gd_guide_a.
 '<p>'.$gd_guide_h.'</p><br />';
 
 for ($i = 1; $i <= $count_guide_gd; $i++) {
-    $pic = '<img src="protected/modules/onlinedrives/asstes/images/guide/gd/'.$i.'.png" />';
+    $pic = '<img src="protected/modules/onlinedrives/assets/images/guide/gd/'.$i.'.png" />';
     echo '<p><b>' . Yii::t('OnlinedrivesModule.new', 'step') . ' '.$i.':</b> ' . Yii::t('OnlinedrivesModule.new', 'gd_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
