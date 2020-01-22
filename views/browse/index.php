@@ -3427,7 +3427,7 @@ $gd_guide_a = '<a name="gd_guide"></a>';
 $sciebo_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_h') . '</b></h1>';
 $gd_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</b></h1>';
 
-$count_guide_sciebo = 8;
+$count_guide_sciebo = 7;
 $count_guide_gd = 5;
 
 // Output box opening
@@ -3487,7 +3487,7 @@ echo
 '<p>'.$sciebo_guide_h.'</p><br />';
 for ($i = 1; $i <= $count_guide_sciebo; $i++) {
     $pic = '<img src="protected/modules/onlinedrives/assets/images/guide/sciebo/'.$i.$lang.'.png" />';
-    echo '<p><b>' . Yii::t('OnlinedrivesModule.new', 'step') . ' '.$i.':</b> ' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i) . '<p>'.
+    echo '<p>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
 

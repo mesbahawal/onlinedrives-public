@@ -53,20 +53,22 @@ return array (
     'guide_h' => 'Configuration Guide for Cloud Access',
     'sciebo_guide_h' => 'How to connect with your Sciebo account',
     'gd_guide_h' => 'How to connect with your Google Drive account',
-    'step' => 'Step',
 
     // Guide for Sciebo
-    'sciebo_guide_txt1' => 'Open <a class="u" href="https://sciebo.de/de/login/index.html" target="_blank">https://sciebo.de/de/login/index.html</a> and click on your university.<br />Log in. Click on your name and on "Settings" in the menu that opens (see orange circle in the screenshot).',
-    'sciebo_guide_txt2' => 'The overview of your settings will open. Click on "Security" (see orange box in the screenshot).',
-    'sciebo_guide_txt3' => 'Under your security settings you will find the item "App passwords / tokens" (see orange circle in the screenshot). Scroll down to the bottom of the screen.<br />
-    <b>At this point it is important to emphasize what happens to your app access data and cloud data from the side of this module: The token to be created is not your actual account password and does not provide OnlineDrives with full access to your account, but only allows OnlineDrives to view, i. e. share, directories and files you select in HumHub at a later stage.<br />By entering your app access data in OnlineDrives, Sciebo does not yet share any content. These must be specifically selected in a further step.<br />Your shared content is then exclusively visible in this Space and only by active members of the Space.</b><br />
-    To create the token for the connection between your Sciebo account and OnlineDrives, enter an app name at the bottom of the page, e. g. "HumHub". Then click on "Create new app passcode".',
-    'sciebo_guide_txt4' => 'Your newly created app access data is now displayed and can be used. Copy the now displayed values for user name and password/token one after the other into the access data form in OnlineDrives. You will learn more about this in step 5.<br /><b>Please leave the page with the app access data open temporarily, as the access data will no longer be visible after reloading the page. However, you can create new app access data at any time, as well as delete the old ones.</b>',
-    'sciebo_guide_txt5' => 'The access data form offers the possibility to connect this module to both your Sciebo and Google Drive account. To open it, scroll up and click on the burger menu at the top right. In the screenshot you can see the opened burger menu with a completed Sciebo registration form.<br /><b>Please also click on the Sciebo icon to confirm which cloud service this module should now connect to.</b><br />Submit the form afterwards.',
-    'sciebo_guide_txt6' => 'Once connected, a new box will appear in the upper part of the module, allowing you to share selected directories and files of your Sciebo account with the members of this space. To do this, first click on "Connected drives" and then on "Select files". <b>With a click on "Disable" you can terminate the connection at any time.</b>',
-    'sciebo_guide_txt7' => 'After clicking on "Select files" in step 6, you will have the possibility to share any directory and any file from your Sciebo account with this space. For directories, you can also choose whether the other members of this space may upload files and create directories/files independently within the selected directory. <b>Sharing keeps your data synchronized, not just copied.</b> You can check or uncheck all directories and files at any time. After you have made your selection, click on "Save".',
-    'sciebo_guide_txt8' => 'The following screenshot shows an exemplary list of shared files after saving the form from step 7. This list can only be viewed by the members of this space.',
-    'sciebo_guide_txt9' => '',
+    'sciebo_guide_txt1' => 'Step1: Open <a class="u" href="https://sciebo.de/de/login/index.html" target="_blank">https://sciebo.de/de/login/index.html</a> and click on the link of your university/college.<br />Log in. Click on your name and on “Settings” in the menu that opens (see orange circle in the screenshot).',
+    'sciebo_guide_txt2' => 'Step 2: The overview of your settings will open. Click on “Security” (see orange box in the screenshot).',
+    'sciebo_guide_txt3' => 'Step 3: At the bottom of your security settings is the item “App passwords / tokens” (see orange circle in the screenshot).<br />
+        At this point, it should be emphasized that the app passcode assigned here does not allow full access to your account, but only specific rights can be assigned. These rights can be adjusted in the further course of the setup.<br />
+        To create a passcode for HumHub, enter “HumHub” as the name below and click “Create new app passcode”.',
+    'sciebo_guide_txt4' => '<p>Step 4: The new app access data created in this way is now displayed and can be used. Copy the values for user name and password/token one after the other into the access data form in OnlineDrives. This is shown in the next screenshot and can be accessed via the small gear wheel in the upper right corner.</p>
+        <p>During this step, it is best to leave the page with the app access data open, as the access data is no longer visible after reloading the page. However, you can create new app access data at any time, as well as delete the old ones.</p>
+        <p>In the form you can then click on the service (Sciebo or Google Drive) and enter the corresponding access data.</p>',
+    'sciebo_guide_txt5' => 'Step 5: After a successful connection, a note about the connected services appears in the upper part of the module.<br />
+        With “Select files” you can now select directories and files of your Sciebo account that you want to share with the members of this space. By clicking on “Disable” you can terminate the connection at any time.',
+    'sciebo_guide_txt6' => 'After clicking on “Select files” the overview shown below will appear, where you can select or deselect files and folders and give other users of the Space permission to upload files and folders to the folders you have shared. In doing so, the data is synchronized, not just copied. But the selection can be adjusted at any time.<br />
+        With a click on “Save” the settings are then applied.',
+    'sciebo_guide_txt7' => 'Step 6: The following screenshot shows an example list of shared files after saving the form from step 5. This list is only visible to the members of this space.',
+    'sciebo_guide_txt8' => '',
 
     // Guide for Google Drive
     'gd_guide_txt1' => 'Please go on <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.',
