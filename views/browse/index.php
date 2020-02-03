@@ -156,84 +156,6 @@ if (!file_exists($path_client)) {
 if (!file_exists($path_tokens)) {
     mkdir($path_tokens, 0700);
 }
-/*
-function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
-    $logged_username =  $loginuser;
-    $client = false ;
-    // Check for database entries for Google Drive and this space
-    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail
-        WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\') AND user_id = :user_id', [
-        ':space_id' => $space_id,
-        ':drive_name' => 'gd',
-        ':user_id' => $logged_username,
-    ])->queryAll();
-
-    if (count($sql) > 0) {
-        foreach ($sql as $value) {
-            $app_password = $value['app_password'];
-            $client = new Google_Client();
-            $client->setApplicationName('ResearchHub');
-            $client->addScope(Google_Service_Drive::DRIVE);
-            $client->setAuthConfig('protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json');
-            $client->setAccessType('offline'); // Offline access
-            $client->setPrompt('select_account consent');
-            $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
-
-            $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
-            if (file_exists($tokenPath)) {
-                $accessToken = json_decode(file_get_contents($tokenPath), true);
-                $client->setAccessToken($accessToken);
-            }
-
-            // If there is no previous token or it's expired
-            if ($client->isAccessTokenExpired()) {
-                // Refresh the token if possible, else fetch a new one
-                if ($client->getRefreshToken()) {
-                    $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-                }
-                else {
-                    // Request authorization from the user
-                    if (!isset($_GET['code'])) {
-                        $authUrl = $client->createAuthUrl();
-                        header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
-                    }
-                    // Hier Code übergeben
-                    if (isset($_GET['code'])) {
-                        $code = $_GET['code'];
-
-                        $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-                        $client->setAccessToken($accessToken);
-
-                        // Check to see if there was an error
-                        if (array_key_exists('error', $accessToken)) {
-                            //throw new Exception(join(', ', $accessToken));
-                            return false;
-                        }
-
-                        // Save the token to a file
-                        if (!file_exists(dirname($tokenPath))) {
-                            mkdir(dirname($tokenPath), 0700, true);
-                        }
-
-                        if (file_put_contents($tokenPath, json_encode($client->getAccessToken()))) {
-                            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'N\'
-                                WHERE app_password = :app_password', [
-                                ':app_password' => $app_password,
-                            ])->execute();
-                        }
-                        else {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        return $client;
-    }
-    else {
-        return false;
-    }
-}*/
 
 function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
     $now = time();
@@ -1164,6 +1086,9 @@ if ($count_sciebo_files > 0) {
 
                 // Open link
                 $open_link = 'https://uni-siegen.sciebo.de/apps/files/?dir=%2F'.$path.'&fileid='.$id;
+
+                // Download link
+                $download_link = '';
             }
             else {
                 $pos = strrpos($values, '/');
@@ -1334,7 +1259,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         $ref = 'https://uni-siegen.sciebo.de/login';
         echo ' /
         <a href="'.$ref.'" target="_blank">';
-            $src = 'protected/modules/onlinedrives/assets/images/sciebo20.png';
+            $src = $bundle->baseUrl . '/images/sciebo20.png';
             echo '<img class="position: relative;" style="top: -2px;" src="'.$src.'" title="Sciebo" />
         </a>';
 /*
@@ -1378,7 +1303,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     elseif ($get_gd_folder_id != '') {
         // Build Google Drive icon for navigation
         $ref = 'https://accounts.google.com/ServiceLogin';
-        $src = 'protected/modules/onlinedrives/assets/images/gd20.png';
+        $src = $bundle->baseUrl . '/images/gd20.png';
 
         // Output Google Drive icon in navigation
         echo ' /
@@ -1432,7 +1357,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     <!-- Plus menu icon -->
     <?php
     // Check (2)
-    if ($check == 1) {
+    if ($check == 1 && (!empty($get_sciebo_path) || !empty($get_gd_folder_id))) {
         echo '<span id="plus_menu_icon" class="glyphicon glyphicon-plus" onclick="getElementById(\'plus_menu\').style.display = \'block\';"></span>';
     }
     ?>
@@ -1554,7 +1479,7 @@ if (count($arr_app_user_admin) > 0) {
                                 elseif ($drive_name == 'gd') {
                                     $ref = 'https://accounts.google.com/ServiceLogin';
                                 }
-                                $src = 'protected/modules/onlinedrives/assets/images/'.$drive_name.'20.png';
+                                $src = $bundle->baseUrl . '/images/'.$drive_name.'20.png';
                                 echo '<a href="'.$ref.'" target="_blank">
                                         <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
                                     </a>';
@@ -1622,12 +1547,12 @@ $form_login = ActiveForm::begin([
 ?>
 
 <!-- Cross icon (login menu) -->
-<img src="protected/modules/onlinedrives/assets/images/cross.png" alt="X" title="<?php echo Yii::t('OnlinedrivesModule.new', 'Close'); ?>"
-    style="z-index: 1; position:absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
+<img src="<?php echo $bundle->baseUrl; ?>/images/cross.png" alt="X" title="<?php echo Yii::t('OnlinedrivesModule.new', 'Close'); ?>"
+    style="z-index: 1; position: absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
     onclick="
         getElementById('login_menu').style.display = 'none';
-        getElementById('select_sciebo_login').src = 'protected/modules/onlinedrives/assets/images/sciebo_gray50.png';
-        getElementById('select_gd_login').src = 'protected/modules/onlinedrives/assets/images/gd_gray50.png';
+        getElementById('select_sciebo_login').src = '<?php echo $bundle->baseUrl; ?>/images/sciebo_gray50.png';
+        getElementById('select_gd_login').src = '<?php echo $bundle->baseUrl; ?>/images/gd_gray50.png';
 " />
 
 <?php
@@ -1636,13 +1561,13 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
     'sciebo' => '<img
         id="select_sciebo_login"
         class="upcr_icon"
-        src="protected/modules/onlinedrives/assets/images/sciebo_gray50.png"
+        src="' . $bundle->baseUrl . '/images/sciebo_gray50.png"
         alt="Sciebo"
         title="Sciebo"
         onclick="
             getElementById(\'line_gd_login\').className = \'line_icons shownone\';
-            getElementById(\'select_gd_login\').src = \'protected/modules/onlinedrives/assets/images/gd_gray50.png\';
-            this.src = \'protected/modules/onlinedrives/assets/images/sciebo50.png\';
+            getElementById(\'select_gd_login\').src = \'' . $bundle->baseUrl . '/images/gd_gray50.png\';
+            this.src = \'' . $bundle->baseUrl . '/images/sciebo50.png\';
             getElementById(\'line_sciebo_login\').className = \'line_icons showblock\';
             getElementById(\'form_sciebo_login\').className = \'showblock\';
             getElementById(\'form_gd_login\').className = \'shownone\';
@@ -1653,13 +1578,13 @@ echo $form_login->field($model_login, 'selected_cloud_login')->radioList([
     'gd' => '<img
         id="select_gd_login"
         class="upcr_icon"
-        src="protected/modules/onlinedrives/assets/images/gd_gray50.png"
+        src="' . $bundle->baseUrl . '/images/gd_gray50.png"
         alt="Google Drive"
         title="Google Drive"
         onclick="
             getElementById(\'line_sciebo_login\').className = \'line_icons shownone\';
-            getElementById(\'select_sciebo_login\').src = \'protected/modules/onlinedrives/assets/images/sciebo_gray50.png\';
-            this.src = \'protected/modules/onlinedrives/assets/images/gd50.png\';
+            getElementById(\'select_sciebo_login\').src = \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\';
+            this.src = \'' . $bundle->baseUrl . '/images/gd50.png\';
             getElementById(\'line_gd_login\').className = \'line_icons showblock\';
             getElementById(\'form_sciebo_login\').className = \'shownone\';
             getElementById(\'form_gd_login\').className = \'showblock\';
@@ -1704,19 +1629,19 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
         echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
             'onclick' =>
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
-                var src_sciebo_gray50 = \''.$home_url.'/protected/modules/onlinedrives/assets/images/sciebo_gray50.png\';
+                var src_sciebo_gray50 = \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\';
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
 
-                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/sciebo_gray50.png\' &&
-                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/gd_gray50.png\'
+                if (select_sciebo_login_src == \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\' &&
+                    select_gd_login_src == \'' . $bundle->baseUrl . '/images/gd_gray50.png\'
                 ) {
                     document.getElementById(\'err_msg\').innerHTML = "Please select a cloud service";
 
                     return false;
                 }
 
-                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/sciebo50.png\' &&
-                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/gd_gray50.png\'
+                if (select_sciebo_login_src == \'' . $bundle->baseUrl . '/images/sciebo50.png\' &&
+                    select_gd_login_src == \'' . $bundle->baseUrl . '/images/gd_gray50.png\'
                 ) {
     				var app_id = document.getElementById(\'loginform-app_id\').value;
                     if (app_id == \'\') {
@@ -1789,19 +1714,19 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
         echo Html::submitButton(Yii::t('OnlinedrivesModule.new', 'Send'), ['class' => 'btn btn-primary',
             'onclick' =>
                 'var select_sciebo_login_src = getElementById(\'select_sciebo_login\').src;
-                var src_sciebo_gray50 = \''.$home_url.'/protected/modules/onlinedrives/assets/images/sciebo_gray50.png\';
+                var src_sciebo_gray50 = \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\';
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
 
-                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/sciebo_gray50.png\' &&
-                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/gd_gray50.png\'
+                if (select_sciebo_login_src == \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\' &&
+                    select_gd_login_src == \'' . $bundle->baseUrl . '/images/gd_gray50.png\'
                 ) {
                     document.getElementById(\'err_msg\').innerHTML = "Please select a cloud service";
 
                     return false;
                 }
 
-                if (select_sciebo_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/sciebo50.png\' &&
-                    select_gd_login_src == \''.$home_url.'/protected/modules/onlinedrives/assets/images/gd_gray50.png\'
+                if (select_sciebo_login_src == \'' . $bundle->baseUrl . '/images/sciebo50.png\' &&
+                    select_gd_login_src == \'' . $bundle->baseUrl . '/images/gd_gray50.png\'
                 ) {
                     var gd_app_id = document.getElementById(\'loginformgdclient-gd_app_id\').value;
                     if (gd_app_id == \'\') {
@@ -1827,7 +1752,7 @@ ActiveForm::end();
 /**
  * Check (3) start
  */
-if ($check == 1) {
+if ($check == 1 && (!empty($get_sciebo_path) || !empty($get_gd_folder_id))) {
 ?>
 
 
@@ -1848,19 +1773,19 @@ $form = ActiveForm::begin([
 ?>
 
 <!-- Cross icon (plus menu) -->
-<img src="protected/modules/onlinedrives/assets/images/cross.png" alt="X" title="<?php echo Yii::t('OnlinedrivesModule.new', 'Close'); ?>"
-    style="z-index: 1; position:absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
+<img src="<?php echo $bundle->baseUrl; ?>/images/cross.png" alt="X" title="Test<?php echo Yii::t('OnlinedrivesModule.new', 'Close'); ?>"
+    style="z-index: 1; position: absolute; right: 10px; width: 10px; height: 10px; cursor: pointer;"
     onclick="
     	getElementById('plus_menu').style.display = 'none';
-        getElementById('select_sciebo').src = 'protected/modules/onlinedrives/assets/images/sciebo_gray50.png';
-        getElementById('select_gd').src = 'protected/modules/onlinedrives/assets/images/gd_gray50.png';
+        getElementById('select_sciebo').src = '<?php echo $bundle->baseUrl; ?>/images/sciebo_gray50.png';
+        getElementById('select_gd').src = '<?php echo $bundle->baseUrl; ?>/images/gd_gray50.png';
         getElementById('create_folder').className = 'upcr_btn btn-info btn-lg upcr_shaddow fa fa-folder-open fa-lg';
         getElementById('create_file').className = 'upcr_btn btn-info btn-lg upcr_shaddow fa fa-file fa-lg';
-        getElementById('type_txt').src = 'protected/modules/onlinedrives/assets/images/type/gray/txt.png';
-        getElementById('type_docx').src = 'protected/modules/onlinedrives/assets/images/type/gray/docx.png';
-        getElementById('type_xlsx').src = 'protected/modules/onlinedrives/assets/images/type/gray/xlsx.png';
-        getElementById('type_pptx').src = 'protected/modules/onlinedrives/assets/images/type/gray/pptx.png';
-        getElementById('type_odt').src = 'protected/modules/onlinedrives/assets/images/type/gray/odt.png';
+        getElementById('type_txt').src = '<?php echo $bundle->baseUrl; ?>/images/type/gray/txt.png';
+        getElementById('type_docx').src = '<?php echo $bundle->baseUrl; ?>/images/type/gray/docx.png';
+        getElementById('type_xlsx').src = '<?php echo $bundle->baseUrl; ?>/images/type/gray/xlsx.png';
+        getElementById('type_pptx').src = '<?php echo $bundle->baseUrl; ?>/images/type/gray/pptx.png';
+        getElementById('type_odt').src = '<?php echo $bundle->baseUrl; ?>/images/type/gray/odt.png';
 " />
 
 
@@ -1871,26 +1796,26 @@ if ($get_sciebo_path == '' && $get_gd_folder_id == '') {
         'sciebo' => '<img
             id="select_sciebo"
             class="upcr_icon"
-            src="protected/modules/onlinedrives/assets/images/sciebo_gray50.png"
+            src="' . $bundle->baseUrl . '/images/sciebo_gray50.png"
             alt="Sciebo"
             title="Sciebo"
             onclick="
                 getElementById(\'line_gd\').className = \'line_icons shownone\';
-                getElementById(\'select_gd\').src = \'protected/modules/onlinedrives/assets/images/gd_gray50.png\';
-                this.src = \'protected/modules/onlinedrives/assets/images/sciebo50.png\';
+                getElementById(\'select_gd\').src = \'' . $bundle->baseUrl . '/images/gd_gray50.png\';
+                this.src = \'' . $bundle->baseUrl . '/images/sciebo50.png\';
                 getElementById(\'line_sciebo\').className = \'line_icons showblock\';
                 getElementById(\'uploadfileform-selected_cloud_u\').value = \'sciebo\';
         " />',
         'gd' => '<img
             id="select_gd"
             class="upcr_icon"
-            src="protected/modules/onlinedrives/assets/images/gd_gray50.png"
+            src="' . $bundle->baseUrl . '/images/gd_gray50.png"
             alt="Google Drive"
             title="Google Drive"
             onclick="
                 getElementById(\'line_sciebo\').className = \'line_icons shownone\';
-                getElementById(\'select_sciebo\').src = \'protected/modules/onlinedrives/assets/images/sciebo_gray50.png\';
-                this.src = \'protected/modules/onlinedrives/assets/images/gd50.png\';
+                getElementById(\'select_sciebo\').src = \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\';
+                this.src = \'' . $bundle->baseUrl . '/images/gd50.png\';
                 getElementById(\'line_gd\').className = \'line_icons showblock\';
                 getElementById(\'uploadfileform-selected_cloud_u\').value = \'gd\';
         " />',
@@ -1926,11 +1851,11 @@ echo '<div class="rel" style="margin-bottom: 50px;">'.
                 	getElementById(\'create_folder_name\').classList.toggle(\'showblock\');
                 	getElementById(\'create_file_name\').className = \'shownone\';
                     getElementById(\'createfileform-new_folder_name\').focus();
-                    getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/txt.png\';
-                    getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/docx.png\';
-                    getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/xlsx.png\';
-                    getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/pptx.png\';
-                    getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/odt.png\';
+                    getElementById(\'type_txt\').src = \'' . $bundle->baseUrl . '/images/type/gray/txt.png\';
+                    getElementById(\'type_docx\').src = \'' . $bundle->baseUrl . '/images/type/gray/docx.png\';
+                    getElementById(\'type_xlsx\').src = \'' . $bundle->baseUrl . '/images/type/gray/xlsx.png\';
+                    getElementById(\'type_pptx\').src = \'' . $bundle->baseUrl . '/images/type/gray/pptx.png\';
+                    getElementById(\'type_odt\').src = \'' . $bundle->baseUrl . '/images/type/gray/odt.png\';
 	        "></span>
     	</div>',
 	    'create_file' => '<div class="upcr_btn_div">
@@ -1976,7 +1901,7 @@ echo '</div>';
             'txt' => '<img
                 id="type_txt"
                 class="type_icon"
-                src="protected/modules/onlinedrives/assets/images/type/gray/txt.png"
+                src="' . $bundle->baseUrl . '/images/type/gray/txt.png"
                 alt="Text file"
                 title="Text file"
                 onclick="
@@ -1989,17 +1914,17 @@ echo '</div>';
                             name = name.substr(0, pos);
                         }
                     	getElementById(\'createfileform-new_file_name\').value = name + type;
-                        getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/docx.png\';
-                        getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/xlsx.png\';
-                        getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/pptx.png\';
-                        getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/odt.png\';
-                        this.src = \'protected/modules/onlinedrives/assets/images/type/txt.png\';
+                        getElementById(\'type_docx\').src = \'' . $bundle->baseUrl . '/images/type/gray/docx.png\';
+                        getElementById(\'type_xlsx\').src = \'' . $bundle->baseUrl . '/images/type/gray/xlsx.png\';
+                        getElementById(\'type_pptx\').src = \'' . $bundle->baseUrl . '/images/type/gray/pptx.png\';
+                        getElementById(\'type_odt\').src = \'' . $bundle->baseUrl . '/images/type/gray/odt.png\';
+                        this.src = \'' . $bundle->baseUrl . '/images/type/txt.png\';
                     }
             " />',
             'docx' => '<img
                 id="type_docx"
                 class="type_icon"
-                src="protected/modules/onlinedrives/assets/images/type/gray/docx.png"
+                src="' . $bundle->baseUrl . '/images/type/gray/docx.png"
                 alt="Document"
                 title="Document"
                 onclick="
@@ -2012,17 +1937,17 @@ echo '</div>';
                             name = name.substr(0, pos);
                         }
                         getElementById(\'createfileform-new_file_name\').value = name + type;
-                        getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/txt.png\';
-                        getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/xlsx.png\';
-                        getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/pptx.png\';
-                        getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/odt.png\';
-                        this.src = \'protected/modules/onlinedrives/assets/images/type/docx.png\';
+                        getElementById(\'type_txt\').src = \'' . $bundle->baseUrl . '/images/type/gray/txt.png\';
+                        getElementById(\'type_xlsx\').src = \'' . $bundle->baseUrl . '/images/type/gray/xlsx.png\';
+                        getElementById(\'type_pptx\').src = \'' . $bundle->baseUrl . '/images/type/gray/pptx.png\';
+                        getElementById(\'type_odt\').src = \'' . $bundle->baseUrl . '/images/type/gray/odt.png\';
+                        this.src = \'' . $bundle->baseUrl . '/images/type/docx.png\';
                     }
             " />',
             'xlsx' => '<img
                 id="type_xlsx"
                 class="type_icon"
-                src="protected/modules/onlinedrives/assets/images/type/gray/xlsx.png"
+                src="' . $bundle->baseUrl . '/images/type/gray/xlsx.png"
                 alt="Table"
                 title="Table"
                 onclick="
@@ -2035,17 +1960,17 @@ echo '</div>';
                             name = name.substr(0, pos);
                         }
                         getElementById(\'createfileform-new_file_name\').value = name + type;
-                        getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/txt.png\';
-                        getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/docx.png\';
-                        getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/pptx.png\';
-                        getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/odt.png\';
-                        this.src = \'protected/modules/onlinedrives/assets/images/type/xlsx.png\';
+                        getElementById(\'type_txt\').src = \'' . $bundle->baseUrl . '/images/type/gray/txt.png\';
+                        getElementById(\'type_docx\').src = \'' . $bundle->baseUrl . '/images/type/gray/docx.png\';
+                        getElementById(\'type_pptx\').src = \'' . $bundle->baseUrl . '/images/type/gray/pptx.png\';
+                        getElementById(\'type_odt\').src = \'' . $bundle->baseUrl . '/images/type/gray/odt.png\';
+                        this.src = \'' . $bundle->baseUrl . '/images/type/xlsx.png\';
                     }
             " />',
             'pptx' => '<img
                 id="type_pptx"
                 class="type_icon"
-                src="protected/modules/onlinedrives/assets/images/type/gray/pptx.png"
+                src="' . $bundle->baseUrl . '/images/type/gray/pptx.png"
                 alt="Presentation"
                 title="Presentation"
                 onclick="
@@ -2058,17 +1983,17 @@ echo '</div>';
                             name = name.substr(0, pos);
                         }
                         getElementById(\'createfileform-new_file_name\').value = name + type;
-                        getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/txt.png\';
-                        getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/docx.png\';
-                        getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/xlsx.png\';
-                        getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/odt.png\';
-                        this.src = \'protected/modules/onlinedrives/assets/images/type/pptx.png\';
+                        getElementById(\'type_txt\').src = \'' . $bundle->baseUrl . '/images/type/gray/txt.png\';
+                        getElementById(\'type_docx\').src = \'' . $bundle->baseUrl . '/images/type/gray/docx.png\';
+                        getElementById(\'type_xlsx\').src = \'' . $bundle->baseUrl . '/images/type/gray/xlsx.png\';
+                        getElementById(\'type_odt\').src = \'' . $bundle->baseUrl . '/images/type/gray/odt.png\';
+                        this.src = \'' . $bundle->baseUrl . '/images/type/pptx.png\';
                     }
             " />',
             'odt' => '<img
                 id="type_odt"
                 class="type_icon"
-                src="protected/modules/onlinedrives/assets/images/type/gray/odt.png"
+                src="' . $bundle->baseUrl . '/images/type/gray/odt.png"
                 alt="OpenDocument"
                 title="OpenDocument"
                 onclick="
@@ -2081,11 +2006,11 @@ echo '</div>';
                             name = name.substr(0, pos);
                         }
                         getElementById(\'createfileform-new_file_name\').value = name + type;
-                        getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/txt.png\';
-                        getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/docx.png\';
-                        getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/xlsx.png\';
-                        getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/pptx.png\';
-                        this.src = \'protected/modules/onlinedrives/assets/images/type/odt.png\';
+                        getElementById(\'type_txt\').src = \'' . $bundle->baseUrl . '/images/type/gray/txt.png\';
+                        getElementById(\'type_docx\').src = \'' . $bundle->baseUrl . '/images/type/gray/docx.png\';
+                        getElementById(\'type_xlsx\').src = \'' . $bundle->baseUrl . '/images/type/gray/xlsx.png\';
+                        getElementById(\'type_pptx\').src = \'' . $bundle->baseUrl . '/images/type/gray/pptx.png\';
+                        this.src = \'' . $bundle->baseUrl . '/images/type/odt.png\';
                     }
             " />',
         ], ['encode' => false]);
@@ -2144,11 +2069,11 @@ $form_u = ActiveForm::begin([
                     getElementById(\'create_file\').className = \'upcr_btn btn-info btn-lg upcr_shaddow fa fa-file fa-lg\';
                     getElementById(\'create_folder_name\').className = \'shownone\';
                     getElementById(\'create_file_name\').className = \'shownone\';
-                    getElementById(\'type_txt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/txt.png\';
-                    getElementById(\'type_docx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/docx.png\';
-                    getElementById(\'type_xlsx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/xlsx.png\';
-                    getElementById(\'type_pptx\').src = \'protected/modules/onlinedrives/assets/images/type/gray/pptx.png\';
-                    getElementById(\'type_odt\').src = \'protected/modules/onlinedrives/assets/images/type/gray/odt.png\';
+                    getElementById(\'type_txt\').src = \'' . $bundle->baseUrl . '/images/type/gray/txt.png\';
+                    getElementById(\'type_docx\').src = \'' . $bundle->baseUrl . '/images/type/gray/docx.png\';
+                    getElementById(\'type_xlsx\').src = \'' . $bundle->baseUrl . '/images/type/gray/xlsx.png\';
+                    getElementById(\'type_pptx\').src = \'' . $bundle->baseUrl . '/images/type/gray/pptx.png\';
+                    getElementById(\'type_odt\').src = \'' . $bundle->baseUrl . '/images/type/gray/odt.png\';
 
                     getElementById(\'create_btn\').className = \'form-group shownone\';
             ">
@@ -2584,14 +2509,14 @@ else {
                     // Output service icon (folders)
                     '<td>
                         <a href="'.$web_view_link.'" target="_blank">
-                            <img src="protected/modules/onlinedrives/assets/images/'.$cloud.'20.png" title="'.$cloud_name.'" />
+                            <img src="' . $bundle->baseUrl . '/images/'.$cloud.'20.png" title="'.$cloud_name.'" />
                         </a>
                     </td>'.
 
                     // Output info (folders), only for development
                     /*
                     '<td>
-                        <img src="protected/modules/onlinedrives/assets/images/info.png" title="'.$info.'" />
+                        <img src="' . $bundle->baseUrl . '/images/info.png" title="'.$info.'" />
                     </td>'.
                     */
 
@@ -2648,7 +2573,7 @@ else {
                                 // Cross icon (more options menu)
                                 $class = 'abs pointer';
                                 $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
-                                $src = 'protected/modules/onlinedrives/assets/images/cross.png';
+                                $src = $bundle->baseUrl . '/images/cross.png';
                                 $title = Yii::t('OnlinedrivesModule.new', 'Close');
                                 $onclick = 'getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';';
                                 echo '<img class="'.$class.'" style="'.$style.'" src="'.$src.'" alt="X" title="'.$title.'" onclick="'.$onclick.'" />';
@@ -2688,7 +2613,7 @@ else {
                                                 <a href="'.$url_share_to_space.'">
                                                     <div class="media">
                                                         <div class="pull-left space-profile-acronym-1 space-acronym" style=" background-color: #6fdbe8; width: 24px; height: 24px; font-size: 10.56px; padding: 4.32px 0; border-radius: 2px;">'.strtoupper(substr($share_name,0,1)).'</div>
-                                                            <img class="pull-left space-profile-image-1 img-rounded profile-user-photo hidden" src="protected/modules/onlinedrives/assets/images/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
+                                                            <img class="pull-left space-profile-image-1 img-rounded profile-user-photo hidden" src="' . $bundle->baseUrl . '/images/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
                                                             <div class="media-body">
                                                                 <strong class="space-name">'.$share_name.'</strong>
                                                                 <i class="fa fa-share badge-space pull-right type tt" title="" aria-hidden="true" data-original-title="Share to this space"></i>                
@@ -2803,7 +2728,7 @@ else {
                                 // Cross icon (more options menu)
                                 $class = 'abs pointer';
                                 $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
-                                $src = 'protected/modules/onlinedrives/assets/images/cross.png';
+                                $src = $bundle->baseUrl . '/images/cross.png';
                                 $title = Yii::t('OnlinedrivesModule.new', 'Close');
                                 $onclick = 'getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
                                         getElementById(\'tr'.$no.'\').className = \'\';
@@ -3071,7 +2996,7 @@ else {
                         $icon = ''; break;
                 }
                 // echo $mime_type_icon;
-                $img = '<img src="protected/modules/onlinedrives/assets/images/type/'.$icon.'.png" alt="'.'" title="'.'" />';
+                $img = '<img src="' . $bundle->baseUrl . '/images/type/'.$icon.'.png" alt="'.'" title="'.'" />';
 
 
                 // Output all files
@@ -3103,14 +3028,14 @@ else {
                     // Output service icon (files)
                     '<td>
                         <a href="'.$web_view_link.'" target="_blank">
-                            <img src="protected/modules/onlinedrives/assets/images/'.$cloud.'20.png" title="'.$cloud_name.'" />
+                            <img src="' . $bundle->baseUrl . '/images/'.$cloud.'20.png" title="'.$cloud_name.'" />
                         </a>
                     </td>'.
 
                     // Output info (files), only for development
                     /*
                     '<td>
-                        <img src="protected/modules/onlinedrives/assets/images/info.png" alt="" title="'.$info.'" />
+                        <img src="' . $bundle->baseUrl . '/images/info.png" alt="" title="'.$info.'" />
                     </td>'.
                     */
 
@@ -3170,7 +3095,7 @@ else {
                             // Cross icon (more options menu)
                             $class = 'abs pointer';
                             $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
-                            $src = 'protected/modules/onlinedrives/assets/images/cross.png';
+                            $src = $bundle->baseUrl . '/images/cross.png';
                             $title = Yii::t('OnlinedrivesModule.new', 'Close');
                             $onclick = 'getElementById(\'space_sharing'.$no.'\').className = \'shownone space_sharing_menu\';';
                             echo '<img class="'.$class.'" style="'.$style.'" src="'.$src.'" alt="X" title="'.$title.'" onclick="'.$onclick.'" />';
@@ -3210,7 +3135,7 @@ else {
                                                     <a href="'.$url_share_to_space.'">
                                                         <div class="media">
                                                             <div class="pull-left space-profile-acronym-3 space-acronym" style=" background-color: #560a93; width: 24px; height: 24px; font-size: 10.56px; padding: 4.32px 0; border-radius: 2px;">'.strtoupper(substr($share_name,0,1)).'</div>
-                                                                <img class="pull-left space-profile-image-3 img-rounded profile-user-photo hidden" src="protected/modules/onlinedrives/assets/images/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
+                                                                <img class="pull-left space-profile-image-3 img-rounded profile-user-photo hidden" src="' . $bundle->baseUrl . '/images/default_space.jpg" alt="'.$share_name.'" style=" width: 24px; height: 24px">            
                                                                 <div class="media-body">
                                                                     <strong class="space-name">'.$share_name.'</strong>
                                                                     <i class="fa fa-share badge-space pull-right type tt" title="" aria-hidden="true" data-original-title="Share to this space"></i>                
@@ -3311,7 +3236,7 @@ else {
                                 // Cross icon (more options menu)
                                 $class = 'abs pointer';
                                 $style = 'top: 5px; right: 5px; width: 10px; height: 10px;';
-                                $src = 'protected/modules/onlinedrives/assets/images/cross.png';
+                                $src = $bundle->baseUrl . '/images/cross.png';
                                 $title = Yii::t('OnlinedrivesModule.new', 'Close');
                                 $onclick = 'getElementById(\'more'.$no.'\').className = \'shownone more_menu\';
                                     getElementById(\'tr'.$no.'\').className = \'\';
@@ -3486,7 +3411,7 @@ $lang = Yii::t('OnlinedrivesModule.new', 'lang');
 echo
 '<p>'.$sciebo_guide_h.'</p><br />';
 for ($i = 1; $i <= $count_guide_sciebo; $i++) {
-    $pic = '<img src="protected/modules/onlinedrives/assets/images/guide/sciebo/'.$i.$lang.'.png" />';
+    $pic = '<img src="'. $bundle->baseUrl .'/images/guide/sciebo/'.$i.$lang.'.png" />';
     echo '<p>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
@@ -3500,7 +3425,7 @@ $gd_guide_a.
 '<p>'.$gd_guide_h.'</p><br />';
 
 for ($i = 1; $i <= $count_guide_gd; $i++) {
-    $pic = '<img src="protected/modules/onlinedrives/assets/images/guide/gd/'.$i.'.png" />';
+    $pic = '<img src="'. $bundle->baseUrl .'/images/guide/gd/'.$i.$lang.'.png" />';
     echo '<p><b>' . Yii::t('OnlinedrivesModule.new', 'step') . ' '.$i.':</b> ' . Yii::t('OnlinedrivesModule.new', 'gd_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
