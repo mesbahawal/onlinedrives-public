@@ -3353,7 +3353,7 @@ $sciebo_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_h')
 $gd_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</b></h1>';
 
 $count_guide_sciebo = 7;
-$count_guide_gd = 5;
+$count_guide_gd = 17;
 
 // Output box opening
 echo '<div class="box gray">';
@@ -3426,7 +3426,7 @@ $gd_guide_a.
 
 for ($i = 1; $i <= $count_guide_gd; $i++) {
     $pic = '<img src="'. $bundle->baseUrl .'/images/guide/gd/'.$i.$lang.'.png" />';
-    echo '<p><b>' . Yii::t('OnlinedrivesModule.new', 'step') . ' '.$i.':</b> ' . Yii::t('OnlinedrivesModule.new', 'gd_guide_txt'.$i) . '<p>'.
+    echo '<p>' . Yii::t('OnlinedrivesModule.new', 'gd_guide_txt'.$i) . '<p>'.
     '<p>'.$pic.'<p><br />';
 }
 
