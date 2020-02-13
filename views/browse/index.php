@@ -3353,7 +3353,7 @@ $sciebo_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_h')
 $gd_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</b></h1>';
 
 $count_guide_sciebo = 7;
-$count_guide_gd = 29;
+$count_guide_gd = 27;
 
 // Output box opening
 echo '<div class="box gray">';
