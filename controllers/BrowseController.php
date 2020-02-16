@@ -136,7 +136,6 @@ class BrowseController extends BaseController
             $db->open();
 
             // Check path is already exist in share
-
             $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE app_user_id = :app_user_id AND if_shared <> \'D\'', [
                 ':app_user_id' => $app_user_id,
             ])->queryAll();

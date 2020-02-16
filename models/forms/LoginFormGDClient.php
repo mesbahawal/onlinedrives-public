@@ -20,7 +20,8 @@ class LoginFormGDClient extends \yii\base\Model
     public function rules()
     {
         return [
-            [['gd_app_id'], 'string'],
+            ['gd_app_id', 'required'],
+            ['gd_app_id', 'string'],
             [['upload_gd_client_secret_file'], 'file', 'extensions' => 'json'],
             [['image_src_filename', 'image_web_filename'], 'string', 'max' => 255],
         ];

@@ -186,8 +186,18 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
 
                 $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
                 if (file_exists($tokenPath)) {
-                    $accessToken = json_decode(file_get_contents($tokenPath), true);
-                    $client->setAccessToken($accessToken);
+                    //$accessToken = json_decode(file_get_contents($tokenPath), true);
+                    //$client->setAccessToken($accessToken);
+
+                                // This token is decoded from the json file which is uploaded in the token path
+                                try {
+                                    // Extracts access tooken from code param
+                                    $accessToken = json_decode(file_get_contents($tokenPath), true);
+                                    $client->setAccessToken($accessToken);
+                                } catch (Exception $e) {
+                                    //echo 'Caught exception: ',  $e->getMessage(), "\n";
+                                    return false;
+                                }
                 }
 
                 // If there is no previous token or it's expired
@@ -197,9 +207,10 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                         $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
                     }
                     else {
-                        // Request authorization from the user
-                        if (!isset($_GET['code'])) {
+                        // Request authorization from the user => First step for forwarding and should happen everytime
+                        if (empty($_GET['code'])) {
                             // Disable tupels which has the if_shared value 'T'
+/*
                             $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
                                         WHERE space_id = :space_id
                                         AND user_id = :user_id
@@ -211,24 +222,61 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                                 ':drive_name' => 'gd',
                                 ':now_minus_some_seconds' => $now - 3,
                             ])->execute();
+*/
 
                             if (file_exists($path_to_json)) {
                                 $content = file_get_contents($path_to_json);
+
+                                
+
                                 if (strpos($content, 'research-hub.social') !== false) {
                                     $authUrl = $client->createAuthUrl();
+
+
+                                    // Forwarding to Google for autorization
                                     header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
+                                }
+                                else {
+                                    //die("else redirection");
+
+                                        $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                                WHERE space_id = :space_id
+                                                AND user_id = :user_id
+                                                AND drive_name = :drive_name
+                                                AND create_date < :now_minus_some_seconds
+                                                AND if_shared IN (\'T\')', [
+                                                    ':space_id' => $space_id,
+                                                    ':user_id' => $logged_username,
+                                                    ':drive_name' => 'gd',
+                                                    ':now_minus_some_seconds' => $now - 3,
+                                                ])->execute();
+
+                                    $error_msg = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed.');
+                                    return false;
                                 }
                             }
                         }
-                        // Hier Code übergeben
-                        if (isset($_GET['code'])) {
+                        // If code param from Google exists
+                        elseif (isset($_GET['code'])) {
+                        	// Get code param from Google after successful autorization
                             $code = $_GET['code'];
 
-                            $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-                            $client->setAccessToken($accessToken);
+                            // Extracts access tooken from code param
+                            //$accessToken = $client->fetchAccessTokenWithAuthCode($code);
+
+                            try {
+                                    // Extracts access tooken from code param
+                                    $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+                                    $client->setAccessToken($accessToken);
+                                } catch (Exception $e) {
+                                    //echo 'Caught exception: ',  $e->getMessage(), "\n";
+                                    return false;
+                                }
+                            // Sets access token to client object
+                            //$client->setAccessToken($accessToken);
 
                             // Check to see if there was an error
-                            if (array_key_exists('error', $accessToken)) {
+                            if (array_key_exists('Invalid token format', $accessToken)) {
                                 //throw new Exception(join(', ', $accessToken));
                                 return false;
                             }
