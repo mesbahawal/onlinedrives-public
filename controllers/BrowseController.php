@@ -89,6 +89,7 @@ class BrowseController extends BaseController
                     $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Already app user exit.');
                 }
                 else {
+echo"sciebo";
                     $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
                         VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
                         ':space_id' => $space_id,
@@ -99,6 +100,7 @@ class BrowseController extends BaseController
                         ':app_password' => $app_password,
                         ':create_date' => time(),
                     ])->execute();
+
                     // Success message
                     $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
                 }
@@ -161,25 +163,39 @@ class BrowseController extends BaseController
                     $path = Yii::$app->params['uploadPath'] . $model_login_gd_client->image_web_filename;
 
                     if ($image->saveAs($path) && !empty($app_user_id) && !empty($random_string)) {
-                        $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
-                            VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date, :if_shared)', [
-                            ':space_id' => $space_id,
-                            ':user_id' => $username,
-                            ':email' => $email,
-                            ':drive_name' => 'gd',
-                            ':app_user_id' => $app_user_id,
-                            ':app_password' => $random_string,
-                            ':create_date' => time(),
-                            ':if_shared' => 'T',
-                        ])->execute();
+                        $content = file_get_contents($path);
+echo"gdrive";
+                        // If uploaded JSON file is valid
+                        if (strpos($content, 'research-hub.social') !== false) {
+                            $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
+                                VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date, :if_shared)', [
+                                ':space_id' => $space_id,
+                                ':user_id' => $username,
+                                ':email' => $email,
+                                ':drive_name' => 'gd',
+                                ':app_user_id' => $app_user_id,
+                                ':app_password' => $random_string,
+                                ':create_date' => time(),
+                                ':if_shared' => 'T',
+                            ])->execute();
 
-                        if (isset($_GET['code'])) {
-                           unset($_GET['code']);
+                            if (isset($_GET['code'])) {
+                                unset($_GET['code']);
+                            }
+
+                            // Success message
+                            $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
                         }
+                        // If uploaded JSON file is NOT valid
+                        else {
+                            // Unlink uploaded JSON file again
+                            unlink($path);
 
-                        // Success message
-                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
+                            // Error message
+                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed, because your JSON file is invalid.');
+                        }
                     }
+                    // Error message
                     else {
                         $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed.');
                     }

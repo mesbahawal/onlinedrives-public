@@ -23,14 +23,9 @@ $db = dbconnect();
 try {
     $DB_open = $db->open();
 }
-catch (Exception $exception)
-{
+catch (Exception $exception) {
     die("Database Connection Error.");
 }
-
-/*if($DB_open == 'NULL'){
-    die("Database connection error.");
-}*/
 
 // General vars
 $now = time();
@@ -157,8 +152,13 @@ if (!file_exists($path_tokens)) {
     mkdir($path_tokens, 0700);
 }
 
+global $success_msg;
+global $error_msg;
+
 function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
     $now = time();
+    global $success_msg;
+    global $error_msg;
 
     $logged_username =  $loginuser;
     $client = false ;
@@ -172,7 +172,10 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
 
     if (count($sql) > 0) {
         foreach ($sql as $value) {
+        	// Read data from DB
             $app_password = $value['app_password'];
+
+            // Rework data from DB
             $path_to_json = 'protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json';
 
             if (file_exists($path_to_json)) {
@@ -189,15 +192,15 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                     //$accessToken = json_decode(file_get_contents($tokenPath), true);
                     //$client->setAccessToken($accessToken);
 
-                                // This token is decoded from the json file which is uploaded in the token path
-                                try {
-                                    // Extracts access tooken from code param
-                                    $accessToken = json_decode(file_get_contents($tokenPath), true);
-                                    $client->setAccessToken($accessToken);
-                                } catch (Exception $e) {
-                                    //echo 'Caught exception: ',  $e->getMessage(), "\n";
-                                    return false;
-                                }
+                    // This token is decoded from the json file which is uploaded in the token path
+                    try {
+	                    // Extracts access tooken from code param
+    	                $accessToken = json_decode(file_get_contents($tokenPath), true);
+        	            $client->setAccessToken($accessToken);
+                    } catch (Exception $e) {
+                        //echo 'Caught exception: ',  $e->getMessage(), "\n";
+                        return false;
+                    }
                 }
 
                 // If there is no previous token or it's expired
@@ -227,11 +230,8 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                             if (file_exists($path_to_json)) {
                                 $content = file_get_contents($path_to_json);
 
-                                
-
                                 if (strpos($content, 'research-hub.social') !== false) {
                                     $authUrl = $client->createAuthUrl();
-
 
                                     // Forwarding to Google for autorization
                                     header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
@@ -569,7 +569,7 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'disable' && iss
             if (!$sql || !$sql1) {
                 $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
             }
-            else{
+            else {
                 (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
             }
         }
@@ -2315,6 +2315,11 @@ if ($count_gd_files > 0) {
  */
 }
 
+
+// Get code param after successful GD connection
+if (!empty($_GET['code'])) {
+    $success_msg = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
+}
 
 // Output success/error message
 if ($success_msg != '') {

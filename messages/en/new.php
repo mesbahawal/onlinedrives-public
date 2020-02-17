@@ -38,6 +38,7 @@ return array (
     'Cloud storage is added successfully.' => 'Cloud storage is added successfully.',
     'JSON file' => 'JSON file',
     'Google Drive client add failed.' => 'Google Drive client add failed.',
+    'Google Drive client add failed, because your JSON file is invalid.' => 'Google Drive client add failed, because your JSON file is invalid.',
     'Change permissions' => 'Change permissions',
     'Unshare' => 'Unshare',
     '<b>No data</b> shared.' => '<b>No files</b> shared.',
