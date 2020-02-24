@@ -50,6 +50,8 @@ if (!empty($_GET['cguid'])) {
 }
 
 // Read success/error message
+global $success_msg;
+global $error_msg;
 $success_msg = '';
 $error_msg = '';
 if (isset($_REQUEST['success_msg'])) {
@@ -151,9 +153,6 @@ if (!file_exists($path_client)) {
 if (!file_exists($path_tokens)) {
     mkdir($path_tokens, 0700);
 }
-
-global $success_msg;
-global $error_msg;
 
 function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
     $now = time();

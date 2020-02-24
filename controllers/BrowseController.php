@@ -89,20 +89,26 @@ class BrowseController extends BaseController
                     $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Already app user exit.');
                 }
                 else {
-echo"sciebo";
-                    $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
-                        VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
-                        ':space_id' => $space_id,
-                        ':user_id' => $username,
-                        ':email' => $email,
-                        ':drive_name' => $drive_name,
-                        ':app_user_id' => $app_user_id,
-                        ':app_password' => $app_password,
-                        ':create_date' => time(),
-                    ])->execute();
+                    if (!empty($app_user_id) && !empty($app_password)) {
+//echo"sciebo";
+                        $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
+                            VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
+                            ':space_id' => $space_id,
+                            ':user_id' => $username,
+                            ':email' => $email,
+                            ':drive_name' => $drive_name,
+                            ':app_user_id' => $app_user_id,
+                            ':app_password' => $app_password,
+                            ':create_date' => time(),
+                        ])->execute();
 
-                    // Success message
-                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
+                        // Success message
+                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
+                    }
+                    else {
+                        // Error message
+                        $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'An error has occurred during registration. Please try it again.');
+                    }
                 }
             }
             else {
@@ -164,7 +170,7 @@ echo"sciebo";
 
                     if ($image->saveAs($path) && !empty($app_user_id) && !empty($random_string)) {
                         $content = file_get_contents($path);
-echo"gdrive";
+//echo"gdrive";
                         // If uploaded JSON file is valid
                         if (strpos($content, 'research-hub.social') !== false) {
                             $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)
@@ -184,7 +190,7 @@ echo"gdrive";
                             }
 
                             // Success message
-                            $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
+                            //$_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
                         }
                         // If uploaded JSON file is NOT valid
                         else {
