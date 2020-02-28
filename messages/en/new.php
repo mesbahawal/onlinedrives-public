@@ -57,11 +57,10 @@ return array (
     'gd_guide_h' => 'How to connect with your Google Drive account',
 
     // Guide for Sciebo
-    'sciebo_guide_txt1' => 'Step1: Open <a class="u" href="https://sciebo.de/de/login/index.html" target="_blank">https://sciebo.de/de/login/index.html</a> and click on the link of your university/college.<br />Log in. Click on your name and on “Settings” in the menu that opens (see orange circle in the screenshot).',
+    'sciebo_guide_txt1' => 'Step1: Open <a class="u" href="https://sciebo.de/de/login/index.html" target="_blank">https://sciebo.de/de/login/index.html</a> and click on the link of your university.<br />Log in. Click on your name and on “Settings” in the menu that opens (see orange circle in the screenshot).',
     'sciebo_guide_txt2' => 'Step 2: The overview of your settings will open. Click on “Security” (see orange box in the screenshot).',
-    'sciebo_guide_txt3' => 'Step 3: At the bottom of your security settings is the item “App passwords / tokens” (see orange circle in the screenshot).<br />
-        At this point, it should be emphasized that the app passcode assigned here does not allow full access to your account, but only specific rights can be assigned. These rights can be adjusted in the further course of the setup.<br />
-        To create a passcode for HumHub, enter “HumHub” as the name below and click “Create new app passcode”.',
+    'sciebo_guide_txt3' => 'Step 3: At the bottom of your security settings you will see the item “App passwords / tokens” (see orange circle in the screenshot). In the “App name” space, create a passcode for HumHub by entering “HumHub” (as the example below) and then click “Create new app passcode”.<br />
+    Note: The app passcode assigned here isn’t the login credential of your Sciebo account. It is a passcode which allows Research Hub to connect to your Sciebo account. You can set specific rights to which content gets accessable from Research Hub. These rights can be adjusted in the further course of the setup.',
     'sciebo_guide_txt4' => '<p>Step 4: The new app access data created in this way is now displayed and can be used. Copy the values for user name and password/token one after the other into the access data form in OnlineDrives. This is shown in the next screenshot and can be accessed via the small gear wheel in the upper right corner.</p>
         <p>During this step, it is best to leave the page with the app access data open, as the access data is no longer visible after reloading the page. However, you can create new app access data at any time, as well as delete the old ones.</p>
         <p>In the form you can then click on the service (Sciebo or Google Drive) and enter the corresponding access data.</p>',
