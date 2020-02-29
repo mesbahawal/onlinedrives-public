@@ -1799,6 +1799,7 @@ ActiveForm::end();
 /**
  * Check (3) start
  */
+
 if ($check == 1 && (!empty($get_sciebo_path) || !empty($get_gd_folder_id))) {
 ?>
 
@@ -2162,8 +2163,13 @@ $form_u = ActiveForm::begin([
 
 </div>
 
-
 <?php
+/**
+ * Check (3) end
+ */
+}
+
+
 /**
  * Get Google Drive files
  */
@@ -2201,6 +2207,7 @@ if ($count_gd_files > 0) {
     	$gd_file_id = $file->getId();
 
         // Check for database entry for Google Drive and this space
+        // TODO @Mesbah I think if there more than 1 GD entry (e. g. from 2 users) it's by chance/coincidence which tupel the SQL query returns
         $sql = $db->createCommand('SELECT id, app_password FROM onlinedrives_app_detail
             WHERE space_id = :space_id AND drive_name = :drive_name', [
             ':space_id' => $space_id,
@@ -2308,11 +2315,6 @@ if ($count_gd_files > 0) {
 }
 
 } // Only for temporary undisplaying Google Drive folders/files
-
-/**
- * Check (3) end
- */
-}
 
 
 // Get code param after successful GD connection
