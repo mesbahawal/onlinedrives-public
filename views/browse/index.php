@@ -267,10 +267,10 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                                     // Extracts access tooken from code param
                                     $accessToken = $client->fetchAccessTokenWithAuthCode($code);
                                     $client->setAccessToken($accessToken);
-                                } catch (Exception $e) {
+                            } catch (Exception $e) {
                                     //echo 'Caught exception: ',  $e->getMessage(), "\n";
                                     return false;
-                                }
+                            }
                             // Sets access token to client object
                             //$client->setAccessToken($accessToken);
 
@@ -821,29 +821,29 @@ else {
 /**
  * Sciebo client
  */
-if (count($arr_app_user_detail) > 0) { // Start of Sciebo according to the database table rows
+if (count($arr_app_user_detail) > 0) { // Start of Sciebo according to the DB table rows
 
-for ($j = 0; $j < count($arr_app_user_detail); $j++) { // Start of for loop (j)
+for ($j = 0; $j < count($arr_app_user_detail); $j++) { // Start of for loop (j) (1)
+    $drive_path = $arr_app_user_detail[$j]['drive_path'];
+    $app_user_id = $arr_app_user_detail[$j]['app_user_id'];
+    $app_password = $arr_app_user_detail[$j]['app_password'];
+    $drive_key = $arr_app_user_detail[$j]['drive_key'];
 
-$drive_path = $arr_app_user_detail[$j]['drive_path'];
-$app_user_id = $arr_app_user_detail[$j]['app_user_id'];
-$app_password = $arr_app_user_detail[$j]['app_password'];
-$drive_key = $arr_app_user_detail[$j]['drive_key'];
+    // Set Sciebo path to replace with user ID
+    $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
 
-// Set Sciebo path to replace with user ID
-$sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
+    if ($drive_path != '' || $drive_path != '/' || // For Sciebo
+        $gd_service !== false                      // For Google Drive
+    ) {
+        $check = 1;
+        if ($drive_path == '/') {
+            $drive_path = '';
+        }
 
-if ($drive_path != '' || $drive_path != '/' || // For Sciebo
-    $gd_service !== false                      // For Google Drive
-) {
-    $check = 1;
-    if ($drive_path == '/') {
-        $drive_path = '';
+        // Get the API client and construct the service object
+        $sciebo_client = getScieboClient($app_user_id, $app_password);
     }
-
-    // Get the API client and construct the service object
-    $sciebo_client = getScieboClient($app_user_id, $app_password);
-}
+} // End of for loop (j) (1)
 
 
 /**
@@ -1263,14 +1263,8 @@ if ($count_sciebo_files > 0) {
  * Check (1) end
  */
 }
-}// end of for loop (j)
 
-/**
- * end of sciebo according to the DB table rows
- */
-}
-
-
+} // End of sciebo according to the DB table rows
 
 
 /**
@@ -1501,7 +1495,7 @@ if (count($arr_app_user_admin) > 0) {
 
             <div class="container" style="margin-left: 20px;">
                 <?php
-                for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j)
+                for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j) (2)
                     $drive_path = $arr_app_user_admin[$j]['drive_path'];
                     $app_user_id = $arr_app_user_admin[$j]['app_user_id'];
                     $app_password = $arr_app_user_admin[$j]['app_password'];
@@ -1567,7 +1561,7 @@ if (count($arr_app_user_admin) > 0) {
                         </div>
                         <?php
                     }
-                }
+                } // End of for loop (j) (2)
                 ?>
             </div>
 
@@ -2206,8 +2200,12 @@ if ($count_gd_files > 0) {
     	// Read folder/file ID
     	$gd_file_id = $file->getId();
 
+        // In case of being in the overview (all drives)
+        if ($get_gd_folder_id != '') {
+            $gd_file_id = $get_gd_folder_id;
+        }
+
         // Check for database entry for Google Drive and this space
-        // TODO @Mesbah I think if there more than 1 GD entry (e. g. from 2 users) it's by chance/coincidence which tupel the SQL query returns
         $sql = $db->createCommand('SELECT id, app_password FROM onlinedrives_app_detail
             WHERE space_id = :space_id AND drive_name = :drive_name', [
             ':space_id' => $space_id,
@@ -2257,8 +2255,7 @@ if ($count_gd_files > 0) {
                 $temp_min = substr($temp, 14, 2);
                 $temp_s = substr($temp, 17, 2);
                 $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
-                //$modified_time += 7200; // 60m * 60m * 2h, European time zone
-                //$modified_time = $temp;
+                $modified_time += 7200; // 60m * 60m * 2h, European time zone
 
                 // Folder list, file list
                 if ($type == 'folder') {
