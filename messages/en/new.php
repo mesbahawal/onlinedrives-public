@@ -61,15 +61,14 @@ return array (
     'sciebo_guide_txt2' => 'Step 2: The overview of your settings will open. Click on “Security” (see orange box in the screenshot).',
     'sciebo_guide_txt3' => 'Step 3: At the bottom of your security settings you will see the item “App passwords / tokens” (see orange circle in the screenshot). In the “App name” space, create a passcode for HumHub by entering “HumHub” (as the example below) and then click “Create new app passcode”.<br />
     Note: The app passcode assigned here isn’t the login credential of your Sciebo account. It is a passcode which allows Research Hub to connect to your Sciebo account. You can set specific rights to which content gets accessable from Research Hub. These rights can be adjusted in the further course of the setup.',
-    'sciebo_guide_txt4' => '<p>Step 4: The new app access data created in this way is now displayed and can be used. Copy the values for user name and password/token one after the other into the access data form in OnlineDrives. This is shown in the next screenshot and can be accessed via the small gear wheel in the upper right corner.</p>
+    'sciebo_guide_txt4' => 'Step 4: The new app access data created in this way is now displayed and can be used. Copy the values for user name and password/token one after the other.',
+    'sciebo_guide_txt5' => 'Step 5: Paste them into the access data form in OnlineDrives (it can be accessed) via the burger icon ([class=glyphicon glyphicon-menu-hamburger][/class]) in the upper right corner).</p>
         <p>During this step, it is best to leave the page with the app access data open, as the access data is no longer visible after reloading the page. However, you can create new app access data at any time, as well as delete the old ones.</p>
-        <p>In the form you can then click on the service (Sciebo or Google Drive) and enter the corresponding access data.</p>',
-    'sciebo_guide_txt5' => 'Step 5: After a successful connection, a note about the connected services appears in the upper part of the module.<br />
-        With “Select files” you can now select directories and files of your Sciebo account that you want to share with the members of this space. By clicking on “Disable” you can terminate the connection at any time.',
-    'sciebo_guide_txt6' => 'After clicking on “Select files” the overview shown below will appear, where you can select or deselect files and folders and give other users of the Space permission to upload files and folders to the folders you have shared. In doing so, the data is synchronized, not just copied. But the selection can be adjusted at any time.<br />
+        <p>In the form you can then click on the service (Sciebo in this case) and enter the corresponding access data.</p>',
+    'sciebo_guide_txt6' => 'Step 6: After a successful connection, a note about the connected services appears in the upper part of the module. (See green box: “Cloud storage is added sccuessfully”.) With “Select files” (orange box) you can now select directories and files (from your Sciebo account) that you want to share with the members of this space. By clicking on “Disable” you can terminate the connection at any time.',
+    'sciebo_guide_txt7' => 'After clicking on “Select files”, you will have the overview of your complete Sciebo account. You can select or deselect files/folders and give other users of the Space permission to upload files to the directories you have shared. In doing so, the data is synchronized, not just copied. But the selection can be adjusted at any time.<br />
         With a click on “Save” the settings are then applied.',
-    'sciebo_guide_txt7' => 'Step 6: The following screenshot shows an example list of shared files after saving the form from step 5. This list is only visible to the members of this space.',
-    'sciebo_guide_txt8' => '',
+    'sciebo_guide_txt8' => 'Step 7: The following screenshot shows an example list of shared files after saving the form from step 6. This list is only visible to the members of this space.',
 
     // Guide for Google Drive
     'gd_guide_txt1' => 'Step 1: Please go on <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in with your Google account access data.',

@@ -65,6 +65,13 @@ elseif (isset($_REQUEST['error_msg'])) {
 /**
  * Functions
  */
+function bbcode($txt) {
+  //class replacing
+    $txt = preg_replace("#\[class=([a-z -]+)\]\[/class\]#", "<span class=\"\\1\"></span>", $txt);
+  //return    
+    return $txt;
+}
+
 function month_name_to_number($number) {
     switch ($number) {
         case 'Jan': return 1; break;
@@ -3463,7 +3470,12 @@ echo
 '<p>'.$sciebo_guide_h.'</p><br />';
 for ($i = 1; $i <= $count_guide_sciebo; $i++) {
     $pic = '<img src="'. $bundle->baseUrl .'/images/guide/sciebo/'.$i.$lang.'.png" />';
-    echo '<p>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i) . '<p>'.
+  //read text
+    $txt = Yii::t('OnlinedrivesModule.new', 'sciebo_guide_txt'.$i);
+  //bbcode
+    $txt = bbcode($txt);
+  //output
+    echo '<p>'.$txt.'<p>'.
     '<p>'.$pic.'<p><br />';
 }
 

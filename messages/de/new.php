@@ -62,15 +62,15 @@ return array (
     'sciebo_guide_txt3' => 'Schritt 3: Unter Ihren Sicherheits-Einstellungen befindet sich ganz unten der Punkt „App-Passwörter / Token“ (siehe oranger Kreis im Screenshot).<br />
     	An dieser Stelle ist zu betonen, dass der hier vergebene App-Passcode keinen Vollzugriff auf Ihr Konto ermöglicht, sondern nur gezielt Rechte vergeben werden können. Diese Rechte können im weiteren Verlauf der Einrichtung angepasst werden.<br />
     	Um nun für HumHub einen Passcode zu erstellen, geben Sie unten bspw. „HumHub“ als Name ein und klicken dann auf „Neuen App-Passcode erstellen“.',
-    'sciebo_guide_txt4' => '<p>Schritt 4: Die so neu erstellten App-Zugangsdaten werden jetzt angezeigt und können verwendet werden. Kopieren Sie die Werte für Benutzernamen und Passwort/Token nacheinander in das Zugangsdaten-Formular in OnlineDrives. Dieses ist, im nächsten Screenshot zu sehen und lässt sich über das kleine Zahnrad oben rechts aufrufen.</p>
-    	<p>Während dieses Schrittes sollten Sie die Seite mit den App-Zugangsdaten am besten geöffnet lassen, da die Zugangsdaten nach einem Reload der Seite nicht mehr sichtbar sind. Sie können sich aber jederzeit neue App-Zugangsdaten erstellen, sowie die alten löschen.</p>
-    	<p>Im Formular kann man dann den Dienst (Sciebo oder Google Drive) anklicken und die entsprechenden Zugangsdaten eintragen.</p>',
-    'sciebo_guide_txt5' => 'Schritt 5: Nach erfolgter Verbindung erscheint im obigen Bereich des Moduls ein Hinweis über die verbundenen Dienste.<br />
+    'sciebo_guide_txt4' => 'Schritt 4: Die so neu erstellten App-Zugangsdaten werden jetzt angezeigt und können verwendet werden. Kopieren Sie die Werte für Benutzernamen und Passwort/Token nacheinander in das Zugangsdaten-Formular in OnlineDrives.',
+    'sciebo_guide_txt5' => '<p>Schritt 5: Das Zugangsdaten-Formular ist im nächsten Screenshot zu sehen und lässt sich über das Burger-Icon ([class=glyphicon glyphicon-menu-hamburger][/class]) oben rechts aufrufen.</p>
+        <p>Während dieses Schrittes sollten Sie die Seite mit den App-Zugangsdaten am besten geöffnet lassen, da die Zugangsdaten nach einem Reload der Seite nicht mehr sichtbar sind. Sie können sich aber jederzeit neue App-Zugangsdaten erstellen, sowie die alten löschen.</p>
+        <p>Im Formular kann man dann den Dienst (in diesem Fall Sciebo) anklicken und die entsprechenden Zugangsdaten eintragen.</p>',
+    'sciebo_guide_txt6' => 'Schritt 6: Nach erfolgter Verbindung erscheint im obigen Bereich des Moduls ein Hinweis über die verbundenen Dienste.<br />
     	Über „Dateien auswählen“ können Sie nun Verzeichnisse und Dateien Ihres Sciebo-Kontos auswählen, die Sie mit den Mitgliedern dieses Spaces teilen möchten. Mit einem Klick auf „Deaktivieren“ können Sie die Verbindung zu jeder Zeit wieder beenden.',
-    'sciebo_guide_txt6' => 'Nach einem Klick auf „Select files“ erscheint die unten dargestellte Übersicht, in der Sie Dateien und Ordner an- oder abwählen können, sowie anderen Nutzern des Spaces die Berechtigung erteilen können auch selbst Dateien und Ordner in die von Ihnen freigegebenen Ordner hochzuladen. Dabei werden die Daten synchronisiert, nicht nur kopiert. Die Auswahl kann aber jederzeit angepasst werden.<br />
+    'sciebo_guide_txt7' => 'Nach einem Klick auf „Select files“ erscheint die unten dargestellte Übersicht, in der Sie Dateien und Ordner an- oder abwählen können, sowie anderen Nutzern des Spaces die Berechtigung erteilen können auch selbst Dateien und Ordner in die von Ihnen freigegebenen Ordner hochzuladen. Dabei werden die Daten synchronisiert, nicht nur kopiert. Die Auswahl kann aber jederzeit angepasst werden.<br />
     	Mit einem Klick auf „Speichern“ werden dann die Einstellungen übernommen.',
-    'sciebo_guide_txt7' => 'Schritt 6: Im folgenden Screenshot sehen Sie eine beispielhafte Liste geteilter Dateien nach dem Speichern des Formulars aus Schritt 5. Diese Liste ist ausschließlich für die Mitglieder dieses Spaces einsehbar.',
-    'sciebo_guide_txt8' => '',
+    'sciebo_guide_txt8' => 'Schritt 7: Im folgenden Screenshot sehen Sie eine beispielhafte Liste geteilter Dateien nach dem Speichern des Formulars aus Schritt 6. Diese Liste ist ausschließlich für die Mitglieder dieses Spaces einsehbar.',
 
     // Guide for Google Drive
     'gd_guide_txt1' => 'Schritt 1: Bitte gehen Sie auf <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> und loggen Sie sich dort mit den Zugangsdaten Ihres Google-Kontos ein.',
