@@ -275,8 +275,15 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                                     $accessToken = $client->fetchAccessTokenWithAuthCode($code);
                                     $client->setAccessToken($accessToken);
                             } catch (Exception $e) {
-                                    //echo 'Caught exception: ',  $e->getMessage(), "\n";
-                                    return false;
+                                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                            WHERE app_password = :app_password', [
+                                    ':app_password' => $app_password,
+                                ])->execute();
+
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed. Please try again.');
+
+                                //echo 'Caught exception: ',  $e->getMessage(), "\n";
+                                return false;
                             }
                             // Sets access token to client object
                             //$client->setAccessToken($accessToken);
@@ -297,8 +304,16 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                                             WHERE app_password = :app_password', [
                                     ':app_password' => $app_password,
                                 ])->execute();
+
+                                $success_msg = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
                             }
                             else {
+                                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                            WHERE app_password = :app_password', [
+                                    ':app_password' => $app_password,
+                                ])->execute();
+
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed. Please try again.');
                                 return false;
                             }
                         }
@@ -787,8 +802,8 @@ elseif ($username <> '' && isset($_GET['op']) && $_GET['op'] == 'share_to' && is
                         (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
                     }
                     else {
-                        $sql_add_drive_path = $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
-                            (`drive_path`, `fileid`, `permission`, `onlinedrives_app_detail_id`, `drive_key`)
+                        $sql_add_drive_path = $db->createCommand('INSERT INTO onlinedrives_app_drive_path_detail
+                            (drive_path, fileid, permission, onlinedrives_app_detail_id, drive_key)
                             VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key)', [
                             ':drive_path' => $drive_path,
                             ':fileid' => $fileid,
@@ -2323,7 +2338,9 @@ if ($count_gd_files > 0) {
 
 // Get code param after successful GD connection
 if (!empty($_GET['code'])) {
-    $success_msg = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
+    if ($error_msg == '') {
+//        $success_msg = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
+    }
 }
 
 // Output success/error message
