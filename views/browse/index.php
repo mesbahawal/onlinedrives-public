@@ -972,7 +972,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                                 $response = $sciebo_client->request('MKCOL', $path_to_dir); // For creating folder only
 
                                 $check_same_folder = '';
-                               // Success msg
+                               // Success message
                                 $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Sciebo.');
                             }
                             else {
@@ -997,7 +997,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                         $content = '';
                         $response = $sciebo_client->request('PUT', $path_to_dir, $content);
 
-                        // Success msg
+                        // Success message
                         $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Sciebo.');
                     }
                 }
@@ -1046,6 +1046,8 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
 
                     // Success message
                     $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Google Drive.');
+
+                    break;
                 }
                 elseif ($do == 'create_file') {
                     // https://stackoverflow.com/questions/26919709/google-drive-php-api-insert-file-to-drive
