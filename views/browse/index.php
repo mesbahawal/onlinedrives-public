@@ -3028,6 +3028,8 @@ else {
 	                $pos = strrpos($name, '.');
     	            $mime_type_icon = substr($name, $pos + 1);
     	        }
+
+                //echo '-'.$mime_type_icon.'-<br />';
                 switch ($mime_type_icon) {
                     case 'txt':
                         $icon = 'txt'; break;
@@ -3036,6 +3038,7 @@ else {
                     case 'docx':
                     case 'doc':
                     case 'rtf':
+                    case 'msword':
                         $icon = 'docx'; break;
                     case 'spreadsheet':
                     case 'xlsx':
