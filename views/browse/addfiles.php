@@ -13,11 +13,10 @@ include __DIR__ . '/../../vendor/autoload.php';
 
 $db = dbconnect();
 
-try{
+try {
     $DB_open = $db->open();
 }
-catch (Exception $exception)
-{
+catch (Exception $exception) {
     die("Database Connection Error.");
 }
 
@@ -448,7 +447,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             if ($get_sciebo_path != '') {
                 // Output Sciebo icon in navigation
                 $ref = 'https://uni-siegen.sciebo.de/login';
-                $src = 'protected/modules/onlinedrives/assets/images/sciebo20.png';
+                $src = 'protected/modules/onlinedrives/resources/images/sciebo20.png';
                 echo ' /
                 <a href="'.$ref.'" target="_blank">
                     <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
@@ -499,7 +498,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             elseif ($get_gd_folder_id != '') {
                 // Build Google Drive icon for navigation
                 $ref = 'https://accounts.google.com/ServiceLogin';
-                $src = 'protected/modules/onlinedrives/assets/images/gd20.png';
+                $src = 'protected/modules/onlinedrives/resources/images/gd20.png';
 
                 // Output Google Drive icon in navigation
                 echo ' /
@@ -1357,7 +1356,7 @@ if ($app_user_id <> '') {
                 }
                 // echo $mime_type_icon;
 
-                $img = '<img src="protected/modules/onlinedrives/assets/images/type/'.$icon.'.png" alt="'.'" title="'.'" style="margin-right: 10px;" />';
+                $img = '<img src="protected/modules/onlinedrives/resources/images/type/'.$icon.'.png" alt="'.'" title="'.'" style="margin-right: 10px;" />';
 
                 // In case of Google Drive we use 'ID' instead of 'path'
                 if ($cloud == 'gd') {

@@ -60,7 +60,7 @@ return array (
     'sciebo_guide_txt1' => 'Step1: Open <a class="u" href="https://sciebo.de/de/login/index.html" target="_blank">https://sciebo.de/de/login/index.html</a> and click on the link of your university.<br />Log in. Click on your name and on “Settings” in the menu that opens (see orange circle in the screenshot).',
     'sciebo_guide_txt2' => 'Step 2: The overview of your settings will open. Click on “Security” (see orange box in the screenshot).',
     'sciebo_guide_txt3' => 'Step 3: At the bottom of your security settings you will see the item “App passwords / tokens” (see orange circle in the screenshot). In the “App name” space, create a passcode for HumHub by entering “HumHub” (as the example below) and then click “Create new app passcode”.<br />
-    Note: The app passcode assigned here isn’t the login credential of your Sciebo account. It is a passcode which allows Research Hub to connect to your Sciebo account. You can set specific rights to which content gets accessable from Research Hub. These rights can be adjusted in the further course of the setup.',
+    Note: The app passcode assigned here isn’t the login credential of your Sciebo account. It is a passcode which allows Research-Hub to connect to your Sciebo account. You can set specific rights to which content gets accessable from Research-Hub. These rights can be adjusted in the further course of the setup.',
     'sciebo_guide_txt4' => 'Step 4: The new app access data created in this way is now displayed and can be used. Copy the values for user name and password/token one after the other.',
     'sciebo_guide_txt5' => 'Step 5: Paste them into the access data form in OnlineDrives (it can be accessed) via the burger icon ([class=glyphicon glyphicon-menu-hamburger][/class]) in the upper right corner).</p>
         <p>During this step, it is best to leave the page with the app access data open, as the access data is no longer visible after reloading the page. However, you can create new app access data at any time, as well as delete the old ones.</p>
@@ -72,7 +72,7 @@ return array (
 
     // Guide for Google Drive
     'gd_guide_txt1' => 'Step 1: Please go to <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> and log in there with the access data of your Google account.',
-    'gd_guide_txt2' => 'Step 2: Now you have to select a project in which you want to use the access to Research Hub or create a new one. To do so, click on “Select a project” or the name of the current project in the upper left corner.',
+    'gd_guide_txt2' => 'Step 2: Now you have to select a project in which you want to use the access to Research-Hub or create a new one. To do so, click on “Select a project” or the name of the current project in the upper left corner.',
     'gd_guide_txt3' => 'Step 3: In the next window, select one of the existing projects and continue with step 5.',
     'gd_guide_txt4' => 'To create a new project, click on “New Project”.',
     'gd_guide_txt5' => 'Step 4: Enter a project name (e.g. OnlineDrives) and click on “Create”. Your project will now be created.',
@@ -92,13 +92,13 @@ return array (
     'gd_guide_txt17' => 'Step 15: Now select “Web application” as the application type. Enter a name below (e.g. OnlineDrives). Under “Authorized redirect URIs” enter “https://research-hub.social” and confirm with the enter key. Finally, click “Create” at the bottom of the page.',
     'gd_guide_txt18' => 'Step 16: Your access data will now be displayed. Confirm these with OK.',
     'gd_guide_txt19' => 'Step 17: Now click on the download icon to the far right of the client you just created. This will download the information as a .json file, which you can save on your PC.',
-    'gd_guide_txt20' => 'Step 18: Uploading the .json file to Research Hub will establish a connection to your Google Drive files. Click on the Burger menu in the upper left corner.',
+    'gd_guide_txt20' => 'Step 18: Uploading the .json file to Research-Hub will establish a connection to your Google Drive files. Click on the Burger menu in the upper left corner.',
     'gd_guide_txt21' => 'Step 19: Click on the Google Drive symbol in the dialag window that opens. Then enter an app ID, which you can choose freely. Then select your .json file and click on “Send”.',
     'gd_guide_txt22' => 'Step 20: You will be redirected to the login screen for Google. Please log in. If you are already logged in, you can click on your desired account here.',
     'gd_guide_txt23' => 'Step 21: Click on “Advanced” at the bottom left.',
     'gd_guide_txt24' => 'Step 22: Click on “Go to research-hub.social (unsafe)” at the bottom left.',
     'gd_guide_txt25' => 'Step 23: Click on “Allow” at the bottom left.',
-    'gd_guide_txt26' => 'Step 24: Your Google Drive account is now connected to Research Hub.',
+    'gd_guide_txt26' => 'Step 24: Your Google Drive account is now connected to Research-Hub.',
     'gd_guide_txt27' => 'Step 25: Click “Connected drives” to view your Google Drive account that you just connected.',
 );
 ?>

@@ -74,7 +74,7 @@ return array (
 
     // Guide for Google Drive
     'gd_guide_txt1' => 'Schritt 1: Bitte gehen Sie auf <a class="u" href="https://console.developers.google.com" target="_blank">https://console.developers.google.com</a> und loggen Sie sich dort mit den Zugangsdaten Ihres Google-Kontos ein.',
-    'gd_guide_txt2' => 'Schritt 2: Nun müssen Sie ein Projekt auswählen, in welchem Sie den Zugang zu Research Hub nutzen möchten, oder ein neues erstellen. Dazu klicken sie oben links auf Projekt auswählen bzw. den Namen des aktuellen Projekts.',
+    'gd_guide_txt2' => 'Schritt 2: Nun müssen Sie ein Projekt auswählen, in welchem Sie den Zugang zu Research-Hub nutzen möchten, oder ein neues erstellen. Dazu klicken sie oben links auf Projekt auswählen bzw. den Namen des aktuellen Projekts.',
     'gd_guide_txt3' => 'Schritt 3: Im nächsten Fenster wählen Sie dann eines der bereits vorhandenen Projekte aus und machen dann bei Schritt 5 weiter.',
     'gd_guide_txt4' => 'Um ein neues Projekt zu erstellen, klicken Sie auf „Neues Projekt“.',
     'gd_guide_txt5' => 'Schritt 4: Geben Sie einen Projektnamen (z. B. OnlineDrives) ein und klicken Sie auf „Erstellen“. Ihr Projekt wird nun erstellt.',
@@ -94,13 +94,13 @@ return array (
     'gd_guide_txt17' => 'Schritt 15: Wählen Sie nun als Anwendungstyp „Webanwendung“ aus. Geben Sie weiter unten einen Namen an (z. B. OnlineDrives). Unter „Autorisierte Weiterleitungs-URIs“ geben Sie „https://research-hub.social“ ein und bestätigen die Eingabe mit der Enter-Taste. Zuletzt klicken Sie ganz unten auf „Erstellen“.',
     'gd_guide_txt18' => 'Schritt 16: Ihnen werden nun Ihre Zugangsdaten angezeigt. Diese bestätigen Sie mit OK.',
     'gd_guide_txt19' => 'Schritt 17: Klicken Sie nun auf das Download-Symbol ganz rechts neben dem gerade angelegten Client. Damit laden Sie die Informationen als .json-Datei herunter, die Sie auf Ihrem PC speichern.',
-    'gd_guide_txt20' => 'Schritt 18: Durch den Upload der .json-Datei in Research Hub wird eine Verbindung zu Ihren Google-Drive-Dateien hergestellt. Klicken Sie dazu auf das Burger-Menu oben links.',
+    'gd_guide_txt20' => 'Schritt 18: Durch den Upload der .json-Datei in Research-Hub wird eine Verbindung zu Ihren Google-Drive-Dateien hergestellt. Klicken Sie dazu auf das Burger-Menu oben links.',
     'gd_guide_txt21' => 'Schritt 19: Klicken Sie im sich öffnenden Dialagfenster auf das Google-Drive-Symbol. Geben Sie anschließend eine App-ID ein, diese können Sie frei wählen. Wählen Sie dann Ihre .json-Datei aus und klicken Sie auf „Abesenden“.',
     'gd_guide_txt22' => 'Schritt 20: Sie werden zum Login-Bildschirm für Google weitergeleitet. Bitte loggen Sie sich ein. Falls Sie bereits eingeloggt sind, können Sie an dieser Stelle Ihr gewünschtes Konto anklicken.',
     'gd_guide_txt23' => 'Schritt 21: Klicken Sie unten links auf „Erweitert“.',
     'gd_guide_txt24' => 'Schritt 22: Klicken Sie unten links auf „OnlineDrives öffnen (unsicher)“.',
     'gd_guide_txt25' => 'Schritt 23: Klicken Sie unten links auf „Zulassen“.',
-    'gd_guide_txt26' => 'Schritt 24: Ihr Google-Drive-Konto ist nun mit Research Hub verbunden.',
+    'gd_guide_txt26' => 'Schritt 24: Ihr Google-Drive-Konto ist nun mit Research-Hub verbunden.',
     'gd_guide_txt27' => 'Schritt 25: Klicken Sie auf „Verbundene Drives“, um Ihr soeben verbundenes Google-Drive-Konto anzuzeigen.',
 );
 ?>
