@@ -235,8 +235,11 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
 
                             if (file_exists($path_to_json)) {
                                 $content = file_get_contents($path_to_json);
+                                //https://research-hub.social/index.php?r=onlinedrives/browse&cguid=747a394c-b4e7-486f-8ebf-5320510fe483
+                                //https://dev.research-hub.social/index.php?r=onlinedrives/browse&cguid=747a394c-b4e7-486f-8ebf-5320510fe483
+                                $check_redirection_uri = 'research-hub.social/index.php?r=onlinedrives/browse&cguid='.$space_id;
 
-                                if (strpos($content, 'research-hub.social') !== false) {
+                                if (strpos($content, $check_redirection_uri) !== false) {
                                     $authUrl = $client->createAuthUrl();
 
                                     // Forwarding to Google for autorization
