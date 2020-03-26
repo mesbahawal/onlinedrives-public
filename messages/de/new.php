@@ -1,4 +1,14 @@
 <?php
+
+// default vars
+$guid = '';
+
+// get param: cguid
+// important for paths
+if (!empty($_GET['cguid'])) {
+    $guid = 'cguid=' . $_GET['cguid'];
+}
+
 return array (
     'lang' => 'de',
 
@@ -91,7 +101,7 @@ return array (
     'gd_guide_txt14' => 'Anschließend speichern Sie die Eingaben, indem Sie ganz unten auf „Speichern“ klicken.',
     'gd_guide_txt15' => 'Schritt 13: Klicken Sie erneut auf „Anmeldedaten“.',
     'gd_guide_txt16' => 'Schritt 14: Klicken Sie auf „Anmeldedaten erstellen“ und wählen Sie „OAuth-Client-ID“.',
-    'gd_guide_txt17' => 'Schritt 15: Wählen Sie nun als Anwendungstyp „Webanwendung“ aus. Geben Sie weiter unten einen Namen an (z. B. OnlineDrives). Unter „Autorisierte Weiterleitungs-URIs“ geben Sie „https://research-hub.social“ ein und bestätigen die Eingabe mit der Enter-Taste. Zuletzt klicken Sie ganz unten auf „Erstellen“.',
+    'gd_guide_txt17' => 'Schritt 15: Wählen Sie nun als Anwendungstyp „Webanwendung“ aus. Geben Sie weiter unten einen Namen an (z. B. OnlineDrives). Unter „Autorisierte Weiterleitungs-URIs“ geben Sie „https://research-hub.social/index.php?r=onlinedrives/browse/index&cguid='.$guid.'“ ein und bestätigen die Eingabe mit der Enter-Taste. Zuletzt klicken Sie ganz unten auf „Erstellen“.',
     'gd_guide_txt18' => 'Schritt 16: Ihnen werden nun Ihre Zugangsdaten angezeigt. Diese bestätigen Sie mit OK.',
     'gd_guide_txt19' => 'Schritt 17: Klicken Sie nun auf das Download-Symbol ganz rechts neben dem gerade angelegten Client. Damit laden Sie die Informationen als .json-Datei herunter, die Sie auf Ihrem PC speichern.',
     'gd_guide_txt20' => 'Schritt 18: Durch den Upload der .json-Datei in Research-Hub wird eine Verbindung zu Ihren Google-Drive-Dateien hergestellt. Klicken Sie dazu auf das Burger-Menu oben links.',

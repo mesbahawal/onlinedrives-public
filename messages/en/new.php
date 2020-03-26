@@ -1,4 +1,14 @@
 <?php
+
+// default vars
+$guid = '';
+
+// get param: cguid
+// important for paths
+if (!empty($_GET['cguid'])) {
+    $guid = 'cguid=' . $_GET['cguid'];
+}
+
 return array (
     'lang' => 'en',
 
@@ -89,7 +99,7 @@ return array (
     'gd_guide_txt14' => 'Then save the entries by clicking on “Save” at the very bottom.',
     'gd_guide_txt15' => 'Step 13: Click on “Credentials” again.',
     'gd_guide_txt16' => 'Step 14: Click on “Create Credentials” and select “OAuth client ID”.',
-    'gd_guide_txt17' => 'Step 15: Now select “Web application” as the application type. Enter a name below (e.g. OnlineDrives). Under “Authorized redirect URIs” enter “https://research-hub.social” and confirm with the enter key. Finally, click “Create” at the bottom of the page.',
+    'gd_guide_txt17' => 'Step 15: Now select “Web application” as the application type. Enter a name below (e.g. OnlineDrives). Under “Authorized redirect URIs” enter “https://research-hub.social/index.php?r=onlinedrives/browse/index&cguid='.$guid.'” and confirm with the enter key. Finally, click “Create” at the bottom of the page.',
     'gd_guide_txt18' => 'Step 16: Your access data will now be displayed. Confirm these with OK.',
     'gd_guide_txt19' => 'Step 17: Now click on the download icon to the far right of the client you just created. This will download the information as a .json file, which you can save on your PC.',
     'gd_guide_txt20' => 'Step 18: Uploading the .json file to Research-Hub will establish a connection to your Google Drive files. Click on the Burger menu in the upper left corner.',
