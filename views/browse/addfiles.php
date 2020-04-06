@@ -1317,6 +1317,7 @@ if ($app_user_id <> '') {
                     case 'docx':
                     case 'doc':
                     case 'rtf':
+                    case 'msword':
                         $icon = 'docx'; break;
                     case 'spreadsheet':
                     case 'xlsx':
@@ -1329,6 +1330,7 @@ if ($app_user_id <> '') {
                     case 'pps':
                     case 'odp':
                         $icon = 'pptx'; break;
+                    case 'text':
                     case 'odt':
                         $icon = 'odt'; break;
                     case 'pdf':
@@ -1345,14 +1347,24 @@ if ($app_user_id <> '') {
                     case 'mp3':
                         $icon = 'sound'; break;
                     case 'mp4':
+                    case 'quicktime':
                         $icon = 'vid'; break;
                     case 'zip':
-                        $icon = ''; break;
+                        $icon = 'zip'; break;
+                    case 'x-ms-dos-executable':
+                    case 'exe':
+                        $icon = 'exe'; break;
                     case 'mx12':
                     case 'mx18':
                         $icon = ''; break;
+                    case 'x-msdos-program':
+                    case 'dll':
+                        $icon = 'dll'; break;
+                    case 'octet-stream':
+                    case 'tlb':
+                        $icon = 'tlb'; break;
                     default:
-                        $icon = ''; break;
+                        $icon = 'unknown'; break;
                 }
                 // echo $mime_type_icon;
 
