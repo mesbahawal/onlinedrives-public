@@ -33,7 +33,7 @@ return array (
     'Properties' => 'Properties',
     'Last modified time' => 'Last modified time',
     'just now' => 'just now',
-    '{%diff} seconds ago' => '{%diff} seconds ago',
+    'a few seconds ago' => 'a few seconds ago',
     '{diff,plural,=1{1 }minute other{# minutes}} ago' => '{diff,plural,=1{1 }minute other{# minutes}} ago',
     '{diff,plural,=1{1 hour} other{# hours}} ago' => '{diff,plural,=1{1 hour} other{# hours}} ago',
     '{diff,plural,=1{1 day} other{# days}} ago' => '{diff,plural,=1{1 day} other{# days}} ago',

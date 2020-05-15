@@ -2130,7 +2130,7 @@ $form_u = ActiveForm::begin([
         $form_u->field($model_u, 'upload')->fileInput(['onchange' => 'this.form.submit()']) .
         '<label for="uploadfileform-upload">
             <span id="upload_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg"
-                title="' . Yii::t('OnlinedrivesModule.new', 'Create file') . '"
+                title="' . Yii::t('OnlinedrivesModule.new', 'Upload file') . '"
                 onclick="'.
                     // Outcommented because of double opening of select windows
                     // $(\'#uploadfileform-upload\').trigger(\'click\');
@@ -2515,7 +2515,7 @@ else {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'a few seconds ago');
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);
@@ -2960,7 +2960,7 @@ else {
                     $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'just now');
                 }
                 elseif ($diff < 60) {
-                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', '{%diff} seconds ago', ['diff' => $diff]);
+                    $modified_time_txt = Yii::t('OnlinedrivesModule.new', 'a few seconds ago');
                 }
                 elseif ($diff < 60 * 60) {
                     $diff = floor($diff / 60);

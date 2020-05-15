@@ -33,7 +33,7 @@ return array (
     'Properties' => 'Eigenschaften',
     'Last modified time' => 'Letzte Änderung',
     'just now' => 'gerade eben',
-    '{%diff} seconds ago' => 'vor {%diff} Sekunden',
+    'a few seconds ago' => 'vor einigen Sekunden',
     '{diff,plural,=1{1 }minute other{# minutes}} ago' => 'vor {diff,plural,=1{1 Minute} other{# Minuten}}',
     '{diff,plural,=1{1 hour} other{# hours}} ago' => 'vor {diff,plural,=1{1 Stunde} other{# Stunden}}',
     '{diff,plural,=1{1 day} other{# days}} ago' => 'vor {diff,plural,=1{1 Tag} other{# Tage}}',
