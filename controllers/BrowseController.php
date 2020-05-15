@@ -90,7 +90,7 @@ class BrowseController extends BaseController
                 }
                 else {
                     if (!empty($app_user_id) && !empty($app_password)) {
-//echo"sciebo";
+
                         $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date)
                             VALUES (:space_id, :user_id, :email, :drive_name, :app_user_id, :app_password, :create_date)', [
                             ':space_id' => $space_id,
@@ -170,7 +170,7 @@ class BrowseController extends BaseController
 
                     if ($image->saveAs($path) && !empty($app_user_id) && !empty($random_string)) {
                         $content = file_get_contents($path);
-//echo"gdrive";
+
                         // If uploaded JSON file is valid
                         if (strpos($content, 'research-hub.social') !== false) {
                             $db->createCommand('INSERT INTO onlinedrives_app_detail (space_id, user_id, email, drive_name, app_user_id, app_password, create_date, if_shared)

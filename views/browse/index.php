@@ -30,6 +30,7 @@ catch (Exception $exception) {
 // General vars
 $now = time();
 $home_url = Url::base(true);
+$basic_url = 'http'.(empty($_SERVER['HTTPS'])?'':'s').'://'.$_SERVER['HTTP_HOST'];
 
 // Declare vars
 $all_folders = array();
@@ -1701,20 +1702,20 @@ echo '<div id="line_sciebo_login" class="line_icons shownone"></div>'.
                 var src_sciebo_gray50 = \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\';
                 var select_gd_login_src = getElementById(\'select_gd_login\').src;
 
-                if (select_sciebo_login_src == \'' . $bundle->baseUrl . '/images/sciebo_gray50.png\' &&
-                    select_gd_login_src == \'' . $bundle->baseUrl . '/images/gd_gray50.png\'
+                if (select_sciebo_login_src == \'' . $basic_url . $bundle->baseUrl . '/images/sciebo_gray50.png\' &&
+                    select_gd_login_src == \'' . $basic_url . $bundle->baseUrl . '/images/gd_gray50.png\'
                 ) {
                     document.getElementById(\'err_msg\').innerHTML = "Please select a cloud service";
 
                     return false;
                 }
 
-                if (select_sciebo_login_src == \'' . $bundle->baseUrl . '/images/sciebo50.png\' &&
-                    select_gd_login_src == \'' . $bundle->baseUrl . '/images/gd_gray50.png\'
+                if (select_sciebo_login_src == \'' . $basic_url . $bundle->baseUrl . '/images/sciebo50.png\' &&
+                    select_gd_login_src == \'' . $basic_url . $bundle->baseUrl . '/images/gd_gray50.png\'
                 ) {
     				var app_id = document.getElementById(\'loginform-app_id\').value;
                     if (app_id == \'\') {
-                        document.getElementById(\'err_msg\').innerHTML = \'App Id Required!\';
+                        document.getElementById(\'err_msg\').innerHTML = \'Username Required!\';
                         document.getElementById(\'loginform-app_id\').focus();
 
                         return false;
