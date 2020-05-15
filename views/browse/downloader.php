@@ -37,6 +37,7 @@ function array_to_xml( $data, &$xml_data ) {
 // Variable initialization
 $content_length = '';
 $content_type = '';
+$space_id = '';
 
 // Checked if user is logged in HumHub
 $username = '';
@@ -47,7 +48,7 @@ if (isset(Yii::$app->user->identity->username)) {
 }
 
 if (!empty($username) && !empty($email)) {
-//    if (!empty($_GET['dk'])) {
+    if (!empty($_GET['dk'])) {
         $drive_key = $_GET['dk'];
         $db = dbconnect();
         $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.* 
@@ -61,6 +62,10 @@ if (!empty($username) && !empty($email)) {
             $drive_path = $value['drive_path'];
             $app_user_id = $value['app_user_id'];
             $app_password = $value['app_password'];
+        }
+		
+		if($space_id =='') {
+            throw new \yii\web\HttpException(404, 'The requested Item could not be found.');
         }
 
         /// Read real space ID from space
@@ -112,6 +117,11 @@ if (!empty($username) && !empty($email)) {
     die();*/
 
         if (count($sql) > 0) {
+			
+			set_time_limit(0);
+			
+            ini_set('memory_limit', '-1');
+			
             $client = getScieboClient($app_user_id, $app_password);
 
             $path = str_replace(' ', '%20', $_GET['file']);
@@ -163,7 +173,13 @@ if (!empty($username) && !empty($email)) {
             echo $download["body"];
 			die();
         }
-    //} //TODO ??
+		else {
+            throw new \yii\web\HttpException(404, 'The requested Item could not be found.');
+		}
+    }
+	else {
+            throw new \yii\web\HttpException(404, 'The requested Item could not be found.');
+	}
 }
 
 ?>
