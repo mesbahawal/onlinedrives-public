@@ -829,7 +829,9 @@ if ($app_user_id <> '') {
                 </td>
 
                 <td>
-                    <?php echo Yii::t('OnlinedrivesModule.new', 'User permissions'); ?>
+
+                        <?php echo Yii::t('OnlinedrivesModule.new', 'User permissions'); ?>
+
                 </td>
 
                 <td>
@@ -1000,7 +1002,7 @@ if ($app_user_id <> '') {
                 // Check which boxes are selected
                 $permission = '';
 
-                //echo 'name='.$name.'--path='.$path.'--permission=';
+                //echo 'name='.$name.'--path='.$path.'--permission=<br>';
 
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
                     WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id AND share_status = \'Y\' ', [
@@ -1011,15 +1013,16 @@ if ($app_user_id <> '') {
                     $permission = $value['permission'];
                 }
 
-                //echo $permission."<br>";
+                //echo "permission=".$permission."<br>";
 
                 if ($permission != '') {
                     $pos_rename = strpos($permission, 'Rn');
                     $pos_move = strpos($permission, 'Mv');
                     $pos_del = strpos($permission, 'D');
                     $pos_upl = strpos($permission, 'U');
+                    $pos_read = strpos($permission, 'Rd');
 
-                    if ($pos_rename !== false || $pos_move !== false || $pos_del !== false || $pos_upl !== false) {
+                    if ($pos_read !== false || $pos_rename !== false || $pos_move !== false || $pos_del !== false || $pos_upl !== false) {
                         $pos_read = true;
                     }
                     else {
@@ -1050,6 +1053,7 @@ if ($app_user_id <> '') {
                                 //echo "I am true";
                                 $has_share = 'Y';
                                 $model_addfiles->drive_path[$i] = urlencode($path_chunk);
+
                             }
                         }
                         elseif ($cloud == 'gd') {
@@ -1072,16 +1076,18 @@ if ($app_user_id <> '') {
                         ], [
                             'onchange' => 'checked = document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked;
 
-                                if (checked == true) {
-                                    document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = true;
-                                }
-                                else {
+                                if (checked != true) {
                                     document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked = false;
-                                }'
+                                }
+                                '
                         ]);
                     echo '</td>
 
                     <td>';
+
+                    // Tooltip message
+
+                    $tooltip_upload = Yii::t('OnlinedrivesModule.new', 'If checked this, other members of the space can upload file and create folder/files into the selected folder!');
 
                     // Check if has child
                     $path_regex = '^'.$path.'.[a-zA-Z0-9!@#$+%&*_.-]*'; //'^Test%201A/.[a-zA-Z0-9!@#$+%&*_.-]*'
@@ -1098,7 +1104,7 @@ if ($app_user_id <> '') {
                     else
                     */
                     if(count($sql) > 0){
-                        $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #f4d9f4"></span>';
+                        $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px; color: #cacaca"></span>';
                     }
                     else {
                         $span_folder_icon = '<span class="glyphicon glyphicon-folder-close" style="margin-right: 10px;"></span>';
@@ -1121,7 +1127,10 @@ if ($app_user_id <> '') {
                         }
                     echo '</td>
 
-                    <td>';
+                    <td><div>
+                    <span style="margin-top: 14px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" 
+                    data-original-title="'.$tooltip_upload.'">
+                    <i data-target="globalModal"></i>';
                         if ($pos_rename !== false && $pos_move !== false && $pos_del !== false && $pos_upl !== false) {
                             $model_addfiles->permission[$i] = ['Rn', 'Mv', 'D', 'U'];
                         }
@@ -1172,18 +1181,16 @@ if ($app_user_id <> '') {
                             // 'Mv' => 'Move',
                             // 'C' => 'Copy',
                             // 'D' => 'Delete',
-                            'U' => 'Upload',
+                            'U' => 'Upload/Create',
                         ], [
                             'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked;
 
                                 if (checked_0 == true) {
                                     document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
                                 }
-                                else {
-                                    document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = false;
-                                }'
+                                '
                         ]);
-                    echo '</td>
+                    echo '</span></div></td>
 
                     <td>
                     </td>

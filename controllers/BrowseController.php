@@ -8,6 +8,8 @@
 namespace humhub\modules\onlinedrives\controllers;
 
 use Google_Service_Drive;
+use humhub\modules\content\widgets\WallCreateContentForm;
+use humhub\modules\post\models\Post;
 use Yii;
 use humhub\modules\onlinedrives\widgets\FileList;
 use yii\helpers\Url;
@@ -219,6 +221,7 @@ class BrowseController extends BaseController
 
         // Upload model
         if ($model_u->load(Yii::$app->request->post())) {
+
             $image = \yii\web\UploadedFile::getInstance($model_u, 'upload');
             if (!is_null($image)) {
                 $model_u->image_src_filename = $image->name;
@@ -254,6 +257,15 @@ class BrowseController extends BaseController
 
                 if (!empty($app_user_id)) {
                     if ($cloud == 'sciebo') {
+
+                        set_time_limit(0);
+
+                        ini_set('memory_limit', '-1');
+
+                        ini_set('post_max_size', '1000M');
+
+                        ini_set('upload_max_filesize', '1000M');
+
                         // Rework
                         $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
 
@@ -471,6 +483,17 @@ class BrowseController extends BaseController
                 if ($model_addfiles->validate()) {
                     $i = 0;
 
+                    // Try to create post
+
+                    /*
+                    $post = new Post($this->contentContainer);
+
+                    $post->message = 'Published new OnlineDrives [content](http://localhost/humhub-uni/index.php?r=onlinedrives%2Fbrowse&cguid=fafecccc-4b3d-4c0a-a30d-51f7bdb88bc4&sciebo_path=Research-Hub-Share/&dk=61e5a68809fce9d6ac1153f10ffb6876 "content")';
+
+                    WallCreateContentForm::create($post, $this->contentContainer);
+                    */
+                    // end new post
+
                     $arr_drive_path = $model_addfiles->drive_path;
                     $arr_fileid =  $model_addfiles->fileid;
                     $app_detail_id =  $model_addfiles->app_detail_id;
@@ -501,24 +524,38 @@ class BrowseController extends BaseController
                                 $permission_items = implode('|', $permission[$key]);
                             }
                             else {
-                                $permission_items = '';
+                                $permission_items = 'Rd';
                             }
 
                             $drive_path = urldecode($val[0]);
 
-                            // Check path is already exist in share
+                            // Check if drive path does already exist in share
+
+                            /* Debug Query: if drive path does already exist in share
+                             * $qry_check = 'SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.*
+                                FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
+                                WHERE d.`id` = p.`onlinedrives_app_detail_id`
+                                AND d.`space_id` = '.$space_id.'
+                                AND d.`user_id` = '.$username.'
+                                AND p.`fileid` = '.$val_fileid.'
+                                AND d.`id` = '.$app_detail_id.'
+                                AND p.`share_status` = "Y"';
+
+                            echo "OK--".$qry_check."<br>";*/
+
+
 
                             $sql = $db->createCommand('SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.* 
                                 FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
                                 WHERE d.`id` = p.`onlinedrives_app_detail_id`
                                 AND d.`space_id` = :space_id
                                 AND d.`user_id` = :username
-                                AND p.`drive_path` = :drive_path
+                                AND p.`fileid` = :fileid
                                 AND d.`id` = :app_detail_id
                                 AND p.`share_status` = \'Y\'', [
                                 ':space_id' => $space_id,
                                 ':username' => $username,
-                                ':drive_path' => $drive_path,
+                                ':fileid' => $val_fileid,
                                 ':app_detail_id' => $app_detail_id,
                             ])->queryAll();
 
@@ -557,6 +594,8 @@ class BrowseController extends BaseController
                     $not_in_list = array();
                     $arr_drive_path = $model_addfiles->drive_path;
 
+                    //print_r( $arr_drive_path );
+
                     for ($i = 0; $i < count($arr_drive_path); $i++) {
                         $key = key($arr_drive_path);
                         $val = $arr_drive_path[$key];
@@ -570,6 +609,7 @@ class BrowseController extends BaseController
                             }
                             $drive_path = urldecode($val[0]);
 
+
                             // Check path is already exist in share
 
                             $sql = $db->createCommand('SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.* 
@@ -577,12 +617,12 @@ class BrowseController extends BaseController
                                 WHERE d.`id` = p.`onlinedrives_app_detail_id`
                                 AND d.`space_id` = :space_id
                                 AND d.`user_id` = :username
-                                AND p.`drive_path` = :drive_path
+                                AND p.`fileid` = :fileid
                                 AND d.`id` = :app_detail_id
-                                AND p.`share_status`=\'Y\'', [
+                                AND p.`share_status` = \'Y\'', [
                                 ':space_id' => $space_id,
                                 ':username' => $username,
-                                ':drive_path' => $drive_path,
+                                ':fileid' => $val_fileid,
                                 ':app_detail_id' => $app_detail_id,
                             ])->queryAll();
 
@@ -593,11 +633,119 @@ class BrowseController extends BaseController
                         next($arr_drive_path);
                     }
 
-                    // print_r($not_in_list);
+                    //print_r($not_in_list);
 
                     $not_in = implode(',', $not_in_list);
 
-                    // echo $get_sciebo_path."--not in (".$not_in.")--";
+                    //echo "<br>Submitted from direcory name = ".$get_sciebo_path." and --not in (".$not_in.")--";
+
+
+
+                    // For handling root directory contents:
+                    // Firstly identify that from which sciebo path the Request submitted. if the sciebo path is null that means
+                    // the request submitted from root folder and all the folder names from root location will have only one '/' in the end in the DB table.
+                    // For identifying files in the root folder, have to check regular expression, which checks if there is no '/' in the  beginning
+                    // of the file name and end with file name and file extension.
+
+                    if ($get_sciebo_path != '') {
+                        $regular_exp1 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*/$';
+                        $regular_exp2 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*.[.]+.[a-zA-Z0-9]*$';
+
+                        $qry_check_foldername = ' ( drive_path like \''.$get_sciebo_path.'%\' 
+                                                    AND length(SUBSTRING(drive_path,LENGTH(\''.$get_sciebo_path.'\')+1)) - length(replace(SUBSTRING(drive_path,LENGTH(\''.$get_sciebo_path.'\')+1),\'/\',\'\')) = 1 
+                                                    and  SUBSTRING(drive_path,LENGTH(\''.$get_sciebo_path.'\')+1) REGEXP \'/$\'
+                                                    )';
+
+                        $qry_check_filename = ' OR (
+                                                    drive_path REGEXP \'^'.$get_sciebo_path.'\' 
+                                                    AND SUBSTRING(drive_path,LENGTH(\''.$get_sciebo_path.'\')+1) NOT LIKE \'%/%\' 
+                                                    )';
+
+                        if (!empty($not_in)) {
+                            $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
+                        }
+                        else {
+                            $id_not_in_str = '';
+                        }
+
+                        //echo '<br>If I am printed then I am inside any directory <br>';
+
+                         //Debug query: which files are going to be unchecked from inside of any folder
+                         /*$qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status ='D'
+                                WHERE onlinedrives_app_detail_id = ".$app_detail_id."
+                                AND (".$qry_check_foldername.$qry_check_filename.")
+                                AND share_status='Y' ".$id_not_in_str;
+                        echo $qry;*/
+
+
+
+                        $db->createCommand('UPDATE onlinedrives_app_drive_path_detail
+                                SET share_status = "D", update_date = CURRENT_TIMESTAMP
+                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                AND ( '.$qry_check_foldername.$qry_check_filename.' )
+                                AND share_status = \'Y\' '.$id_not_in_str, [
+                            ':onlinedrives_app_detail_id' => $app_detail_id,
+                        ])->execute();
+                    }
+                    else { // this section only handles files and folder shared from root directory of sciebo
+                        if (!empty($not_in)) {
+                            $id_not_in_str = ' AND id NOT IN ('.$not_in.')';
+                        }
+                        else {
+                            $id_not_in_str = '';
+                        }
+
+                        // construct query to check if the path has only one '/' at the end to identify folders of root directory.
+                        // And also to check if there is no '/' in the filename which means the file belongs to root directory.
+
+                        $qry_filename_check = ' AND (drive_path NOT LIKE \'%/%\')'; // check expression for searching file name only from root directory.
+                        $qry_foldername_check = ' AND (LENGTH(`drive_path`) - LENGTH(REPLACE(`drive_path`, \'/\', \'\'))) = 1 AND (drive_path REGEXP \'/$\')'; // This checks if the path has only one '/' at the end to identify folders of root directory.
+
+
+                        /* Debug query:  select id for which file/folder to disable.
+                         * $qry = 'SELECT * FROM `onlinedrives_app_drive_path_detail`
+                                WHERE onlinedrives_app_detail_id = '.$app_detail_id.' AND share_status = \'Y\'  
+                                '.$qry_foldername_check.$id_not_in_str.'
+                                UNION
+                                SELECT * FROM `onlinedrives_app_drive_path_detail`
+                                WHERE onlinedrives_app_detail_id = '.$app_detail_id.' AND share_status = \'Y\'  
+                                '.$qry_filename_check.$id_not_in_str;
+                        echo '<br>'.$qry;*/
+
+                        $sql = $db->createCommand('SELECT * FROM `onlinedrives_app_drive_path_detail`
+                                                        WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id AND share_status = \'Y\'  
+                                                        '.$qry_foldername_check.$id_not_in_str.'
+                                                        UNION
+                                                        SELECT * FROM `onlinedrives_app_drive_path_detail`
+                                                        WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id AND share_status = \'Y\'  
+                                                        '.$qry_filename_check.$id_not_in_str, [
+                            ':onlinedrives_app_detail_id' => $app_detail_id,
+                        ])->queryAll();
+
+                        if (count($sql) > 0) {
+
+                            foreach($sql as $values) {
+                                $unchecked_path_id = $values['id'];
+
+                                /* Debug the update query:
+                                 * $update_qry = 'UPDATE onlinedrives_app_drive_path_detail
+                                SET share_status = "D", update_date = CURRENT_TIMESTAMP
+                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                AND id = '.$unchecked_path_id;
+
+                                echo '<br>Count='.count($sql).$update_qry;*/
+
+                                $db->createCommand('UPDATE onlinedrives_app_drive_path_detail
+                                SET share_status = "D", update_date = CURRENT_TIMESTAMP
+                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
+                                AND id = :unchecked_path_id', [
+                                    ':onlinedrives_app_detail_id' => $app_detail_id,
+                                    ':unchecked_path_id' => $unchecked_path_id,
+                                ])->execute();
+
+                            }
+                        }
+                    }
 
                     $sql = $db->createCommand('SELECT * FROM `onlinedrives_app_drive_path_detail`
                         WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id AND share_status = "Y"', [
@@ -611,67 +759,6 @@ class BrowseController extends BaseController
                              ':onlinedrives_app_detail_id' => $app_detail_id,
                          ])->execute();
 
-                         // Update other drives paths to disabled which are unchecked from the addfiles-Form
-
-                        // Step-1: Select all rows with same owner (onlinedrives_app_detail_id of table- onlinedrives_app_drive_path_detail)
-                        // Step-1: also check if they are children of same parent drive path.
-
-                        // Step-2: Update share_status = D for unchecked values.
-                        if ($get_sciebo_path != '') {
-                            $regular_exp1 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*/$';
-                            $regular_exp2 = '^' . $get_sciebo_path . '.[a-zA-Z0-9!@#$+%&*_.-]*.[.]+.[a-zA-Z0-9]*$';
-                            if (!empty($not_in)) {
-                                $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
-                            }
-                            else {
-                                $id_not_in_str = '';
-                            }
-
-                            // echo $regular_exp1.'<br>'.$regular_exp2.'<br>'.$id_not_in; die();
-
-
-                            $qry = "UPDATE onlinedrives_app_drive_path_detail SET share_status ='D'
-                                WHERE onlinedrives_app_detail_id = ".$app_detail_id."
-                                AND (drive_path REGEXP '".$regular_exp1."' OR drive_path REGEXP '".$regular_exp2."')
-                                AND share_status='Y' ".$id_not_in_str;
-                            echo $qry;
-
-
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail
-                                SET share_status = "D", update_date = CURRENT_TIMESTAMP
-                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
-                                AND (drive_path REGEXP :regex1 OR drive_path REGEXP :regex2)
-                                AND share_status = \'Y\' '.$id_not_in_str, [
-                                ':onlinedrives_app_detail_id' => $app_detail_id,
-                                ':regex1' => $regular_exp1,
-                                ':regex2' => $regular_exp2,
-                            ])->execute();
-                        }
-                        else {
-                            if (!empty($not_in)) {
-                                $id_not_in_str = 'AND id NOT IN ('.$not_in.')';
-                            }
-                            else {
-                                $id_not_in_str = '';
-                            }
-                            // This checks if the path has only one '/' at the end or not. out commented due to having no use.
-                            //$qry_drive_path = ' AND (LENGTH(`drive_path`) - LENGTH(REPLACE(`drive_path`, \'/\', \'\'))) = 1 AND drive_path REGEXP \'/$\' ';
-
-
-                            /*$qry = 'UPDATE onlinedrives_app_drive_path_detail SET share_status = "D", update_date = CURRENT_TIMESTAMP
-                                WHERE onlinedrives_app_detail_id = '.$app_detail_id.'
-                                AND share_status = \'Y\' '.$id_not_in_str;
-                            echo $qry;*/
-
-
-                            $db->createCommand('UPDATE onlinedrives_app_drive_path_detail
-                                SET share_status = "D", update_date = CURRENT_TIMESTAMP
-                                WHERE onlinedrives_app_detail_id = :onlinedrives_app_detail_id
-                                AND share_status = \'Y\' '.$id_not_in_str, [
-                                ':onlinedrives_app_detail_id' => $app_detail_id,
-                            ])->execute();
-
-                        }
                     }
 
                     $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
