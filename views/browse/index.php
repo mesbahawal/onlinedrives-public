@@ -997,6 +997,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
 
                         $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/' . $app_user_id . '/' . $get_sciebo_path . '/' . $name;
 
+                        // File upload duplicate checking
                         if ($get_sciebo_path != '') {
                             if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
                                 $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
@@ -1138,6 +1139,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
     }
 
     $db_app_user_id = '';
+    $db_drive_path = '';
     $sciebo_content = array();
     $count_sciebo_files = 0;
     if ($get_gd_folder_id == '') {
@@ -1150,12 +1152,17 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
             foreach ($sql as $value) {
                 $db_app_user_id = $value['app_user_id'];
                 $db_drive_key = $value['drive_key'];
+                $db_drive_path = $value['drive_path'];
             }
         }
 
-        if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
+        if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key && strpos($drive_path, $db_drive_path)!==false)) {
             $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
         }
+        elseif ($get_sciebo_path != '' && strpos($drive_path, $db_drive_path) === false){
+            // Error msg
+            $error_msg = Yii::t('OnlinedrivesModule.new', 'Unable to display requested content.');
+        }// disable parent folder access if not shared.
 
         if (isset($sciebo_content)) {
             $count_sciebo_files = count($sciebo_content);
