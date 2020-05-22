@@ -1406,7 +1406,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             $navi_start_name = urldecode($target_foldername);
 
             // Build output for initial node of navigation
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$get_sciebo_path.'&dk='.$get_drive_key;
+            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$drive_path.'&dk='.$get_drive_key;
             $navi_start = ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$navi_start_name.'</a>';
             echo $navi_start;
 
