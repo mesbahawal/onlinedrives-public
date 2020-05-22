@@ -440,33 +440,25 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         <!-- Breadcrumb navigation -->
         <div style="border: 1px solid #f0f0f0; border-radius: 10px; padding: 10px; background-color: #f5f5f5;">
             <?php
+            $src = $bundle->baseUrl . '/images/sciebo20.png';
+            $ref = 'https://uni-siegen.sciebo.de/login';
+            $tooltip_sciebo_redirection = Yii::t('OnlinedrivesModule.new','Redirect to Sciebo web portal.');
+            echo '
+            <!-- Tooltip -->
+            <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_sciebo_redirection.'">
+                <a href="'.$ref.'" target="_blank" data-target="globalModal">
+                    <img src="'.$src.'" style="position: relative; top: 0px;" />
+                </a>
+                <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span>
+            </span>';
+
             $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&'.$guid.'&app_detail_id='.$app_detail_id;
-            echo '<a href="'.$ref.'">'.$app_user_id.'</a>';
+            echo ' <a href="'.$ref.'">'.$app_user_id.' <span class="glyphicon glyphicon-home" ></span></a>';
 
             // Output Sciebo navigation
             if ($get_sciebo_path != '') {
                 // Output Sciebo icon in navigation
-                $ref = 'https://uni-siegen.sciebo.de/login';
-                $src = 'protected/modules/onlinedrives/resources/images/sciebo20.png';
-                echo ' /
-                <a href="'.$ref.'" target="_blank">
-                    <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
-                </a>';
 
-                /*
-                // Test%201A/ins/
-                // Check breadcrumb for shared location
-                $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-                    FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                    ON d.id=p.onlinedrives_app_detail_id
-                    WHERE drive_key = :drive_key', [
-                    ':drive_key' => $get_dk,
-                ])->queryAll();
-                foreach ($sql as $value) {
-                    $drive_path = $value['drive_path'];
-                    $app_user_id = $value['app_user_id'];
-                }
-                */
 
                 // Build rest of Sciebo navigation
                 $navi = '';
@@ -488,7 +480,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
                     // Build output
                     $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path);
-                    $navi .= ' / <a href="'.$ref.'">'.$name.'</a>';
+                    $navi .= ' <span class="glyphicon glyphicon-menu-right"></span> <a href="'.$ref.'">'.$name.'</a>';
                 } while ($temp != '');
 
                 // Output rest of Sciebo navigation
@@ -1081,13 +1073,11 @@ if ($app_user_id <> '') {
                                 }
                                 '
                         ]);
-                    echo '</td>
-
+                    echo '
                     <td>';
 
                     // Tooltip message
-
-                    $tooltip_upload = Yii::t('OnlinedrivesModule.new', 'If checked this, other members of the space can upload file and create folder/files into the selected folder!');
+                    $tooltip_upload = Yii::t('OnlinedrivesModule.new', 'Please select the checkbox to allow other members of this space to upload files inside the folder on the left or to create a new folder / file.');
 
                     // Check if has child
                     $path_regex = '^'.$path.'.[a-zA-Z0-9!@#$+%&*_.-]*'; //'^Test%201A/.[a-zA-Z0-9!@#$+%&*_.-]*'
@@ -1127,8 +1117,8 @@ if ($app_user_id <> '') {
                         }
                     echo '</td>
 
-                    <td><div>
-                    <span style="margin-top: 14px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" 
+                    <td><div><!-- Tooltip -->
+                    <span style="margin-top: 0px; margin-bottom: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" 
                     data-original-title="'.$tooltip_upload.'">
                     <i data-target="globalModal"></i>';
                         if ($pos_rename !== false && $pos_move !== false && $pos_del !== false && $pos_upl !== false) {
@@ -1181,7 +1171,7 @@ if ($app_user_id <> '') {
                             // 'Mv' => 'Move',
                             // 'C' => 'Copy',
                             // 'D' => 'Delete',
-                            'U' => 'Upload/Create',
+                            'U' => 'Upload / Create',
                         ], [
                             'onchange' => 'checked_0 = document.getElementsByName(\'AddFilesForm[permission]['.$i.'][]\')[0].checked;
 
@@ -1190,9 +1180,8 @@ if ($app_user_id <> '') {
                                 }
                                 '
                         ]);
-                    echo '</span></div></td>
+                    echo '</span></div>
 
-                    <td>
                     </td>
                 </tr>';
             }

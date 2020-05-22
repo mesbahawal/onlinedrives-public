@@ -47,6 +47,15 @@ class BrowseController extends BaseController
             $get_sciebo_path = $_POST['sciebo_path'];
         }
 
+        if (isset(Yii::$app->user->identity->username)) {
+            $username = Yii::$app->user->identity->username;
+        }
+        else {
+            $username = '';
+            $home_url = Url::base(true);
+            return $this->redirect($home_url);
+        }
+
         $currentFolder = $this->getCurrentFolder();
         if (!$currentFolder->content->canView()) {
             throw new HttpException(403);
@@ -236,58 +245,117 @@ class BrowseController extends BaseController
                 Yii::$app->params['uploadPath'] = Yii::$app->basePath . '/modules/onlinedrives/upload_dir/';
                 $path = Yii::$app->params['uploadPath'] . $model_u->image_web_filename;
 
+                // initialize variables
                 $get_dk = '';
                 if (!empty($_GET['dk'])) {
                     $get_dk = $_GET['dk'];
                 }
+                $db_connected_user_id = '';
+                $permission_pos = false;
+
 
                 include_once __DIR__ . '/../models/dbconnect.php';
                 $db = dbconnect();
                 $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-                    FROM onlinedrives_app_detail d
-                    LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+                    FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p 
+                    ON d.id = p.onlinedrives_app_detail_id
                     WHERE drive_key = :drive_key', [
                     ':drive_key' => $get_dk,
                 ])->queryAll();
                 foreach ($sql as $value) {
+                    $db_connected_user_id = $value['user_id'];
                     $drive_path = $value['drive_path'];
                     $app_user_id = $value['app_user_id'];
                     $app_password = $value['app_password'];
+                    $db_permission = $value['permission'];
+                    $permission_pos = strpos($db_permission, 'U'); // 'U' is for both Upload file and Create Folder
                 }
 
                 if (!empty($app_user_id)) {
                     if ($cloud == 'sciebo') {
-
-                        set_time_limit(0);
-
-                        ini_set('memory_limit', '-1');
-
-                        ini_set('post_max_size', '1000M');
-
-                        ini_set('upload_max_filesize', '1000M');
+                        //initialize flags
+                        $flag_same_file = '';
 
                         // Rework
                         $get_sciebo_path = str_replace(' ', '%20', $get_sciebo_path);
 
+                        // check duplicate content
+                        if ($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false) {
+                            // Set Sciebo path to replace with user ID
+                            $sciebo_path_to_replace = '/remote.php/dav/files/'.$app_user_id.'/';
+
+                            $sciebo_client = $model_u->getScieboClient($app_user_id, $app_password);
+
+                            $sciebo_content = $model_u->getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
+
+                            $keys = array_keys((array)$sciebo_content);
+
+                            foreach ($keys as $values) {
+                                // echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
+
+                                $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
+
+                                $new_folder_path = $get_sciebo_path.$realname;
+
+                                 //echo '--new folder path='.$new_folder_path.'--'.$existing_folder_path.'<br>';
+
+                                if ($existing_folder_path === $new_folder_path)                 {
+                                    // set the below flag for checking if the file is same. Check before file 'PUT' request
+                                    $flag_same_file = 'y';
+                                    continue;
+                                }
+
+                                $flag_same_file .= $flag_same_file;
+                            }
+
+                        }
+                        $check_duplicate_file = strpos($flag_same_file, 'y');
+
                         // Check if access for drive path is given
-                        if (strpos($get_sciebo_path, $drive_path) !== false) {
-                            if ($image->saveAs($path)) {
-                                $content = file_get_contents($path);
-                                $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$realname;
+                        if ($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false) {
 
-                                $client = $model_u->getScieboClient($app_user_id, $app_password);
+                            if ($check_duplicate_file !== false){
+                                // Error msg
+                                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'File already exist. Please rename.');
+                            }// check duplicate content
+                            elseif( !($db_connected_user_id ==  $username || $permission_pos !== false) ){
+                                // Error msg
+                                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
+                            }// check upload permission
+                            else{
+                                if ($image->saveAs($path)) {
+                                    // get file content from local upload_dir
+                                    $content = file_get_contents($path);
 
-                                if ($client->request('PUT', $path_to_dir, $content)) {
-                                    unlink($path);
+                                    // Upload target in sciebo
+                                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$realname;
 
-                                    // Success msg
-                                    $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'File is successfuly uploaded in Sciebo.');
+                                    // set unlimited time limit and unlimited memory limit for this transfer
+                                    set_time_limit(0);
+                                    ini_set('memory_limit', '-1');
+
+                                    // initialize client
+                                    $client = $model_u->getScieboClient($app_user_id, $app_password);
+                                    if ($client->request('PUT', $path_to_dir, $content)) {
+                                        unlink($path);
+
+                                        // Success msg
+                                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'File is successfuly uploaded in Sciebo.');
+                                    }else{
+                                        // Error msg
+                                        $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Failed to transfer file to Sciebo.');
+                                    }
+                                }
+                                else{
+                                    // Error msg
+                                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Failed to transfer file to upload directory.');
                                 }
                             }
+
                         }
                         else {
                             // Error msg
-                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'The permission for this folder is missing.');
+                            $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'The upload permission for this folder is missing.');
                         }
                     }
                     elseif ($cloud == 'gd') {

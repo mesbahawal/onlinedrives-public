@@ -42,5 +42,29 @@ class UploadFileForm extends \yii\base\Model
 
         return $client;
     }
+
+    public function getScieboFiles($client, $app_user_id, $drive_path) {
+        $folder_content = false;
+        try {
+            $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
+                '{http://owncloud.org/ns}fileid', // ID
+                '{DAV:}getetag', //TODO doesn't work
+                '{DAV:}creationdate', //TODO doesn't work
+                '{DAV:}getlastmodified',
+                '{DAV:}getcontenttype',
+                '{DAV:}getcontentlength',
+                '{DAV:}getcontentname', //TODO doesn't work
+                '{http://owncloud.org/ns}favorite',
+                '{http://owncloud.org/ns}share-types',
+                '{http://owncloud.org/ns}owner-display-name',
+                '{http://owncloud.org/ns}comments-count',
+            ), 1);
+
+            return $folder_content;
+        }
+        catch ( Sabre\HTTP\ClientHttpException $e) {
+            Yii::warning($e);
+        }
+    }
 }
 ?>

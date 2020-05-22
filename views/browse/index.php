@@ -124,11 +124,6 @@ function getScieboClient($user_id, $pw) {
 
 function getScieboFiles($client, $app_user_id, $drive_path) {
     $folder_content = false;
-    $home_url = Url::base(true);
-
-    if (!empty($_GET['cguid'])) {
-        $guid = 'cguid=' . $_GET['cguid']; // Get param, important for paths
-    }
 
     try {
         $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
@@ -148,7 +143,7 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
         return $folder_content;
     }
     catch ( Sabre\HTTP\ClientHttpException $e) {
-        Yii::warning("Sciebo Connection Unseccessful");
+        Yii::warning($e);
     }
 }
 
@@ -900,43 +895,44 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
         if (substr($name, 0, 1) != '.') {
             // Sciebo
             if ($cloud == 'sciebo') {
-                if ($do == 'create_folder') {
-                    // http://sabre.io/dav/davclient
-                    $db_app_user_id = '';
-                    $permission_pos = false;
-                    if ($get_drive_key != '') {
-                        $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+
+                // get information from db to validate permission for creating content or duplicating content.
+                $db_connected_user_id = '';
+                $db_app_user_id = '';
+                $permission_pos = false;
+                $sciebo_content = array();
+                $upload_list = str_replace(' ', '%20', $name);
+
+                if ($get_drive_key != '') {
+                    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
                             FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
                             ON d.id = p.onlinedrives_app_detail_id
                             WHERE drive_key = :drive_key', [
-                            ':drive_key' => $get_drive_key,
-                        ])->queryAll();
+                        ':drive_key' => $get_drive_key,
+                    ])->queryAll();
 
-                        foreach ($sql as $value) {
-                            $db_app_user_id = $value['app_user_id'];
-                            $db_drive_key = $value['drive_key'];
-                            $db_permission = $value['permission'];
-                            $permission_pos = strpos($db_permission, 'U'); // 'U' is for both Upload file and Create Folder
-                        }
+                    foreach ($sql as $value) {
+                        $db_connected_user_id = $value['user_id'];
+                        $db_app_user_id = $value['app_user_id'];
+                        $db_drive_key = $value['drive_key'];
+                        $db_permission = $value['permission'];
+                        $permission_pos = strpos($db_permission, 'U'); // 'U' is for both Upload file and Create Folder
                     }
+                }
 
-                    // echo "db_app_user_id =".$db_app_user_id."-- app_user_id=".$app_user_id."-- get drive key=".$get_drive_key."-- owner=".$user_id."-- logged-in user=".$username; die();
-                    // if get_drive_key='' means in the root folder, then only owner can upload/create, but if get_drive_key has value then check permission from DB.
-                    // got an error while create folder, so out-commented the line
-                    // if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                    // if (($get_drive_key == '' && $user_id == $username) || ($db_app_user_id == $app_user_id && $permission_pos !== false)) {
+                if ($do == 'create_folder') {
+                    // http://sabre.io/dav/davclient
 
                     //Check flag
                     $check_same_folder = '';
                     $flag_create_folder = 0;
 
-                    $sciebo_content = array();
-                    $upload_file_content = date('F j, Y, g:i a');
-                    $upload_list = str_replace(' ', '%20', $name);
+
                     $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$upload_list;
 
                     //echo "<br>get-dk-$get_drive_key-$db_app_user_id-$app_user_id-dk-$drive_key-dpath-$drive_path-get sciebo path-$get_sciebo_path";
 
+                    // Folder upload duplicate checking
                     if ($get_sciebo_path != '') {
                         if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
                             $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
@@ -954,10 +950,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                             // echo '--new folder path='.$new_folder_path;
 
                             if ($existing_folder_path === $new_folder_path)                 {
-                                //echo '<br />File already exist! Please rename.'; //TODO No output at the moment?
-                                //return false;
-                                //next($arr_app_user_detail);
-                                $error_msg = Yii::t('OnlinedrivesModule.new', 'File already exist! Please rename.');
+                                // set the below flag for checking if the folder is duplicating.
                                 $check_same_folder = 'y';
                                 continue;
                             }
@@ -968,9 +961,9 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                         if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
                             $flag_same_folder = strpos($check_same_folder,'y');
 
-                            // echo "<br>checksome=".$check_same_folder;
+                            //echo "<br>checksome=".$check_same_folder."bool =".$flag_same_folder;
 
-                            if (($user_id =  'mesbah' || $permission_pos !== false) && $flag_same_folder === false) {
+                            if (($db_connected_user_id ==  $username || $permission_pos !== false) && $flag_same_folder === false) {
                                 // echo "<br>--I am creating folder".$path_to_dir;
 
                                 $response = $sciebo_client->request('MKCOL', $path_to_dir); // For creating folder only
@@ -979,8 +972,11 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                                // Success message
                                 $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Sciebo.');
                             }
+                            elseif ( $flag_same_folder !== false){
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Folder already exist. Please rename.');
+                            }
                             else {
-                                $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
                             }
                         }
                         $check_same_folder = '';
@@ -990,19 +986,66 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                     }
                 }
                 elseif ($do == 'create_file') {
+                    //initialize flags
+                    $flag_same_file = '';
+
                     // Check for correct type
                     $pos = strrpos($name, '.');
                     $type = substr($name, $pos);
                     if ($type == '.txt' || $type == '.docx' || $type == '.xlsx' || $type == '.pptx' || $type == '.odt') {
                         $name = str_replace(' ', '%20', $name);
 
-                        $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.'/'.$name;
-                        // $content = 'New contents';
-                        $content = '';
-                        $response = $sciebo_client->request('PUT', $path_to_dir, $content);
+                        $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/' . $app_user_id . '/' . $get_sciebo_path . '/' . $name;
 
-                        // Success message
-                        $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Sciebo.');
+                        if ($get_sciebo_path != '') {
+                            if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
+                                $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
+                            }
+
+                            $keys = array_keys((array)$sciebo_content);
+
+                            foreach ($keys as $values) {
+
+                                $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
+
+                                $new_folder_path = $get_sciebo_path.$upload_list;
+
+                                 if ($existing_folder_path === $new_folder_path)                 {
+                                    // set the below flag for checking if the file is same. Check before file 'PUT' request
+                                    $flag_same_file = 'y';
+                                    continue;
+                                }
+
+                                $flag_same_file .= $flag_same_file;
+                            }
+
+                        }else {
+                            echo "handle for landing page. dpath=".$drive_path;
+                        }
+
+                        if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
+                            $check_duplicate_file = strpos($flag_same_file, 'y');
+                            $content = '';
+
+                            if (($db_connected_user_id ==  $username || $permission_pos !== false) && $check_duplicate_file === false) {
+                                // create file
+                                $response = $sciebo_client->request('PUT', $path_to_dir, $content);
+
+                                // unset flag
+                                $flag_same_file = '';
+
+                                // Success message
+                                $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Sciebo.');
+                            }
+                            elseif ( $check_duplicate_file !== false){
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'File already exist. Please rename.');
+                            }else {
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
+                            }
+                        }
+                    }
+                    else{
+                        $error_msg = Yii::t('OnlinedrivesModule.new', 'File type is not supported');
                     }
                 }
             }
@@ -1321,51 +1364,72 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     // Output start of navigation
     $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
     echo '<span class="silver">Location:</span>
-    <a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . '</a>';
+    <a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . ' <span class="glyphicon glyphicon-home" ></span></a>';
 
     // Output Sciebo navigation
     if ($get_sciebo_path != '') {
         // Output Sciebo icon in navigation
+        $src = $bundle->baseUrl . '/images/sciebo20.png';
         $ref = 'https://uni-siegen.sciebo.de/login';
-        echo ' /
-        <a href="'.$ref.'" target="_blank">';
-            $src = $bundle->baseUrl . '/images/sciebo20.png';
-            echo '<img class="position: relative;" style="top: -2px;" src="'.$src.'" title="Sciebo" />
-        </a>';
-/*
+
+        $tooltip_sciebo_redirection = Yii::t('OnlinedrivesModule.new','Redirects to Sciebo web portal.');
+        echo ' <span class="glyphicon glyphicon-menu-right"></span>
+        <!-- Tooltip -->
+            <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_sciebo_redirection.'">
+                <a href="'.$ref.'" target="_blank" data-target="globalModal">
+                    <img src="'.$src.'" style="position: relative; top: 0px;" />
+                </a>
+            </span>';
+
         // Test%201A/ins/
         // Check breadcrumb for shared location
         $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
             FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id=p.onlinedrives_app_detail_id
             WHERE drive_key = :drive_key', [
-            ':drive_key' => $get_dk,
+            ':drive_key' => $get_drive_key,
         ])->queryAll();
         foreach ($sql as $value) {
             $drive_path = $value['drive_path'];
             $app_user_id = $value['app_user_id'];
         }
-*/
+
         // Build rest of Sciebo navigation
         $navi = '';
         $path = '';
-        $temp = $get_sciebo_path;
-        do {
-            // Read out Sciebo folder name
-            $pos = strpos($temp, '/');
-            $name = substr($temp, 0, $pos);
-            // Update Sciebo path
-            $path .= $name.'/';
-            // Change temp var
-            $temp = substr($temp, $pos + 1);
+        $content_name='';
+        $temp = '';
+        if($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false){
+            //echo '--path='.$get_sciebo_path;
+            $sub_path = substr($drive_path,0,-1);
+            $list_foldernames = explode('/',$sub_path);
+            $target_foldername = end($list_foldernames);
+            $navi_start_name = urldecode($target_foldername);
 
-            // Decode name for output
-            $name = urldecode($name);
+            // Build output for initial node of navigation
+            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$get_sciebo_path.'&dk='.$get_drive_key;
+            $navi_start = ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$navi_start_name.'</a>';
+            echo $navi_start;
 
-            // Build output
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$path.'&dk='.$get_drive_key;
-            $navi .= ' / <a href="'.$ref.'">'.$name.'</a>';
-        } while ($temp != '');
+            $rest_sciebo_path = str_replace($drive_path, "", $get_sciebo_path);
+            $temp = $rest_sciebo_path;
+            $path = $drive_path;
+            do {
+                // Read out Sciebo folder name
+                $pos = strpos($temp, '/');
+                $name = substr($temp, 0, $pos);
+                // Update Sciebo path
+                $path .= $name.'/';
+                // Change temp var
+                $temp = substr($temp, $pos + 1);
 
+                // Decode name for output
+                $name = urldecode($name);
+
+                // Build output
+                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$path.'&dk='.$get_drive_key;
+                $navi .= ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$name.'</a>';
+            } while ($temp != '');
+        }
         // Output rest of Sciebo navigation
         echo $navi;
     }
@@ -1374,12 +1438,17 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         // Build Google Drive icon for navigation
         $ref = 'https://accounts.google.com/ServiceLogin';
         $src = $bundle->baseUrl . '/images/gd20.png';
+        $tooltip_google_redirection = Yii::t('OnlinedrivesModule.new','Redirects to Google Drive web portal.');
 
         // Output Google Drive icon in navigation
-        echo ' /
-        <a href="'.$ref.'" target="_blank">
-            <img src="'.$src.'" style="position: relative; top: -2px;" title="Google Drive" />
-        </a>';
+        echo ' <span class="glyphicon glyphicon-menu-right"></span>
+        <!-- Tooltip -->
+            <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_google_redirection.'">
+                <a href="'.$ref.'" target="_blank" data-target="globalModal">
+                    <img src="'.$src.'" style="position: relative; top: 0px;" />
+                </a>
+                
+            </span>';
 
         // Build rest of Google Drive navigation
         $navi = '';
@@ -1406,7 +1475,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
             // Build output
             $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
-            $navi = ' / <a href="'.$ref.'">'.$name.'</a>'.$navi;
+            $navi = ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$name.'</a>'.$navi;
 
             // Change search name for next loop
             $check_id = $parents[0]; // Change parent folder ID to check
@@ -1419,16 +1488,26 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         // Output rest of Google Drive navigation
         echo $navi;
     }
-    ?>
 
+    // Tooltip message
+    $tooltip_login_menu_icon = Yii::t('OnlinedrivesModule.new', 'Set external drive connections such as - login to Sciebo or Google Drive. Please see configuration guide below for detail.');
+    $tooltip_plus_menu_icon = Yii::t('OnlinedrivesModule.new', 'Click here to upload file or add new files / folder of your choice.');
+    ?>
+    <!-- Tooltip -->
+    <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="<?=$tooltip_login_menu_icon?>">
+        <i data-target="globalModal"></i>
     <!-- Login menu icon -->
     <span id="login_menu_icon" class="glyphicon glyphicon-menu-hamburger" onclick="getElementById('login_menu').style.display = 'block';"></span>
-
+    </span>
     <!-- Plus menu icon -->
     <?php
     // Check (2)
     if ($check == 1 && (!empty($get_sciebo_path) || !empty($get_gd_folder_id))) {
-        echo '<span id="plus_menu_icon" class="glyphicon glyphicon-plus" onclick="getElementById(\'plus_menu\').style.display = \'block\';"></span>';
+        echo '
+<!-- Tooltip -->
+    <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_plus_menu_icon.'">
+        <i data-target="globalModal"></i>
+<span id="plus_menu_icon" class="glyphicon glyphicon-plus" onclick="getElementById(\'plus_menu\').style.display = \'block\';"></span></span>';
     }
     ?>
 </div>
@@ -1490,6 +1569,14 @@ if (count($arr_app_user_admin) > 0) {
 
 
     <div class="box gray">
+        <?php
+        // Tooltip message
+        $tooltip_connected_drives = Yii::t('OnlinedrivesModule.new', 'Please click here to view connected drives and select contents from them. The selected contents will be open to all members in the table below.');
+        ?>
+        <!-- Tooltip -->
+        <span style="margin-top: 0px; margin-bottom: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top"
+              data-original-title="<?=$tooltip_connected_drives?>">
+                    <i data-target="globalModal"></i>
         <span class="glyphicon glyphicon-check"></span>
         <span class="pointer">
             <?php
@@ -1518,6 +1605,7 @@ if (count($arr_app_user_admin) > 0) {
                     }
             "></span>';
             ?>
+        </span>
         </span>
 
         <div id="connected_drives_table" class="shownone" style="margin-top: 20px;">
@@ -1908,10 +1996,18 @@ elseif ($get_gd_folder_id != '') {
 }
 
 // Wrapper container
+// Tootip
+$tooltip_create_folder = Yii::t('OnlinedrivesModule.new', 'Click here to create folder. Creating a new folder is subject to the owner\'s permission');
+$tooltip_create_file = Yii::t('OnlinedrivesModule.new', 'Click here to create file. Inside you will find the option to select supported file type such as - *.txt, *.docx, *.xlsx, *.pptx, *.odt');
+
 echo '<div class="rel" style="margin-bottom: 50px;">'.
 	// Icons for creating folder and creating file
     $form->field($model, 'create')->radioList([
 	    'create_folder' => '<div class="upcr_btn_div">
+                            <!-- Tooltip -->
+                            <span style="margin-top: 14px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" 
+                            data-original-title="'.$tooltip_create_folder.'">
+                            <i data-target="globalModal"></i>
     	    <span id="create_folder" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-folder-open fa-lg" title="' . Yii::t('OnlinedrivesModule.new', 'Create folder') . '"
         	    onclick="
                     getElementById(\'create_btn\').className = \'form-group showblock\';
@@ -1930,6 +2026,11 @@ echo '<div class="rel" style="margin-bottom: 50px;">'.
 	        "></span>
     	</div>',
 	    'create_file' => '<div class="upcr_btn_div">
+                            <!-- Tooltip -->
+                            <span style="margin-top: 14px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" 
+                            data-original-title="'.$tooltip_create_file.'">
+                            <i data-target="globalModal"></i>
+                    
     	    <span id="create_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-file fa-lg" title="' . Yii::t('OnlinedrivesModule.new', 'Create file') . '"
         	    onclick="
                     getElementById(\'create_btn\').className = \'form-group showblock\';
@@ -1940,7 +2041,7 @@ echo '<div class="rel" style="margin-bottom: 50px;">'.
                 	getElementById(\'create_folder_name\').className = \'shownone\';
                 	getElementById(\'create_file_name\').classList.toggle(\'showblock\');
                     getElementById(\'createfileform-new_file_name\').focus();
-	        "></span>
+	        "></span></span>
     	</div>',
 	], ['encode' => false]); // https://stackoverflow.com/questions/46094352/display-image-with-label-in-radiobutton-yii2
 echo '</div>';
@@ -2019,8 +2120,8 @@ echo '</div>';
                 id="type_xlsx"
                 class="type_icon"
                 src="' . $bundle->baseUrl . '/images/type/gray/xlsx.png"
-                alt="Table"
-                title="Table"
+                alt="Spreadsheet"
+                title="Spreadsheet"
                 onclick="
                     type = \'.xlsx\';
                     name = getElementById(\'createfileform-new_file_name\').value;
@@ -2126,10 +2227,17 @@ $form_u = ActiveForm::begin([
         $css = 'upload_btn_div_inside_folder';
     }
 
+    // Tooltip
+    $tooltip_upload_file = Yii::t('OnlinedrivesModule.new', 'Click here to upload file. Uploading a new file is subject to the owner\'s permission and file size is limited to 20M');
+
     // Icon for uploading file
     echo '<div class="'.$css.'">' .
         $form_u->field($model_u, 'upload')->fileInput(['onchange' => 'this.form.submit()']) .
         '<label for="uploadfileform-upload">
+            <!-- Tooltip -->
+            <span style="margin-top: 14px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" 
+            data-original-title="'.$tooltip_upload_file.'">
+            <i data-target="globalModal"></i>
             <span id="upload_file" class="upcr_btn btn-info btn-lg upcr_shaddow fa fa-cloud-upload fa-lg"
                 title="' . Yii::t('OnlinedrivesModule.new', 'Upload file') . '"
                 onclick="'.
@@ -2608,8 +2716,12 @@ else {
                             echo '<div>
 
                                 <div class="col-sm-1 float-left">
-                                    <div class="round round-sm hollow">
-                                        <span title="'.$file_owner.'">';
+                                    
+                                    <!--Owner information -->
+                                        
+                                    <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$file_owner.'">
+                                    <i data-target="globalModal"></i>
+                                        <div class="round round-sm hollow">';
                                             $words = explode(',', $file_owner);
                                             $result1 = $words[0][0];
                                             if (count($words) > 1) {
@@ -2619,8 +2731,9 @@ else {
                                                 $result2 = '';
                                             }
                                             echo '<span class="b">'.$result2.$result1.'</span>
-                                        </span>
-                                    </div>
+                                        </div>
+                                    </span>
+                                    
                                 </div>';
 
                                 if (is_array($file_shared) && count($file_shared) > 0) {
@@ -2800,8 +2913,8 @@ else {
                                 echo 'getElementById(\'more'.$no.'\').className = \'showblock more_menu'.$class.'\';
                                 getElementById(\'tr'.$no.'\').className = \'bgyellow\';
                                 return false;
-                            ">
-                                <span class="glyphicon glyphicon-option-horizontal" style="font-size: 25px;"></span>
+                            ">';
+                                echo '<span class="glyphicon glyphicon-option-horizontal" style="font-size: 25px;"></span>
                             </a>'.
 
                             // Wrapper container
@@ -3322,8 +3435,8 @@ else {
                                 echo 'getElementById(\'more'.$no.'\').className = \'showblock more_menu'.$class.'\';
                                 getElementById(\'tr'.$no.'\').className = \'bgyellow\';
                                 return false;
-                            ">
-                                <span class="glyphicon glyphicon-option-horizontal" style="font-size: 25px;"></span>
+                            ">';
+                              echo  '<span class="glyphicon glyphicon-option-horizontal" style="font-size: 25px;"></span>
                             </a>'.
 
                             // Wrapper container
