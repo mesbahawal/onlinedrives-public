@@ -162,83 +162,6 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
     }
 }
 
-/*
-function getGoogleClient($db, $space_id, $home_url, $guid) {
-    $client = false ;
-    // Check for database entries for Google Drive and this space
-    $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE space_id = :space_id AND drive_name = :drive_name AND if_shared NOT IN (\'D\')', [
-        ':space_id' => $space_id,
-        ':drive_name' => 'gd',
-    ])->queryAll();
-
-    if (count($sql) > 0) {
-        foreach ($sql as $value) {
-            $app_password = $value['app_password'];
-            $client = new Google_Client();
-            $client->setApplicationName('ResearchHub');
-            $client->addScope(Google_Service_Drive::DRIVE);
-            $client->setAuthConfig('protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json');
-            $client->setAccessType('offline'); // Offline access
-            $client->setPrompt('select_account consent');
-            $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
-        }
-
-        $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
-        if (file_exists($tokenPath)) {
-            $accessToken = json_decode(file_get_contents($tokenPath), true);
-            $client->setAccessToken($accessToken);
-        }
-
-        // If there is no previous token or it's expired
-        if ($client->isAccessTokenExpired()) {
-            // Refresh the token if possible, else fetch a new one
-            if ($client->getRefreshToken()) {
-                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-            }
-            else {
-                // Request authorization from the user
-                if (!isset($_GET['code'])) {
-                    $authUrl = $client->createAuthUrl();
-                    header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
-                }
-                // Hier Code übergeben
-                if (isset($_GET['code'])) {
-                    $code = $_GET['code'];
-
-                    $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-                    $client->setAccessToken($accessToken);
-
-                    // Check to see if there was an error
-                    if (array_key_exists('error', $accessToken)) {
-                        //throw new Exception(join(', ', $accessToken));
-                        return false;
-                    }
-
-                    // Save the token to a file
-                    if (!file_exists(dirname($tokenPath))) {
-                        mkdir(dirname($tokenPath), 0700, true);
-                    }
-
-                    if (file_put_contents($tokenPath, json_encode($client->getAccessToken()))){
-
-                        $sql = $db->createCommand('UPDATE onlinedrives_app_detail
-                            SET if_shared = \'N\' WHERE app_password = :app_password', [
-                            ':app_password' => $app_password,
-                        ])->execute();
-                    }
-                    else {
-                        return false;
-                    }
-                }
-            }
-        }
-        return $client;
-    }
-    else {
-        return false;
-    }
-}*/
-
 
 
 function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
@@ -490,13 +413,20 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             elseif ($get_gd_folder_id != '') {
                 // Build Google Drive icon for navigation
                 $ref = 'https://accounts.google.com/ServiceLogin';
-                $src = 'protected/modules/onlinedrives/resources/images/gd20.png';
+                $src = $bundle->baseUrl .'/images/gd20.png';
 
-                // Output Google Drive icon in navigation
-                echo ' /
-                <a href="'.$ref.'" target="_blank">
-                    <img src="'.$src.'" style="position: relative; top: -2px;" title="Google Drive" />
-                </a>';
+                // Output Google Drive icon in navigation with tooltip
+                $tooltip_gd_redirection = Yii::t('OnlinedrivesModule.new','Redirect to Google Drive web portal.');
+                echo '
+                <!-- Tooltip -->
+                <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_gd_redirection.'">
+                    <a href="'.$ref.'" target="_blank" data-target="globalModal">
+                        <img src="'.$src.'" style="position: relative; top: 0px;" />
+                    </a>
+                    <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span>
+                </span>';
+
+
 
                 // Build rest of Googel Drive navigation
                 $navi = '';
@@ -994,11 +924,13 @@ if ($app_user_id <> '') {
                 // Check which boxes are selected
                 $permission = '';
 
-                //echo 'name='.$name.'--path='.$path.'--permission=<br>';
-
+                // Get shared content rows from database
                 $sql = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
-                    WHERE drive_path = :drive_path AND onlinedrives_app_detail_id = :app_detail_id AND share_status = \'Y\' ', [
+                    WHERE (drive_path = :drive_path AND fileid = :fileid)
+                    AND onlinedrives_app_detail_id = :app_detail_id 
+                    AND share_status = \'Y\' ', [
                     ':drive_path' => $path,
+                    ':fileid' => $id,
                     ':app_detail_id' => $app_detail_id,
                 ])->queryAll();
                 foreach ($sql as $value) {
@@ -1062,6 +994,9 @@ if ($app_user_id <> '') {
                         // File ID
                         echo Html::ActiveHiddenInput($model_addfiles, 'fileid['.$i.']', array('value' => $id));
 
+                        // mime type input
+                        echo Html::ActiveHiddenInput($model_addfiles, 'mime_type['.$i.']',  array('value' => $type));
+
                         // Output
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$i.']')->checkboxList([
                             urlencode($path_chunk) => '',
@@ -1120,7 +1055,8 @@ if ($app_user_id <> '') {
                     <td><div><!-- Tooltip -->
                     <span style="margin-top: 0px; margin-bottom: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" 
                     data-original-title="'.$tooltip_upload.'">
-                    <i data-target="globalModal"></i>';
+                    <i data-target="globalModal"></i>
+                    ';
                         if ($pos_rename !== false && $pos_move !== false && $pos_del !== false && $pos_upl !== false) {
                             $model_addfiles->permission[$i] = ['Rn', 'Mv', 'D', 'U'];
                         }
@@ -1179,7 +1115,7 @@ if ($app_user_id <> '') {
                                     document.getElementsByName(\'AddFilesForm[drive_path]['.$i.'][]\')[0].checked = true;
                                 }
                                 '
-                        ]);
+                        ] );
                     echo '</span></div>
 
                     </td>
@@ -1439,7 +1375,11 @@ if ($app_user_id <> '') {
                         // File ID
                         echo Html::ActiveHiddenInput($model_addfiles, 'fileid['.$checkbox_index.']', array('value' => $id));
 
-                        // Output
+                        // mime type input
+                        echo Html::ActiveHiddenInput($model_addfiles, 'mime_type['.$checkbox_index.']',  array('value' => $type));
+
+
+                // Output
                         echo $form_addfiles->field($model_addfiles, 'drive_path['.$checkbox_index.']')->checkboxList([
                             urlencode($path_chunk) => '',
                         ], [

@@ -15,6 +15,7 @@ class AddFilesForm extends \yii\base\Model
     public $drive_path;
     public $fileid;
     public $permission;
+    public $mime_type;
     public $app_detail_id;
 
     public function rules()
@@ -23,6 +24,7 @@ class AddFilesForm extends \yii\base\Model
             [['drive_path'], 'required', 'message' => 'Please choose a drive path.'],
             [['fileid'], 'required'],
             [['permission'], 'required'],
+            [['mime_type'], 'required'],
             ['app_detail_id', 'string'],
         ];
     }

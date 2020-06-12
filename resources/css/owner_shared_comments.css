@@ -36,7 +36,7 @@
 /* on ex2 if you include bootstrap v3 css the number is a rounded circle with the .has-badge class */
 #ex2 .fa-stack[data-count]:after {
     position: absolute;
-    right: %;
+
     top: 1%;
     margin-left: 20px;
     content: attr(data-count);

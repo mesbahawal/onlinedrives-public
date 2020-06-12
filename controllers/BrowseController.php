@@ -30,6 +30,66 @@ use yii\web\UploadedFile;
 
 class BrowseController extends BaseController
 {
+
+    public function postMsgStream($mime_type, $space_id, $drive_path, $drive_key, $drive_name){
+        // initialize variables
+        $post_target_content_name = '';
+        $post_msg_url = '';
+        $post_msg_description_start = '';
+        $post_msg_description_end = '';
+        $home_url = Url::base(true);
+
+        if($drive_name == 'sciebo' && $mime_type=='folder'){
+            // Folder content url
+            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&sciebo_path='.$drive_path.'&dk='.$drive_key;
+
+            // Folder content name
+            $sub_path = substr($drive_path,0,-1);
+            $list_foldernames = explode('/',$sub_path);
+            $target_foldername = end($list_foldernames);
+            $post_target_content_name = urldecode($target_foldername);
+        }
+        elseif ($drive_name == 'sciebo' && $mime_type=='file'){
+            // File content url
+            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
+
+            // File content name
+            $list_foldernames = explode('/',$drive_path);
+            $target_foldername = end($list_foldernames);
+            $post_target_content_name = urldecode($target_foldername);
+        }
+        else if($drive_name == 'gd' && $mime_type=='folder'){
+            // Folder content url
+            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+
+            // Folder content name
+            $post_target_content_name = 'New Folder';
+        }
+        else if($drive_name == 'gd' && $mime_type=='file'){
+            // Folder content url
+            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+
+            // Folder content name
+            $post_target_content_name = 'New File';
+        }
+
+        // build post message
+        $drive_name_desc = ($drive_name=='sciebo') ? 'Sciebo':'Google Drive';
+        $post_msg_description_start = 'Published new '.$drive_name_desc.' '.$mime_type.' - ';
+        $post_msg_description_end = ' in OnlineDrives module';
+        $post_msg = $post_msg_description_start.' ['.$post_target_content_name.']('.$post_msg_url.' "'.$post_target_content_name.'")'.$post_msg_description_end;
+
+        // Output New post msg to stream
+        $post = new Post($this->contentContainer);
+        $post->message = $post_msg;
+        $post_result = WallCreateContentForm::create($post, $this->contentContainer);
+
+        // stream post id
+        $post_content_id = $post_result['id'];
+
+        return $post_content_id;
+    }
+
     public function actionIndex()
     {
         // Sciebo params
@@ -566,14 +626,29 @@ class BrowseController extends BaseController
                     $arr_fileid =  $model_addfiles->fileid;
                     $app_detail_id =  $model_addfiles->app_detail_id;
                     $permission =  $model_addfiles->permission;
+                    $arr_mime_type =  $model_addfiles->mime_type;
+
+                    // initialize variables
+                    $post_content_id = '';
+                    $drive_name = '';
 
                     if (isset($_GET['sciebo_path'])) {
                         $get_sciebo_path = $_GET['sciebo_path'];
-                        $str_drive_path_check = ' AND ';
                     } // TODO: XXX
                     else {
                         $get_sciebo_path = '';
-                        $str_drive_path_check = '';
+                    }
+
+                    // find drive name
+                    $sql_drive_name = $db->createCommand('SELECT d.* 
+                                FROM onlinedrives_app_detail d
+                                WHERE d.`id` = :app_detail_id
+                                ',
+                        [':app_detail_id' => $app_detail_id,
+                    ])->queryAll();
+
+                    if(count($sql_drive_name)>0){
+                        $drive_name = $sql_drive_name[0]["drive_name"];
                     }
 
                     for ($i = 0; $i < count($arr_drive_path); $i++) {
@@ -581,6 +656,8 @@ class BrowseController extends BaseController
                         $val = $arr_drive_path[$key];
                         
                         if ($val <> '') {
+
+                            // form input - fileid
 							if ($arr_fileid[$key] <> '') {
                                 $val_fileid = $arr_fileid[$key];
                             }
@@ -588,6 +665,7 @@ class BrowseController extends BaseController
                                 $val_fileid = '';
                             }
 
+                            // form input - user permission
                             if ($permission[$key] <> '') {
                                 $permission_items = implode('|', $permission[$key]);
                             }
@@ -595,23 +673,30 @@ class BrowseController extends BaseController
                                 $permission_items = 'Rd';
                             }
 
+                            // form input - mime type
+                            if ($arr_mime_type[$key] <> '') {
+                                $mime_type = $arr_mime_type[$key];
+                            }
+                            else {
+                                $mime_type = '';
+                            }
+
+
                             $drive_path = urldecode($val[0]);
 
                             // Check if drive path does already exist in share
 
-                            /* Debug Query: if drive path does already exist in share
-                             * $qry_check = 'SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.*
+                            // Debug Query: if drive path does already exist in share
+                              /*$qry_check = 'SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.*
                                 FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
                                 WHERE d.`id` = p.`onlinedrives_app_detail_id`
-                                AND d.`space_id` = '.$space_id.'
-                                AND d.`user_id` = '.$username.'
-                                AND p.`fileid` = '.$val_fileid.'
+                                AND d.`space_id` = \''.$space_id.'\'
+                                AND d.`user_id` = \''.$username.'\'
+                                AND p.`fileid` = \''.$val_fileid.'\'
                                 AND d.`id` = '.$app_detail_id.'
-                                AND p.`share_status` = "Y"';
+                                GROUP BY p.`fileid`';
 
-                            echo "OK--".$qry_check."<br>";*/
-
-
+                              echo "OK--".$qry_check."<br>";*/
 
                             $sql = $db->createCommand('SELECT d.`id` AS d_id, p.`id` AS p_id, d.*,p.* 
                                 FROM onlinedrives_app_detail d, onlinedrives_app_drive_path_detail p
@@ -620,7 +705,7 @@ class BrowseController extends BaseController
                                 AND d.`user_id` = :username
                                 AND p.`fileid` = :fileid
                                 AND d.`id` = :app_detail_id
-                                AND p.`share_status` = \'Y\'', [
+                                GROUP BY p.`fileid`', [
                                 ':space_id' => $space_id,
                                 ':username' => $username,
                                 ':fileid' => $val_fileid,
@@ -628,29 +713,73 @@ class BrowseController extends BaseController
                             ])->queryAll();
 
                             if (count($sql) == 0) { // If there is no such drive path then create new row, else update existing row
+                                // New drive key
+                                $new_dk = md5(microtime());
+
+                                // stream post id - after post msg to stream
+                                $post_content_id = $this->postMsgStream($mime_type, $space_id, $drive_path, $new_dk, $drive_name);
+
+                                // Insert new drive content
                                 $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
-                                    (`drive_path`, `fileid`, `permission`, `onlinedrives_app_detail_id`, `drive_key`) 
-                                    VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key)', [
+                                    (`drive_path`, `fileid`, `permission`, `onlinedrives_app_detail_id`, `drive_key`, `content_id`, `mime_type`) 
+                                    VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key, :content_id, :mime_type)', [
                                     ':drive_path' => $drive_path,
                                     ':fileid' => $val_fileid,
                                     ':permission' => $permission_items,
                                     ':onlinedrives_app_detail_id' => $app_detail_id,
-                                    ':drive_key' => md5(microtime()),
+                                    ':drive_key' => $new_dk,
+                                    ':content_id' => $post_content_id,
+                                    ':mime_type' => $mime_type,
                                 ])->execute();
                             }
                             else { // Update existing row which are selected from the addfiles-form checkbox list
                                 foreach($sql as $values) {
                                     $drive_path_detail_id = $values['p_id'];
-                                    $db->createCommand('UPDATE onlinedrives_app_drive_path_detail 
+                                    $db_content_id = $values['content_id'];
+                                    $db_drive_key = $values['drive_key'];
+
+                                    // if there was no previous post then post msg to stream
+                                    if($db_content_id > 0 && !empty($db_content_id)){
+                                        // stream post id - after post msg to stream
+                                        $post_content_id = $db_content_id;
+                                    }
+                                    else{
+                                        // stream post id - after post msg to stream
+                                        $post_content_id = $this->postMsgStream($mime_type, $space_id, $drive_path, $db_drive_key, $drive_name);
+                                    }
+
+                                    // Debug update query
+                                    /*$updt_qry = 'UPDATE onlinedrives_app_drive_path_detail
+                                        SET `drive_path` = \''.$drive_path.'\', 
+                                        `permission` = \''.$permission_items.'\', 
+                                        `onlinedrives_app_detail_id` = '.$app_detail_id.',
+                                        `update_date` = CURRENT_TIMESTAMP,
+                                        `fileid` = \''.$val_fileid.'\',
+                                        `mime_type` = \''.$mime_type.'\',
+                                        `content_id` = '.$post_content_id.',
+                                        `share_status` = \'Y\'
+                                        WHERE id = '.$drive_path_detail_id;
+
+                                    echo $updt_qry."<br>";*/
+
+
+                                    $db->createCommand('UPDATE onlinedrives_app_drive_path_detail
                                         SET `drive_path` = :drive_path, 
                                         `permission` = :permission, 
                                         `onlinedrives_app_detail_id` = :onlinedrives_app_detail_id,
-                                        `update_date` = CURRENT_TIMESTAMP
+                                        `update_date` = CURRENT_TIMESTAMP,
+                                        `fileid` = :fileid,
+                                        `mime_type` = :mime_type,
+                                        `content_id` =:content_id,
+                                        `share_status` = \'Y\'
                                         WHERE id = :drive_path_detail_id', [
                                         ':drive_path_detail_id' => $drive_path_detail_id,
                                         ':drive_path' => $drive_path,
                                         ':permission' => $permission_items,
                                         ':onlinedrives_app_detail_id' => $app_detail_id,
+                                        ':fileid' => $val_fileid,
+                                        ':mime_type' => $mime_type,
+                                        ':content_id' => $post_content_id,
                                     ])->execute();
                                 }
                             }
@@ -839,6 +968,10 @@ class BrowseController extends BaseController
                         'canWrite' => $this->canWrite(),
                     ]);
 
+                }
+                else {
+                    $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
+                    return $this->redirect($redirect_url);
                 }
             }
             else {

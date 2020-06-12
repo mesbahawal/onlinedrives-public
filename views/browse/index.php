@@ -1,6 +1,8 @@
 <?php
 
 use humhub\modules\admin\models\forms\FileSettingsForm;
+use humhub\modules\content\widgets\WallCreateContentForm;
+use humhub\modules\post\models\Post;
 use Psr\Log\NullLogger;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -15,6 +17,7 @@ use humhub\modules\onlinedrives\models\forms\LoginFormGDClient;
 use humhub\modules\onlinedrives\models\forms\CreateFileForm;
 use humhub\modules\onlinedrives\models\forms\UploadFileForm;
 use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
+
 
 // DB connection
 include_once __DIR__ . '/../../models/dbconnect.php';
@@ -716,6 +719,9 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                 $transfer_acc_if_shared = '';
                 $permission_items = '';
                 $new_app_user_id = '';
+                $db_fileid = '';
+                $db_mime_type = '';
+
                 $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$to_space_guid;
 
                 // Get data
@@ -729,6 +735,8 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                     $share_status = $value['share_status'];
                     $user_id = $value['user_id'];
                     $email = $value['email'];
+                    $db_fileid = $value['fileid'];
+                    $db_mime_type = $value['mime_type'];
                 }
 
                 // Check if already account exist? if not then insert
@@ -791,9 +799,10 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
 
                         // Check if already shared same content?
                         $sql_check_drive_path = $db->createCommand('SELECT * FROM onlinedrives_app_drive_path_detail
-                            WHERE `onlinedrives_app_detail_id` = :new_app_user_id AND share_status = \'Y\' AND drive_path = :drive_path', [
+                            WHERE `onlinedrives_app_detail_id` = :new_app_user_id AND share_status = \'Y\' AND (drive_path = :drive_path OR fileid = :fileid)', [
                             ':new_app_user_id' => $new_app_user_id,
                             ':drive_path' => $drive_path,
+                            ':fileid' => $fileid,
                         ])->queryAll();
 
                         if (count($sql_check_drive_path) > 0) {
@@ -801,14 +810,24 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                             (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
                         }
                         else {
+
+                            if ($db_fileid!=''){
+                                $fileid = $db_fileid;
+                            }// check fileid exist in db, if treu then use this as insert value
+
+                            // New drive key
+                            $new_dk = md5(microtime());
+
+
                             $sql_add_drive_path = $db->createCommand('INSERT INTO onlinedrives_app_drive_path_detail
-                                (drive_path, fileid, permission, onlinedrives_app_detail_id, drive_key)
-                                VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key)', [
+                                (drive_path, fileid, permission, onlinedrives_app_detail_id, drive_key, mime_type)
+                                VALUES (:drive_path, :fileid, :permission, :onlinedrives_app_detail_id, :drive_key, :mime_type)', [
                                 ':drive_path' => $drive_path,
                                 ':fileid' => $fileid,
                                 ':permission' => $permission_items,
                                 ':onlinedrives_app_detail_id' => $new_app_user_id,
-                                ':drive_key' => md5(microtime()),
+                                ':drive_key' => $new_dk,
+                                ':mime_type' => $db_mime_type,
                             ])->execute();
 
                             if (!$sql_add_drive_path) {
@@ -1161,7 +1180,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
         }
         elseif ($get_sciebo_path != '' && strpos($drive_path, $db_drive_path) === false){
             // Error msg
-            $error_msg = Yii::t('OnlinedrivesModule.new', 'Unable to display requested content.');
+            $error_msg = Yii::t('OnlinedrivesModule.new', 'User access permission for the requested content is not granted.');
         }// disable parent folder access if not shared.
 
         if (isset($sciebo_content)) {
@@ -1279,6 +1298,30 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                     $file_shared = $sciebo_content[$values]['{http://owncloud.org/ns}share-types'];
                     $file_comment = $sciebo_content[$values]['{http://owncloud.org/ns}comments-count'];
 
+                    // Find profile owner info, content Id
+                    $sql_profile_content = $db->createCommand('SELECT pfl.`firstname`,pfl.`lastname`, p.`content_id`
+                    FROM `onlinedrives_app_drive_path_detail` p,`onlinedrives_app_detail` d,`user` u,`profile` pfl
+                    WHERE p.`onlinedrives_app_detail_id`=d.`id`
+                    AND d.`user_id`=u.`username`
+                    AND u.`id`=pfl.`user_id`
+                    AND p.`drive_key`= :drive_key
+                    AND d.`if_shared` <> \'D\'
+                    AND p.`share_status` = \'Y\'', [
+                        ':drive_key' => $drive_key,
+                    ])->queryAll();
+
+                    if(count($sql_profile_content)>0){
+                        $content_id = $sql_profile_content[0]["content_id"];
+                        $firstname = $sql_profile_content[0]["firstname"];
+                        $lastname = $sql_profile_content[0]["lastname"];
+                        $profile_owner_name = $lastname.', '.$firstname;
+                    }
+                    else{
+                        $content_id = '';
+                        $profile_owner_name = '';
+                    }
+
+
                     // Folder list
                     if ($type == 'folder') {
                         $all_folders[$afo]['cloud'] = 'sciebo';
@@ -1302,6 +1345,8 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                         $all_folders[$afo]['file_shared'] = $file_shared;
                         $all_folders[$afo]['file_comment'] = $file_comment;
                         $all_folders[$afo]['drive_key'] = $drive_key;
+                        $all_folders[$afo]['content_id'] = $content_id;
+                        $all_folders[$afo]['profile_owner'] = $profile_owner_name;
                         $afo++;
                     }
                     // File list
@@ -1327,6 +1372,8 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                         $all_files[$afi]['file_shared'] = $file_shared;
                         $all_files[$afi]['file_comment'] = $file_comment;
                         $all_files[$afi]['drive_key'] = $drive_key;
+                        $all_files[$afi]['content_id'] = $content_id;
+                        $all_files[$afi]['profile_owner'] = $profile_owner_name;
                         $afi++;
                     }
                     $all++;
@@ -1357,12 +1404,12 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         <div class="panel-body">
 
             <?php
-            /*
-            echo FolderView::widget([
+
+            /*echo FolderView::widget([
                 'contentContainer' => $contentContainer,
                 'folder' => $folder,
-            ])
-            */
+            ])*/
+
             ?>
 
 <!-- Breadcrumb navigation -->
@@ -1388,7 +1435,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 </a>
             </span>';
 
-        // Test%201A/ins/
+        $share_status = '';
         // Check breadcrumb for shared location
         $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
             FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id=p.onlinedrives_app_detail_id
@@ -1398,6 +1445,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         foreach ($sql as $value) {
             $drive_path = $value['drive_path'];
             $app_user_id = $value['app_user_id'];
+            $share_status = $value['share_status'];
         }
 
         // Build rest of Sciebo navigation
@@ -1405,7 +1453,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
         $path = '';
         $content_name='';
         $temp = '';
-        if($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false){
+        if($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false && $share_status=='Y'){
             //echo '--path='.$get_sciebo_path;
             $sub_path = substr($drive_path,0,-1);
             $list_foldernames = explode('/',$sub_path);
@@ -1413,7 +1461,7 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             $navi_start_name = urldecode($target_foldername);
 
             // Build output for initial node of navigation
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$drive_path.'&dk='.$get_drive_key;
+            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.urlencode($drive_path).'&dk='.$get_drive_key;
             $navi_start = ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$navi_start_name.'</a>';
             echo $navi_start;
 
@@ -1436,9 +1484,10 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$path.'&dk='.$get_drive_key;
                 $navi .= ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$name.'</a>';
             } while ($temp != '');
+            // Output rest of Sciebo navigation
+            echo $navi;
         }
-        // Output rest of Sciebo navigation
-        echo $navi;
+
     }
     // Output Google Drive navigation
     elseif ($get_gd_folder_id != '') {
@@ -2401,6 +2450,30 @@ if ($count_gd_files > 0) {
                 $modified_time = mktime($temp_h, $temp_min, $temp_s, $temp_mon, $temp_d, $temp_y);
                 $modified_time += 7200; // 60m * 60m * 2h, European time zone
 
+                // Find profile owner info, content Id
+                $sql_profile_content = $db->createCommand('SELECT pfl.`firstname`,pfl.`lastname`, p.`content_id`
+                    FROM `onlinedrives_app_drive_path_detail` p,`onlinedrives_app_detail` d,`user` u,`profile` pfl
+                    WHERE p.`onlinedrives_app_detail_id`=d.`id`
+                    AND d.`user_id`=u.`username`
+                    AND u.`id`=pfl.`user_id`
+                    AND p.`drive_key`= :drive_key
+                    AND d.`if_shared` <> \'D\'
+                    AND p.`share_status` = \'Y\'', [
+                    ':drive_key' => $drive_key,
+                ])->queryAll();
+
+                if(count($sql_profile_content)>0){
+                    $content_id = $sql_profile_content[0]["content_id"];
+                    $firstname = $sql_profile_content[0]["firstname"];
+                    $lastname = $sql_profile_content[0]["lastname"];
+                    $profile_owner_name = $lastname.', '.$firstname;
+                }
+                else{
+                    $content_id = '';
+                    $profile_owner_name = '';
+                }
+
+
                 // Folder list, file list
                 if ($type == 'folder') {
                     $all_folders[$afo]['cloud'] = 'gd';
@@ -2423,6 +2496,8 @@ if ($count_gd_files > 0) {
                     $all_folders[$afo]['file_shared'] = array();
                     $all_folders[$afo]['file_comment'] = '';
                     $all_folders[$afo]['drive_key'] = $drive_key;
+                    $all_folders[$afo]['content_id'] = $content_id;
+                    $all_folders[$afo]['profile_owner'] = $profile_owner_name;
                     $afo++;
                 }
                 else {
@@ -2447,6 +2522,8 @@ if ($count_gd_files > 0) {
                     $all_files[$afi]['file_shared'] = array();
                     $all_files[$afi]['file_comment'] = '';
                     $all_files[$afi]['drive_key'] = $drive_key;
+                    $all_files[$afi]['content_id'] = $content_id;
+                    $all_files[$afi]['profile_owner'] = $profile_owner_name;
                     $afi++;
                 }
                 $all++;
@@ -2597,14 +2674,20 @@ else {
             $file_shared = $all_folders[$i]['file_shared'];
             $file_comment = $all_folders[$i]['file_comment'];
             $drive_key = $all_folders[$i]['drive_key'];
+            $content_id = $all_folders[$i]['content_id'];
+            $profile_owner_name = $all_folders[$i]['profile_owner'];
+
 
             $created_time_txt = $created_time;
             $modified_time_txt = $modified_time;
+
+
 
             // Parents list
             $count_parents = 0;
             $parent_id_list = '';
             if ($cloud == 'gd') {
+                $file_owner = $username;
                 if (is_array($parents)) {
                     $count_parents = sizeof($parents);
                     $parent_id_list = '';
@@ -2676,6 +2759,11 @@ else {
                 $time_title = 'Modified time: '.$modified_time_txt_exact."\n".
                     'Creation time: '.$created_time_txt."\n";
 
+                // Build owner of google drive
+                if($cloud == 'gd'){
+                    $file_owner = $profile_owner_name;
+                }
+
                 // Output all folders
                 echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
                     <td class="shownone">'.$type.'</td>
@@ -2719,57 +2807,114 @@ else {
 
                     // Output owner, shared, comments (folders)
                     '<td>';
-                        if ($cloud == 'sciebo') {
+
                             echo '<div>
 
-                                <div class="col-sm-1 float-left">
+                                    <div class="col-sm-1 float-left">
                                     
-                                    <!--Owner information -->
-                                        
-                                    <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$file_owner.'">
-                                    <i data-target="globalModal"></i>
-                                        <div class="round round-sm hollow">';
-                                            $words = explode(',', $file_owner);
-                                            $result1 = $words[0][0];
-                                            if (count($words) > 1) {
-                                                $result2 = $words[1][1];
-                                            }
-                                            else {
-                                                $result2 = '';
-                                            }
-                                            echo '<span class="b">'.$result2.$result1.'</span>
-                                        </div>
-                                    </span>
-                                    
-                                </div>';
-
-                                if (is_array($file_shared) && count($file_shared) > 0) {
-                                    echo '<div id="ex2" class="float-left">
-                                        <span class="fa-stack fa-1x has-badge" data-count="yes">
-                                            <i class="fa fa-circle fa-stack-2x"></i>
-                                            <i class="fa fa-share fa-stack-1x fa-inverse"></i>
+                                        <!--Owner information -->';
+                                        $tooltip_owner_information = Yii::t('OnlinedrivesModule.new', 'Shared by- ').$file_owner;
+                                        echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_owner_information.'">
+                                        <i data-target="globalModal"></i>
+                                            <div class="round round-sm hollow">';
+                                                $words = explode(',', $file_owner);
+                                                $result1 = $words[0][0];
+                                                if (count($words) > 1) {
+                                                    $result2 = $words[1][1];
+                                                }
+                                                else {
+                                                    $result2 = '';
+                                                }
+                                                echo '<span class="b">'.$result2.$result1.'</span>
+                                            </div>
                                         </span>
+                                    
                                     </div>';
+
+                        if ($cloud == 'sciebo') {
+
+                                if($content_id<>''){
+                                    $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                }
+                                else{
+                                    $perma_link = '#';
                                 }
 
-                                if ($file_comment > 0) {
-                                    echo '<div id="ex2" class="float-left">
+                                if ($file_comment > 0 && $get_sciebo_path=='') {
+                                    // Tooltip external comment information
+                                    $tooltip_ext_comment_information = Yii::t('OnlinedrivesModule.new', 'This content has comment(s) internally within Sciebo member(s). Please login to Sciebo for details.');
+                                    echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_ext_comment_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left"><a href="'.$perma_link.'">
                                         <span class="fa-stack fa-1x has-badge" data-count="'.$file_comment.'">
                                             <i class="fa fa-circle fa-stack-2x"></i>
                                             <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
-                                        </span>
-                                    </div>';
+                                        </span></a>
+                                    </div></span>';
+                                }
+                                else if ( $get_sciebo_path=='' && $file_comment==0){
+                                    // Tooltip new research-hub comment information
+                                    $tooltip_new_comment_information = Yii::t('OnlinedrivesModule.new', 'Click here to comment');
+                                    echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left"><a href="'.$perma_link.'">
+                                        <span class="fa-stack fa-1x has-badge">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
+                                        </span></a>
+                                    </div></span>';
+                                }
+
+                                if (is_array($file_shared) && count($file_shared) > 0) {
+                                    // Tooltip external share information
+                                    $tooltip_ext_share_information = Yii::t('OnlinedrivesModule.new', 'This content has been shared internally within Sciebo member(s). Please login to Sciebo for details.');
+                                    echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_ext_share_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left">
+                                            <span class="fa-stack fa-1x has-badge" data-count="yes">
+                                                <i class="fa fa-circle fa-stack-2x"></i>
+                                                <i class="fa fa-share fa-stack-1x fa-inverse"></i>
+                                            </span>
+                                        </div></span>';
                                 }
 
                             echo '</div>';
                         }
-                    echo '</td>'.
+                        else if($cloud == 'gd'){
+
+                            if($content_id<>''){
+                                $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                            }
+                            else{
+                                $perma_link = '#';
+                            }
+
+                            if(!isset($_GET['gd_folder_id'])){
+                                // Tooltip new research-hub comment information
+                                $tooltip_new_comment_information = Yii::t('OnlinedrivesModule.new', 'Click here to comment');
+                                echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left"><a href="'.$perma_link.'">
+                                        <span class="fa-stack fa-1x has-badge">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
+                                        </span></a>
+                                    </div></span>
+                             </div>';
+                            }
+                        }
+                    echo '</td>';
 
                     // Output space sharing (folders)
-                    '<td style="position: relative;">
-                        <a href="#" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
+                        $tooltip_space_sharing = Yii::t('OnlinedrivesModule.new', 'Share this content directly to other space listed inside. If OnlineDrives is not activated in the desired space, then the content will be displayed automatically after the activation of this module there.');
+                    echo '<td style="position: relative;">
+                        <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_space_sharing.'">
+
+                        <a href="#" data-target="globalModal" onclick="getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\'; return false;">
                             <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
                         </a>
+                        
+                        </span>
 
                         <div id="space_sharing'.$no.'" class="shownone space_sharing_menu" style="background: white;">';
                                 // Cross icon (more options menu)
@@ -2939,10 +3084,10 @@ else {
 
                                 // Copy function
                                 '<div class="more_menu_div">';
-                                    $copy = Yii::t('OnlinedrivesModule.new', 'Copy');
+                                    $copy = Yii::t('OnlinedrivesModule.new', 'info - this portion is under construction');
                                     echo '<a href="" class="more_a" alt="'.$copy.'" title="'.$copy.'">
-                                        <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
-                                        <span class="more_txt">'.$copy.'</span>
+                                        <span class="glyphicon glyphicon-info-sign" style="font-size: 25px;"></span><br />
+                                        <span class="more_txt">info</span>
                                     </a>
                                 </div>';
 
@@ -3046,6 +3191,8 @@ else {
             $file_shared = $all_files[$i]['file_shared'];
             $file_comment = $all_files[$i]['file_comment'];
             $drive_key = $all_files[$i]['drive_key'];
+            $content_id = $all_files[$i]['content_id'];
+            $profile_owner_name = $all_files[$i]['profile_owner'];
 
             $created_time_txt = $created_time;
             $modified_time_txt = $modified_time;
@@ -3214,6 +3361,10 @@ else {
                 // echo $mime_type_icon;
                 $img = '<img src="' . $bundle->baseUrl . '/images/type/'.$icon.'.png" alt="'.'" title="'.'" />';
 
+                // Build owner of google drive
+                if($cloud == 'gd'){
+                    $file_owner = $profile_owner_name;
+                }
 
                 // Output all files
                 echo '<tr id="tr'.$no.'" style="border-top: 1px solid #ddd; color: #555;">
@@ -3257,55 +3408,112 @@ else {
 
                     // Output owner, shared, comments (files)
                     '<td>';
-                        if ($cloud == 'sciebo') {
+
                             echo '<div>
+                                    <div class="col-sm-1 float-left">
+                                    <!--Owner information -->';
+                                    $tooltip_owner_information = Yii::t('OnlinedrivesModule.new', 'Shared by- ').$file_owner;
+                                    echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_owner_information.'">
+                                                <i data-target="globalModal"></i>
+                                                    <div class="round round-sm hollow">';
+                                                        $words = explode(',', $file_owner);
+                                                        $result1 = $words[0][0];
+                                                        if (count($words) > 1) {
+                                                            $result2 = $words[1][1];
+                                                        }
+                                                        else {
+                                                            $result2 = '';
+                                                        }
+                                                        echo '<span class="b">'.$result2.$result1.'</span>
+                                                    </div>
+                                          </span>
+                                    </div>';
 
-                                <div class="col-sm-1 float-left">
-                                    <div class="round round-sm hollow">
-                                        <span title="'.$file_owner.'">';
-                                            $words = explode(',', $file_owner);
-                                            $result1 = $words[0][0];
-                                            if (count($words) > 1) {
-                                                $result2 = $words[1][1];
-                                            }
-                                            else {
-                                                $result2 = '';
-                                            }
-                                            echo '<b>'.$result2.$result1.'</b>'.
-                                        '</span>
-                                    </div>
-                                </div>';
+                        if ($cloud == 'sciebo') {
 
-                                if (is_array($file_shared) && count($file_shared) > 0) {
-                                    echo '<div id="ex2" class="float-left">
+                            if($content_id<>''){
+                                $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                            }
+                            else{
+                                $perma_link = '#';
+                            }
+
+                            if ($file_comment > 0 && $get_sciebo_path=='') {
+                                // Tooltip external comment information
+                                $tooltip_ext_comment_information = Yii::t('OnlinedrivesModule.new', 'This content has comment(s) internally within Sciebo member(s). Please login to Sciebo for details.');
+                                echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_ext_comment_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left"><a href="'.$perma_link.'">
+                                        <span class="fa-stack fa-1x has-badge" data-count="'.$file_comment.'">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
+                                        </span></a>
+                                    </div></span>';
+                            }
+                            else if ( $get_sciebo_path=='' && $file_comment==0){
+                                // Tooltip new research-hub comment information
+                                $tooltip_new_comment_information = Yii::t('OnlinedrivesModule.new', 'Click here to comment');
+                                echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left"><a href="'.$perma_link.'">
+                                        <span class="fa-stack fa-1x has-badge">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
+                                        </span></a>
+                                    </div></span>';
+                            }
+
+                            if (is_array($file_shared) && count($file_shared) > 0) {
+                                // Tooltip external share information
+                                $tooltip_ext_share_information = Yii::t('OnlinedrivesModule.new', 'This content has been shared internally within Sciebo member(s). Please login to Sciebo for details.');
+                                echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_ext_share_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left">
                                         <span class="fa-stack fa-1x has-badge" data-count="yes">
                                             <i class="fa fa-circle fa-stack-2x"></i>
                                             <i class="fa fa-share fa-stack-1x fa-inverse"></i>
                                         </span>
-                                    </div>';
-                                }
-
-                                if ($file_comment > 0) {
-                                    echo '<div id="ex2" class="float-left">
-                                        <span class="fa-stack fa-1x has-badge" data-count="'.$file_comment.'">
-                                            <i class="fa fa-circle fa-stack-2x"></i>
-                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
-                                        </span>
-                                    </div>';
-                                }
+                                    </div></span>';
+                            }
 
                             echo '</div>';
                         }
-                    echo '</td>'.
+                        else if($cloud == 'gd'){
+
+                            if($content_id<>''){
+                                $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                            }
+                            else{
+                                $perma_link = '#';
+                            }
+
+                            if(!isset($_GET['gd_folder_id'])){
+                                // Tooltip new research-hub comment information
+                                $tooltip_new_comment_information = Yii::t('OnlinedrivesModule.new', 'Click here to comment');
+                                echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
+                                          <i data-target="globalModal"></i>
+                                        <div id="ex2" class="float-left"><a href="'.$perma_link.'">
+                                        <span class="fa-stack fa-1x has-badge">
+                                            <i class="fa fa-circle fa-stack-2x"></i>
+                                            <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
+                                        </span></a>
+                                    </div></span>
+                             </div>';
+                            }
+                        }
+                    echo '</td>';
 
                     // Output space sharing (files)
-                    '<td style="position: relative;">
-                        <a href="#" onclick="
+                    $tooltip_space_sharing = Yii::t('OnlinedrivesModule.new', 'Share this content directly to other space listed inside. If OnlineDrives is not activated in the desired space, then the content will be displayed automatically after the activation of this module there.');
+                    echo '<td style="position: relative;">
+                        <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_space_sharing.'">
+                        <a href="#" data-target="globalModal" onclick="
                             getElementById(\'space_sharing'.$no.'\').className = \'showblock space_sharing_menu\';
                             return false;
                         ">
                             <span class="glyphicon glyphicon-share" style="font-size: 20px;"></span>
                         </a>
+                        </span>
 
                         <div id="space_sharing'.$no.'" class="shownone space_sharing_menu" style="background: white">';
                             // Cross icon (more options menu)
@@ -3461,10 +3669,10 @@ else {
 
                                 // Copy function
                                 '<div class="more_menu_div">';
-                                    $copy = Yii::t('OnlinedrivesModule.new', 'Copy');
+                                    $copy = Yii::t('OnlinedrivesModule.new', 'info - this portion is under construction');
                                     echo '<a class="more_a" href="" alt="'.$copy.'" title="'.$copy.'">
-                                        <span class="glyphicon glyphicon-duplicate" style="font-size: 25px;"></span><br />
-                                        <span class="more_txt">'.$copy.'</span>
+                                        <span class="glyphicon glyphicon-info-sign" style="font-size: 25px;"></span><br />
+                                        <span class="more_txt">info</span>
                                     </a>
                                 </div>';
 
