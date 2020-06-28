@@ -2776,8 +2776,10 @@ else {
                     <td style="padding: 5px;">';
                         if ($cloud == 'sciebo') {
                             //$path = urlencode($path);
+                            //echo "url manager=".Yii::$app->urlManager->enablePrettyUrl;
                             $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&sciebo_path='.urlencode($path).'&dk='.$drive_key;
                             echo '<a href="'.$url.'">'.$name.'</a>';
+
                         }
                         elseif ($cloud == 'gd') {
                             $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
