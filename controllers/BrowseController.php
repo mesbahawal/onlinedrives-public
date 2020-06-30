@@ -41,7 +41,12 @@ class BrowseController extends BaseController
 
         if($drive_name == 'sciebo' && $mime_type=='folder'){
             // Folder content url
-            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&sciebo_path='.$drive_path.'&dk='.$drive_key;
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id.'&sciebo_path='.$drive_path.'&dk='.$drive_key;
+            }
+            else{
+                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&sciebo_path='.$drive_path.'&dk='.$drive_key;
+            }
 
             // Folder content name
             $sub_path = substr($drive_path,0,-1);
@@ -51,7 +56,12 @@ class BrowseController extends BaseController
         }
         elseif ($drive_name == 'sciebo' && $mime_type=='file'){
             // File content url
-            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id;
+            }
+            else{
+                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
+            }
 
             // File content name
             $list_foldernames = explode('/',$drive_path);
@@ -60,14 +70,25 @@ class BrowseController extends BaseController
         }
         else if($drive_name == 'gd' && $mime_type=='folder'){
             // Folder content url
-            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+            }
+            else{
+                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+            }
 
             // Folder content name
             $post_target_content_name = 'New Folder';
         }
         else if($drive_name == 'gd' && $mime_type=='file'){
             // Folder content url
-            $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+            }
+            else{
+                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
+            }
+
 
             // Folder content name
             $post_target_content_name = 'New File';
@@ -740,11 +761,22 @@ class BrowseController extends BaseController
 
                                     // if there was no previous post then post msg to stream
                                     if($db_content_id > 0 && !empty($db_content_id)){
-                                        // stream post id - after post msg to stream
-                                        $post_content_id = $db_content_id;
+                                        // Verify post still exists or deleted?
+                                        $sql = $db->createCommand('SELECT id FROM `content` WHERE id = :content_id', [
+                                            ':content_id' => $db_content_id,
+                                        ])->queryAll();
+
+                                        if (count($sql) == 0){
+                                            // stream post id - after posting new msg to stream (because the old post might be deleted)
+                                            $post_content_id = $this->postMsgStream($mime_type, $space_id, $drive_path, $db_drive_key, $drive_name);
+                                        }
+                                        else{
+                                            // stream post id - which is already exist
+                                            $post_content_id = $db_content_id;
+                                        }
                                     }
                                     else{
-                                        // stream post id - after post msg to stream
+                                        // stream post id - after posting new msg to stream
                                         $post_content_id = $this->postMsgStream($mime_type, $space_id, $drive_path, $db_drive_key, $drive_name);
                                     }
 
@@ -958,7 +990,13 @@ class BrowseController extends BaseController
 
                     }
 
-                    $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+                    // Redirection Url
+                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                        $redirect_url = $home_url.'/onlinedrives/browse/?'.$guid;
+                    }
+                    else{
+                        $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+                    }
 
                     (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
 
@@ -970,7 +1008,13 @@ class BrowseController extends BaseController
 
                 }
                 else {
-                    $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
+                    // Redirection Url
+                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                        $redirect_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id;
+                    }
+                    else{
+                        $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
+                    }
                     return $this->redirect($redirect_url);
                 }
             }

@@ -166,6 +166,8 @@ function getScieboFiles($client, $app_user_id, $drive_path) {
 
 function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
     $now = time();
+    global $success_msg;
+    global $error_msg;
 
     $logged_username =  $loginuser;
     $client = false ;
@@ -179,8 +181,18 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
 
     if (count($sql) > 0) {
         foreach ($sql as $value) {
+            // Read data from DB
             $app_password = $value['app_password'];
+
+            // Rework data from DB
             $path_to_json = 'protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json';
+
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $redirectUri = $home_url.'/onlinedrives/browse/?'.$guid;
+            }
+            else{
+                $redirectUri = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+            }
 
             if (file_exists($path_to_json)) {
                 $client = new Google_Client();
@@ -189,12 +201,22 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                 $client->setAuthConfig($path_to_json);
                 $client->setAccessType('offline'); // Offline access
                 $client->setPrompt('select_account consent');
-                $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+                $client->setRedirectUri($redirectUri);
 
                 $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
                 if (file_exists($tokenPath)) {
-                    $accessToken = json_decode(file_get_contents($tokenPath), true);
-                    $client->setAccessToken($accessToken);
+                    //$accessToken = json_decode(file_get_contents($tokenPath), true);
+                    //$client->setAccessToken($accessToken);
+
+                    // This token is decoded from the json file which is uploaded in the token path
+                    try {
+                        // Extracts access tooken from code param
+                        $accessToken = json_decode(file_get_contents($tokenPath), true);
+                        $client->setAccessToken($accessToken);
+                    } catch (Exception $e) {
+                        //echo 'Caught exception: ',  $e->getMessage(), "\n";
+                        return false;
+                    }
                 }
 
                 // If there is no previous token or it's expired
@@ -204,38 +226,87 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                         $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
                     }
                     else {
-                        // Request authorization from the user
-                        if (!isset($_GET['code'])) {
+                        // Request authorization from the user => First step for forwarding and should happen everytime
+                        if (empty($_GET['code'])) {
                             // Disable tupels which has the if_shared value 'T'
-                            $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
-                                        WHERE space_id = :space_id
-                                        AND user_id = :user_id
-                                        AND drive_name = :drive_name
-                                        AND create_date < :now_minus_some_seconds
-                                        AND if_shared IN (\'T\')', [
-                                ':space_id' => $space_id,
-                                ':user_id' => $logged_username,
-                                ':drive_name' => 'gd',
-                                ':now_minus_some_seconds' => $now - 3,
-                            ])->execute();
+                            /*
+                                                        $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                                                    WHERE space_id = :space_id
+                                                                    AND user_id = :user_id
+                                                                    AND drive_name = :drive_name
+                                                                    AND create_date < :now_minus_some_seconds
+                                                                    AND if_shared IN (\'T\')', [
+                                                            ':space_id' => $space_id,
+                                                            ':user_id' => $logged_username,
+                                                            ':drive_name' => 'gd',
+                                                            ':now_minus_some_seconds' => $now - 3,
+                                                        ])->execute();
+                            */
 
                             if (file_exists($path_to_json)) {
                                 $content = file_get_contents($path_to_json);
-                                if (strpos($content, 'research-hub.social') !== false) {
+
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $check_redirection_uri = 'research-hub.social'.'/onlinedrives/browse/?cguid='.$space_id;
+                                }
+                                else{
+                                    $check_redirection_uri = 'research-hub.social/index.php?r=onlinedrives/browse&cguid='.$space_id;
+                                }
+
+                                if (strpos($content, $check_redirection_uri) !== false) {
                                     $authUrl = $client->createAuthUrl();
+
+                                    // Forwarding to Google for autorization
                                     header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL)) or die();
+                                }
+                                else {
+                                    //die("else redirection");
+
+                                    $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                                WHERE space_id = :space_id
+                                                AND user_id = :user_id
+                                                AND drive_name = :drive_name
+                                                AND create_date < :now_minus_some_seconds
+                                                AND if_shared IN (\'T\')', [
+                                        ':space_id' => $space_id,
+                                        ':user_id' => $logged_username,
+                                        ':drive_name' => 'gd',
+                                        ':now_minus_some_seconds' => $now - 3,
+                                    ])->execute();
+
+                                    $error_msg = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed.');
+                                    return false;
                                 }
                             }
                         }
-                        // Hier Code übergeben
-                        if (isset($_GET['code'])) {
+                        // If code param from Google exists
+                        elseif (isset($_GET['code'])) {
+                            // Get code param from Google after successful autorization
                             $code = $_GET['code'];
 
-                            $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-                            $client->setAccessToken($accessToken);
+                            // Extracts access tooken from code param
+                            //$accessToken = $client->fetchAccessTokenWithAuthCode($code);
+
+                            try {
+                                // Extracts access tooken from code param
+                                $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+                                $client->setAccessToken($accessToken);
+                            } catch (Exception $e) {
+                                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                            WHERE app_password = :app_password', [
+                                    ':app_password' => $app_password,
+                                ])->execute();
+
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed. Please try again.');
+
+                                //echo 'Caught exception: ',  $e->getMessage(), "\n";
+                                return false;
+                            }
+                            // Sets access token to client object
+                            //$client->setAccessToken($accessToken);
 
                             // Check to see if there was an error
-                            if (array_key_exists('error', $accessToken)) {
+                            if (array_key_exists('Invalid token format', $accessToken)) {
                                 //throw new Exception(join(', ', $accessToken));
                                 return false;
                             }
@@ -250,8 +321,16 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                                             WHERE app_password = :app_password', [
                                     ':app_password' => $app_password,
                                 ])->execute();
+
+                                $success_msg = Yii::t('OnlinedrivesModule.new', 'Cloud storage is added successfully.');
                             }
                             else {
+                                $sql = $db->createCommand('UPDATE onlinedrives_app_detail SET if_shared = \'D\'
+                                            WHERE app_password = :app_password', [
+                                    ':app_password' => $app_password,
+                                ])->execute();
+
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Google Drive client add failed. Please try again.');
                                 return false;
                             }
                         }
@@ -375,7 +454,12 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span>
             </span>';
 
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&'.$guid.'&app_detail_id='.$app_detail_id;
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $ref = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id;
+            }
+            else{
+                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2faddfiles&'.$guid.'&app_detail_id='.$app_detail_id;
+            }
             echo ' <a href="'.$ref.'">'.$app_user_id.' <span class="glyphicon glyphicon-home" ></span></a>';
 
             // Output Sciebo navigation
@@ -402,7 +486,13 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                     $name = urldecode($name);
 
                     // Build output
-                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path);
+                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                        $ref = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path);
+                    }
+                    else{
+                        $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path=' . urlencode($path);
+                    }
+
                     $navi .= ' <span class="glyphicon glyphicon-menu-right"></span> <a href="'.$ref.'">'.$name.'</a>';
                 } while ($temp != '');
 
@@ -452,7 +542,13 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                     }
 
                     // Build output
-                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                        $ref = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                    }
+                    else{
+                        $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                    }
+
                     $navi = ' / <a href="'.$ref.'">'.$name.'</a>'.$navi;
 
                     // Change search name for next loop
@@ -1043,11 +1139,25 @@ if ($app_user_id <> '') {
 
                         if ($cloud == 'sciebo') {
                             $path = urlencode($path);
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
+
+                            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                $url = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
+                            }
+                            else{
+                                $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&sciebo_path='.$path;
+                            }
+
                             echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                         }
                         elseif ($cloud == 'gd') {
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+
+                            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                $url = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                            }
+                            else{
+                                $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                            }
+
                             echo $span_fav_icon.'<a href="'.$url.'">'.$span_folder_icon.' '.$name.'</a>';
                         }
                     echo '</td>

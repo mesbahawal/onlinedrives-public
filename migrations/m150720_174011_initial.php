@@ -35,10 +35,16 @@ class m150720_174011_initial extends Migration
         $this->createTable('onlinedrives_app_drive_path_detail', array(
             'id' => 'int(11) NOT NULL AUTO_INCREMENT',
             'drive_path' => 'varchar(255) DEFAULT NULL',
+            'fileid' => 'varchar(255) DEFAULT NULL',
             'permission' => 'varchar(255) DEFAULT NULL',
             'onlinedrives_app_detail_id' => 'int(11) NOT NULL',
             'drive_key' => 'varchar(255) NOT NULL',
-            'if_shared' => 'varchar(10) NOT NULL DEFAULT \'Y\'',
+            'share_status' => 'varchar(10) NOT NULL DEFAULT \'Y\'',
+            'create_date' => 'timestamp NOT NULL DEFAULT current_timestamp()',
+            'update_date' => 'timestamp NOT NULL DEFAULT current_timestamp()',
+            'parent_id' => 'varchar(255) DEFAULT NULL',
+            'content_id' => 'int(11) DEFAULT NULL',
+            'mime_type' => 'varchar(255) DEFAULT NULL',
             'PRIMARY KEY (`drive_key`),  KEY `id` (`id`)'
         ), '');
     }

@@ -65,6 +65,11 @@ elseif (isset($_REQUEST['error_msg'])) {
     $error_msg = $_REQUEST['error_msg'];
 }
 
+// Create Upload dir (if not created before)
+$upload_dir_create_path = 'protected/modules/onlinedrives/upload_dir';
+if (!file_exists($upload_dir_create_path)) {
+    mkdir($upload_dir_create_path, 0700);
+}
 
 /**
  * Functions
@@ -183,6 +188,13 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
             // Rework data from DB
             $path_to_json = 'protected/modules/onlinedrives/upload_dir/google_client/'.$app_password.'.json';
 
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $redirectUri = $home_url.'/onlinedrives/browse/?'.$guid;
+            }
+            else{
+                $redirectUri = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+            }
+
             if (file_exists($path_to_json)) {
                 $client = new Google_Client();
                 $client->setApplicationName('ResearchHub');
@@ -190,7 +202,7 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
                 $client->setAuthConfig($path_to_json);
                 $client->setAccessType('offline'); // Offline access
                 $client->setPrompt('select_account consent');
-                $client->setRedirectUri($home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid);
+                $client->setRedirectUri($redirectUri);
 
                 $tokenPath = 'protected/modules/onlinedrives/upload_dir/google_client/tokens/'.$app_password.'.json';
                 if (file_exists($tokenPath)) {
@@ -234,9 +246,13 @@ function getGoogleClient($db, $space_id, $home_url, $guid, $loginuser) {
 
                             if (file_exists($path_to_json)) {
                                 $content = file_get_contents($path_to_json);
-                                //https://research-hub.social/index.php?r=onlinedrives/browse&cguid=747a394c-b4e7-486f-8ebf-5320510fe483
-                                //https://dev.research-hub.social/index.php?r=onlinedrives/browse&cguid=747a394c-b4e7-486f-8ebf-5320510fe483
-                                $check_redirection_uri = 'research-hub.social/index.php?r=onlinedrives/browse&cguid='.$space_id;
+
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $check_redirection_uri = 'research-hub.social'.'/onlinedrives/browse/?cguid='.$space_id;
+                                }
+                                else{
+                                    $check_redirection_uri = 'research-hub.social/index.php?r=onlinedrives/browse&cguid='.$space_id;
+                                }
 
                                 if (strpos($content, $check_redirection_uri) !== false) {
                                     $authUrl = $client->createAuthUrl();
@@ -587,7 +603,12 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                     ':app_detail_id' => $app_detail_id,
                 ])->execute();
 
-                $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                    $redirect_url = $home_url.'/onlinedrives/browse/?'.$guid;
+                }
+                else{
+                    $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+                }
 
                 if (!$sql || !$sql1) {
                     $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Unsuccessful operation.');
@@ -644,7 +665,12 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                     ':p_id' => $p_id,
                 ])->execute();
 
-                $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                    $redirect_url = $home_url.'/onlinedrives/browse/?'.$guid;
+                }
+                else{
+                    $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+                }
 
                 if ($sql1) {
                     (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
@@ -722,7 +748,12 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                 $db_fileid = '';
                 $db_mime_type = '';
 
-                $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$to_space_guid;
+                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                    $redirect_url = $home_url.'/onlinedrives/browse/?cguid='.$to_space_guid;
+                }
+                else{
+                    $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$to_space_guid;
+                }
 
                 // Get data
                 foreach ($sql_onlinedrives_data as $value) {
@@ -1244,7 +1275,12 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
                     $type = 'file';
 
                     // Download link
-                    $download_link = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Fdownloader&'.$guid.'&dk='.$drive_key.'&file='.urlencode($path);
+                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                        $download_link = $home_url.'/onlinedrives/browse/downloader/?'.$guid.'&dk='.$drive_key.'&file='.urlencode($path);
+                    }
+                    else{
+                        $download_link = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Fdownloader&'.$guid.'&dk='.$drive_key.'&file='.urlencode($path);
+                    }
 
                     // Read file type
                     $pos = strrpos($values, '.');
@@ -1416,7 +1452,12 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 <div class="box gray">
     <?php
     // Output start of navigation
-    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+    if(Yii::$app->urlManager->enablePrettyUrl == true){
+        $ref = $home_url.'/onlinedrives/browse/?'.$guid;
+    }
+    else{
+        $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid;
+    }
     echo '<span class="silver">Location:</span>
     <a href="'.$ref.'">' . Yii::t('OnlinedrivesModule.new', 'All drives') . ' <span class="glyphicon glyphicon-home" ></span></a>';
 
@@ -1461,7 +1502,13 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             $navi_start_name = urldecode($target_foldername);
 
             // Build output for initial node of navigation
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.urlencode($drive_path).'&dk='.$get_drive_key;
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $ref = $home_url.'/onlinedrives/browse/?'.$guid.'&sciebo_path='.urlencode($drive_path).'&dk='.$get_drive_key;
+            }
+            else{
+                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.urlencode($drive_path).'&dk='.$get_drive_key;
+            }
+
             $navi_start = ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$navi_start_name.'</a>';
             echo $navi_start;
 
@@ -1481,7 +1528,13 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 $name = urldecode($name);
 
                 // Build output
-                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$path.'&dk='.$get_drive_key;
+                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                    $ref = $home_url.'/onlinedrives/browse/?'.$guid.'&sciebo_path='.$path.'&dk='.$get_drive_key;
+                }
+                else{
+                    $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.$path.'&dk='.$get_drive_key;
+                }
+
                 $navi .= ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$name.'</a>';
             } while ($temp != '');
             // Output rest of Sciebo navigation
@@ -1530,7 +1583,13 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
             }
 
             // Build output
-            $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                $ref = $home_url.'/onlinedrives/browse/?'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+            }
+            else{
+                $ref = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+            }
+
             $navi = ' <span class="glyphicon glyphicon-menu-right" style="margin-top: 5px;"></span> <a href="'.$ref.'">'.$name.'</a>'.$navi;
 
             // Change search name for next loop
@@ -1704,8 +1763,16 @@ if (count($arr_app_user_admin) > 0) {
                             </div>
                             <div class="col-sm-6">
                                 <?php
-                                $url_select_files = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid;
-                                $url_disable_account = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid;
+
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $url_select_files = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&sciebo_path=&app_detail_id='.$uid;
+                                    $url_disable_account = $home_url.'/onlinedrives/browse/index/?'.$guid.'&op=disable&app_detail_id='.$uid;
+                                }
+                                else{
+                                    $url_select_files = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid;
+                                    $url_disable_account = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid;
+                                }
+
                                 ?>
                                 <button type="button" class="btn btn-primary btn-sm" onclick="location.href='<?=$url_select_files?>'">
                                     <?php
@@ -2775,14 +2842,25 @@ else {
 
                     <td style="padding: 5px;">';
                         if ($cloud == 'sciebo') {
-                            //$path = urlencode($path);
-                            //echo "url manager=".Yii::$app->urlManager->enablePrettyUrl;
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&sciebo_path='.urlencode($path).'&dk='.$drive_key;
+
+                            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                $url = $home_url.'/onlinedrives/browse/?'.$guid.'&sciebo_path='.urlencode($path).'&dk='.$drive_key;
+                            }
+                            else{
+                                $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&sciebo_path='.urlencode($path).'&dk='.$drive_key;
+                            }
+
                             echo '<a href="'.$url.'">'.$name.'</a>';
 
                         }
                         elseif ($cloud == 'gd') {
-                            $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                $url = $home_url.'/onlinedrives/browse/?'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                            }
+                            else{
+                                $url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                            }
+
                             echo '<a href="'.$url.'">'.$name.'</a>';
                         }
                     echo '</td>
@@ -2836,7 +2914,25 @@ else {
                         if ($cloud == 'sciebo') {
 
                                 if($content_id<>''){
-                                    $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                        $perma_link = $home_url.'/content/perma/?id='.$content_id;
+                                    }
+                                    else{
+                                        $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                    }
+
+                                    // Get comments count
+                                    $sql_content_comments = $db->createCommand('SELECT COUNT(cm.`id`) `comment_count` FROM `comment` cm, `content` cn WHERE cm.`object_id`=cn.`object_id` AND cn.`id`= :content_id', [
+                                        ':content_id' => $content_id,
+                                    ])->queryAll();
+
+                                    if($sql_content_comments[0]["comment_count"] > 0){
+                                        $content_comments = $sql_content_comments[0]["comment_count"];
+                                        $content_comments_data_count_str = 'data-count='.$content_comments;
+                                    }
+                                    else{
+                                        $content_comments_data_count_str = '';
+                                    }
                                 }
                                 else{
                                     $perma_link = '#';
@@ -2860,7 +2956,7 @@ else {
                                     echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
                                           <i data-target="globalModal"></i>
                                         <div id="ex2" class="float-left"><a href="'.$perma_link.'">
-                                        <span class="fa-stack fa-1x has-badge">
+                                        <span class="fa-stack fa-1x has-badge" '.$content_comments_data_count_str.'>
                                             <i class="fa fa-circle fa-stack-2x"></i>
                                             <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
                                         </span></a>
@@ -2885,7 +2981,25 @@ else {
                         else if($cloud == 'gd'){
 
                             if($content_id<>''){
-                                $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $perma_link = $home_url.'/content/perma/?id='.$content_id;
+                                }
+                                else{
+                                    $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                }
+
+                                // Get comments count
+                                $sql_content_comments = $db->createCommand('SELECT COUNT(cm.`id`) `comment_count` FROM `comment` cm, `content` cn WHERE cm.`object_id`=cn.`object_id` AND cn.`id`= :content_id', [
+                                    ':content_id' => $content_id,
+                                ])->queryAll();
+
+                                if($sql_content_comments[0]["comment_count"] > 0){
+                                    $content_comments = $sql_content_comments[0]["comment_count"];
+                                    $content_comments_data_count_str = 'data-count='.$content_comments;
+                                }
+                                else{
+                                    $content_comments_data_count_str = '';
+                                }
                             }
                             else{
                                 $perma_link = '#';
@@ -2897,7 +3011,7 @@ else {
                                 echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
                                           <i data-target="globalModal"></i>
                                         <div id="ex2" class="float-left"><a href="'.$perma_link.'">
-                                        <span class="fa-stack fa-1x has-badge">
+                                        <span class="fa-stack fa-1x has-badge" '.$content_comments_data_count_str.'>
                                             <i class="fa fa-circle fa-stack-2x"></i>
                                             <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
                                         </span></a>
@@ -2952,10 +3066,21 @@ else {
 
                                         if ($cloud == 'sciebo') {
                                             $path_for_space_sharing = urlencode($path);
-                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
+
+                                            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                                $url_share_to_space = $home_url.'/onlinedrives/browse/?'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
+                                            }
+                                            else{
+                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
+                                            }
                                         }
                                         elseif ($cloud == 'gd') {
-                                            $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                                $url_share_to_space = $home_url.'/onlinedrives/browse/?'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                            }
+                                            else{
+                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                            }
                                         }
 
                                         echo '<li data-space-chooser-item="" data-space-member="" data-space-guid="'.$share_guid.'">
@@ -3008,11 +3133,15 @@ else {
                                     $db_drive_path = $value['drive_path'];
                                 }
 
-                                $url_unshare_content = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
+                                // Unshare content link
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $url_unshare_content = $home_url.'/onlinedrives/browse/?'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
+                                }
+                                else{
+                                    $url_unshare_content = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
+                                }
 
                                 if ($cloud == 'sciebo') {
-                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
-                                    //$path = urldecode($path);
 
                                     $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
                                     $pos = strrpos($parent_path, '/');
@@ -3023,11 +3152,21 @@ else {
                                     }
 
                                     // unshare-xx
-
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                        $share_setting_url = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                    }
+                                    else{
+                                        $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                    }
                                 }
                                 elseif ($cloud == 'gd') {
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+
+                                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                        $share_setting_url = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                    }
+                                    else{
+                                        $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                    }
                                 }
 
                                 //$full_sciebo_path = $path;
@@ -3434,7 +3573,25 @@ else {
                         if ($cloud == 'sciebo') {
 
                             if($content_id<>''){
-                                $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $perma_link = $home_url.'/content/perma/?id='.$content_id;
+                                }
+                                else{
+                                    $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                }
+
+                                // Get comments count
+                                $sql_content_comments = $db->createCommand('SELECT COUNT(cm.`id`) `comment_count` FROM `comment` cm, `content` cn WHERE cm.`object_id`=cn.`object_id` AND cn.`id`= :content_id', [
+                                    ':content_id' => $content_id,
+                                ])->queryAll();
+
+                                if($sql_content_comments[0]["comment_count"] > 0){
+                                    $content_comments = $sql_content_comments[0]["comment_count"];
+                                    $content_comments_data_count_str = 'data-count='.$content_comments;
+                                }
+                                else{
+                                    $content_comments_data_count_str = '';
+                                }
                             }
                             else{
                                 $perma_link = '#';
@@ -3458,7 +3615,7 @@ else {
                                 echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
                                           <i data-target="globalModal"></i>
                                         <div id="ex2" class="float-left"><a href="'.$perma_link.'">
-                                        <span class="fa-stack fa-1x has-badge">
+                                        <span class="fa-stack fa-1x has-badge" '.$content_comments_data_count_str.'>
                                             <i class="fa fa-circle fa-stack-2x"></i>
                                             <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
                                         </span></a>
@@ -3483,7 +3640,25 @@ else {
                         else if($cloud == 'gd'){
 
                             if($content_id<>''){
-                                $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $perma_link = $home_url.'/content/perma/?id='.$content_id;
+                                }
+                                else{
+                                    $perma_link = $home_url.'/index.php?r=content%2Fperma&id='.$content_id;
+                                }
+
+                                // Get comments count
+                                $sql_content_comments = $db->createCommand('SELECT COUNT(cm.`id`) `comment_count` FROM `comment` cm, `content` cn WHERE cm.`object_id`=cn.`object_id` AND cn.`id`= :content_id', [
+                                    ':content_id' => $content_id,
+                                ])->queryAll();
+
+                                if($sql_content_comments[0]["comment_count"] > 0){
+                                    $content_comments = $sql_content_comments[0]["comment_count"];
+                                    $content_comments_data_count_str = 'data-count='.$content_comments;
+                                }
+                                else{
+                                    $content_comments_data_count_str = '';
+                                }
                             }
                             else{
                                 $perma_link = '#';
@@ -3495,7 +3670,7 @@ else {
                                 echo '<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_new_comment_information.'">
                                           <i data-target="globalModal"></i>
                                         <div id="ex2" class="float-left"><a href="'.$perma_link.'">
-                                        <span class="fa-stack fa-1x has-badge">
+                                        <span class="fa-stack fa-1x has-badge" '.$content_comments_data_count_str.'>
                                             <i class="fa fa-circle fa-stack-2x"></i>
                                             <i class="fa fa-comments fa-stack-1x fa-inverse" aria-hidden="true"></i>
                                         </span></a>
@@ -3551,10 +3726,22 @@ else {
 
                                             if ($cloud == 'sciebo') {
                                                 $path_for_space_sharing = $unshare_file_path;
-                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
+
+                                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                                    $url_share_to_space = $home_url.'/onlinedrives/browse/?'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
+                                                }
+                                                else{
+                                                    $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&sciebo_path='.$path_for_space_sharing.'&dk='.$drive_key.'&fileid='.$id;
+                                                }
                                             }
                                             elseif ($cloud == 'gd') {
-                                                $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+
+                                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                                    $url_share_to_space = $home_url.'/onlinedrives/browse/?'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                                }
+                                                else{
+                                                    $url_share_to_space = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=share_to&space_id='.$share_id.'&gd_folder_id='.$id.'&gd_folder_name='.$name.'&dk='.$drive_key;
+                                                }
                                             }
 
                                             echo '<li data-space-chooser-item="" data-space-member="" data-space-guid="'.$share_guid.'">
@@ -3604,12 +3791,15 @@ else {
                                     $db_drive_path = $value['drive_path'];
                                 }
 
-                                $url_unshare_content = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
+                                if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                    $url_unshare_content = $home_url.'/onlinedrives/browse/?'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
+                                }
+                                else{
+                                    $url_unshare_content = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=unshare_content&app_detail_id='.$app_detail_id_unshare.'&p_id='.$id_path_unshare;
+                                }
 
                                 if ($cloud == 'sciebo') {
-                                    // https://research-hub.social/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&cguid=747a394c-b4e7-486f-8ebf-5320510fe483&app_detail_id=1&sciebo_path=
                                     $path = $unshare_file_path;
-
                                     $parent_path = substr(urldecode($path), 0, strlen(urldecode($path)) - 1);
                                     $pos = strrpos($parent_path, '/');
                                     $parent_path = substr($parent_path, 0, $pos);
@@ -3618,10 +3808,21 @@ else {
                                         $parent_path .= '/';
                                     }
 
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                        $share_setting_url = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                    }
+                                    else{
+                                        $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&sciebo_path=' . urlencode($parent_path);
+                                    }
                                 }
                                 elseif ($cloud == 'gd') {
-                                    $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+
+                                    if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                        $share_setting_url = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                    }
+                                    else{
+                                        $share_setting_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&app_detail_id='.$app_detail_id_unshare.'&gd_folder_id='.$id.'&gd_folder_name='.$name;
+                                    }
                                 }
 
                                 // Set flag if user is owner (files)
