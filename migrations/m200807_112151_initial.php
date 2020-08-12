@@ -12,7 +12,7 @@ class m200807_112151_initial extends Migration
      */
     public function safeUp()
     {
-        $this->createTable('onlinedrives_file', array(
+		$this->createTable('onlinedrives_file', array(
             'id' => 'pk',
             'parent_folder_id' => 'int(11) NULL',
             'description' => 'varchar(1000) DEFAULT NULL'
@@ -25,8 +25,8 @@ class m200807_112151_initial extends Migration
             'description' => 'varchar(1000) DEFAULT NULL',
             'type' => 'varchar(255) DEFAULT NULL'
         ), '');
-
-        $this->createTable('onlinedrives_app_detail', array(
+		
+		$this->createTable('onlinedrives_app_detail', array(
             'id' => 'int(11) NOT NULL AUTO_INCREMENT',
             'space_id' => 'varchar(255) NOT NULL',
             'user_id' => 'varchar(255) NOT NULL',
@@ -46,7 +46,7 @@ class m200807_112151_initial extends Migration
             'fileid' => 'varchar(255) DEFAULT NULL',
             'permission' => 'varchar(255) DEFAULT NULL',
             'onlinedrives_app_detail_id' => 'int(11) NOT NULL',
-            'drive_key' => 'varchar(255) NOT NULL',
+            'drive_key' => 'varchar(128) NOT NULL',
             'share_status' => 'varchar(10) NOT NULL DEFAULT \'Y\'',
             'create_date' => 'timestamp NOT NULL DEFAULT current_timestamp()',
             'update_date' => 'timestamp NOT NULL DEFAULT current_timestamp()',
