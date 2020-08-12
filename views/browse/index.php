@@ -1630,8 +1630,52 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
     ?>
 </div>
 
+            <!-- connected device bar starts-->
+            <div class="box gray" style="position: relative">
+                <?php
+                // Tooltip message
+                $tooltip_connected_drives = Yii::t('OnlinedrivesModule.new', 'Please click here to view connected drives and select contents from them. The selected contents will be open to all members in the table below.');
+                ?>
+                <!-- Tooltip -->
+                <span style="margin-top: 0px; margin-bottom: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top"
+                      data-original-title="<?=$tooltip_connected_drives?>">
+                    <i data-target="globalModal"></i>
+        <span class="glyphicon glyphicon-check"></span>
+        <span class="pointer">
             <?php
-            // connected device bar starts
+            // Heading
+            echo '<span id="connected_drives_heading"
+                    onclick="
+                        getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
+
+                        if (getElementById(\'connected_drives_arrow\').className == \'glyphicon glyphicon-chevron-down\') {
+                            getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-up\';
+                        }
+                        else {
+                            getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-down\';
+                        }
+            ">' . Yii::t('OnlinedrivesModule.new', 'Connected drives') . '</span></span>'.
+                // Arrow
+                '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
+                onclick="
+                    getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
+
+                    if (this.className == \'glyphicon glyphicon-chevron-down\') {
+                        this.className = \'glyphicon glyphicon-chevron-up\';
+                    }
+                    else {
+                        this.className = \'glyphicon glyphicon-chevron-down\';
+                    }
+            "></span>';
+            ?>
+        </span>
+        </span>
+                <!-- Login menu icon -->
+                <span id="login_menu_icon" class="glyphicon glyphicon-menu-hamburger" style="position: absolute; right: 10px; top: 10px" onclick="getElementById('login_menu').style.display = 'block';"></span>
+
+
+                <?php
+
             /**
              * Sciebo data who didn't share
              */
@@ -1686,47 +1730,6 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
                 ?>
 
 
-                <div class="box gray" style="position: relative">
-                    <?php
-                    // Tooltip message
-                    $tooltip_connected_drives = Yii::t('OnlinedrivesModule.new', 'Please click here to view connected drives and select contents from them. The selected contents will be open to all members in the table below.');
-                    ?>
-                    <!-- Tooltip -->
-                    <span style="margin-top: 0px; margin-bottom: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top"
-                          data-original-title="<?=$tooltip_connected_drives?>">
-                    <i data-target="globalModal"></i>
-        <span class="glyphicon glyphicon-check"></span>
-        <span class="pointer">
-            <?php
-            // Heading
-            echo '<span id="connected_drives_heading"
-                    onclick="
-                        getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
-
-                        if (getElementById(\'connected_drives_arrow\').className == \'glyphicon glyphicon-chevron-down\') {
-                            getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-up\';
-                        }
-                        else {
-                            getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-down\';
-                        }
-            ">' . Yii::t('OnlinedrivesModule.new', 'Connected drives') . '</span></span>'.
-                // Arrow
-                '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
-                onclick="
-                    getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
-
-                    if (this.className == \'glyphicon glyphicon-chevron-down\') {
-                        this.className = \'glyphicon glyphicon-chevron-up\';
-                    }
-                    else {
-                        this.className = \'glyphicon glyphicon-chevron-down\';
-                    }
-            "></span>';
-            ?>
-        </span>
-        </span>
-                    <!-- Login menu icon -->
-                    <span id="login_menu_icon" class="glyphicon glyphicon-menu-hamburger" style="position: absolute; right: 10px; top: 10px" onclick="getElementById('login_menu').style.display = 'block';"></span>
 
                     <div id="connected_drives_table" class="shownone" style="margin-top: 20px;">
 
