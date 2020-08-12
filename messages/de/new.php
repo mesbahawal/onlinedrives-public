@@ -72,7 +72,7 @@ return array (
     'gd_guide_h' => 'Wie Sie sich mit Ihrem Google-Drive-Konto verbinden',
 
     // Guide for Sciebo
-    'sciebo_guide_txt1' => 'Schritt 1: Öffnen Sie <a class="u" href="https://sciebo.de/de/login/index.html" target="_blank">https://sciebo.de/de/login/index.html</a> und klicken Sie auf den Link Ihrer Universität/Hochschule.<br />Loggen Sie sich ein. Klicken Sie auf Ihren Namen und im sich öffnenden Menü auf „Einstellungen“ (siehe oranger Kreis im Screenshot).',
+    'sciebo_guide_txt1' => 'Schritt 1: Öffnen Sie <a class="u" href="https://uni-siegen.sciebo.de/login" target="_blank">https://uni-siegen.sciebo.de/login</a> und klicken Sie auf den Link Ihrer Universität/Hochschule.<br />Loggen Sie sich ein. Klicken Sie auf Ihren Namen und im sich öffnenden Menü auf „Einstellungen“ (siehe oranger Kreis im Screenshot).',
     'sciebo_guide_txt2' => 'Schritt 2: Die Überischt über Ihre Einstellungen wird geöffnet. Klicken Sie auf „Sicherheit“ (siehe orange Box im Screenshot).',
     'sciebo_guide_txt3' => 'Schritt 3: Unter Ihren Sicherheits-Einstellungen befindet sich ganz unten der Punkt „App-Passwörter / Token“ (siehe oranger Kreis im Screenshot).<br />
     	An dieser Stelle ist zu betonen, dass der hier vergebene App-Passcode keinen Vollzugriff auf Ihr Konto ermöglicht, sondern nur gezielt Rechte vergeben werden können. Diese Rechte können im weiteren Verlauf der Einrichtung angepasst werden.<br />

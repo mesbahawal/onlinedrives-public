@@ -1,21 +1,29 @@
 <?php
-use yii\db\Schema;
+
 use yii\db\Migration;
 
-class m150720_174011_initial extends Migration
+/**
+ * Class m200807_112151_initial
+ */
+class m200807_112151_initial extends Migration
 {
-
-    public function up()
+    /**
+     * {@inheritdoc}
+     */
+    public function safeUp()
     {
         $this->createTable('onlinedrives_file', array(
             'id' => 'pk',
-            'parent_folder_id' => 'int(11) NULL'
+            'parent_folder_id' => 'int(11) NULL',
+            'description' => 'varchar(1000) DEFAULT NULL'
         ), '');
-        
+
         $this->createTable('onlinedrives_folder', array(
             'id' => 'pk',
             'parent_folder_id' => 'int(11) NULL',
-            'title' => 'varchar(255) NOT NULL'
+            'title' => 'varchar(255) NOT NULL',
+            'description' => 'varchar(1000) DEFAULT NULL',
+            'type' => 'varchar(255) DEFAULT NULL'
         ), '');
 
         $this->createTable('onlinedrives_app_detail', array(
@@ -49,14 +57,28 @@ class m150720_174011_initial extends Migration
         ), '');
     }
 
-    public function down()
+    /**
+     * {@inheritdoc}
+     */
+    public function safeDown()
     {
-        echo "m150720_174011_initial cannot be reverted.\n";
-        
+        echo "m200807_112151_initial cannot be reverted.\n";
+
         return false;
     }
-    
+
     /*
-     * // Use safeUp/safeDown to run migration code within a transaction public function safeUp() { } public function safeDown() { }
-     */
+    // Use up()/down() to run migration code without a transaction.
+    public function up()
+    {
+
+    }
+
+    public function down()
+    {
+        echo "m200807_112151_initial cannot be reverted.\n";
+
+        return false;
+    }
+    */
 }

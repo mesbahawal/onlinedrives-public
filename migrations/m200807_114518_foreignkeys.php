@@ -1,15 +1,15 @@
 <?php
-/**
- * @link https://www.humhub.org/
- * @copyright Copyright (c) 2017 HumHub GmbH & Co. KG
- * @license https://www.humhub.com/licences
- *
- */
 
 use yii\db\Migration;
 
-class m170830_122439_foreignkeys extends Migration
+/**
+ * Class m200807_114518_foreignkeys
+ */
+class m200807_114518_foreignkeys extends Migration
 {
+    /**
+     * {@inheritdoc}
+     */
     public function safeUp()
     {
         try {
@@ -20,9 +20,12 @@ class m170830_122439_foreignkeys extends Migration
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function safeDown()
     {
-        echo "m170830_122437_foreignkeys.\n";
+        echo "m200807_114518_foreignkeys cannot be reverted.\n";
 
         return false;
     }
@@ -36,7 +39,7 @@ class m170830_122439_foreignkeys extends Migration
 
     public function down()
     {
-        echo "m170830_122432_foreignkeys cannot be reverted.\n";
+        echo "m200807_114518_foreignkeys cannot be reverted.\n";
 
         return false;
     }

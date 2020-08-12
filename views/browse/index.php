@@ -1606,14 +1606,16 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 
     // Tooltip message
     $tooltip_login_menu_icon = Yii::t('OnlinedrivesModule.new', 'Set external drive connections such as - login to Sciebo or Google Drive. Please see configuration guide below for detail.');
-    $tooltip_plus_menu_icon = Yii::t('OnlinedrivesModule.new', 'Click here to upload file or add new files / folder of your choice.');
+    $tooltip_plus_menu_icon = '';//Yii::t('OnlinedrivesModule.new', 'Click here to upload file or add new files / folder of your choice.');
     ?>
     <!-- Tooltip -->
-    <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="<?=$tooltip_login_menu_icon?>">
-        <i data-target="globalModal"></i>
+    <!--<span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="<?/*=$tooltip_login_menu_icon*/?>">
+        <i data-target="globalModal"></i>-->
     <!-- Login menu icon -->
+    <!--
     <span id="login_menu_icon" class="glyphicon glyphicon-menu-hamburger" onclick="getElementById('login_menu').style.display = 'block';"></span>
     </span>
+    -->
     <!-- Plus menu icon -->
     <?php
     // Check (2)
@@ -1622,75 +1624,76 @@ echo Html::beginForm(null, null, ['data-target' => '#globalModal', 'id' => 'onli
 <!-- Tooltip -->
     <span style="margin-top: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top" data-original-title="'.$tooltip_plus_menu_icon.'">
         <i data-target="globalModal"></i>
-<span id="plus_menu_icon" class="glyphicon glyphicon-plus" onclick="getElementById(\'plus_menu\').style.display = \'block\';"></span></span>';
+         <span id="plus_menu_icon" class="glyphicon glyphicon-plus" onclick="getElementById(\'plus_menu\').style.display = \'block\';"></span></span>
+        ';
     }
     ?>
 </div>
 
+            <?php
+            // connected device bar starts
+            /**
+             * Sciebo data who didn't share
+             */
+            $arr_app_user_admin = array();
+            $adm = 0;
 
-<?php
-/**
- * Sciebo data who didn't share
- */
-$arr_app_user_admin = array();
-$adm = 0;
+            if ($username <> '') {
+                /*
+                echo "SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                    FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
+                    WHERE d.space_id = '$space_id' AND d.user_id = '$username'
+                    GROUP BY d.app_user_id,d.`if_shared`";
+                */
 
-if ($username <> '') {
-    /*
-    echo "SELECT d.id AS uid, p.id AS pid, d.*, p.*
-        FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
-        WHERE d.space_id = '$space_id' AND d.user_id = '$username'
-        GROUP BY d.app_user_id,d.`if_shared`";
-    */
-
-    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
         FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p ON d.id = p.onlinedrives_app_detail_id
         WHERE d.space_id = :space_id AND d.user_id = :user_id
         GROUP BY d.app_user_id, d.`if_shared`', [
-        ':space_id' => $space_id,
-        ':user_id' => $username,
-    ])->queryAll();
-    foreach ($sql as $value) {
-        $drive_path = $value['drive_path'];
-        $app_user_id = $value['app_user_id'];
-        $app_password = $value['app_password'];
-        $drive_key = $value['drive_key'];
-        $uid = $value['uid'];
-        $pid = $value['pid'];
-        $if_shared = $value['if_shared'];
-        $share_status = $value['share_status'];
-        $user_id = $value['user_id'];
-        $drive_name = $value['drive_name'];
+                    ':space_id' => $space_id,
+                    ':user_id' => $username,
+                ])->queryAll();
+                foreach ($sql as $value) {
+                    $drive_path = $value['drive_path'];
+                    $app_user_id = $value['app_user_id'];
+                    $app_password = $value['app_password'];
+                    $drive_key = $value['drive_key'];
+                    $uid = $value['uid'];
+                    $pid = $value['pid'];
+                    $if_shared = $value['if_shared'];
+                    $share_status = $value['share_status'];
+                    $user_id = $value['user_id'];
+                    $drive_name = $value['drive_name'];
 
-        $arr_app_user_admin[$adm]['drive_path'] = $drive_path;
-        $arr_app_user_admin[$adm]['app_user_id'] = $app_user_id;
-        $arr_app_user_admin[$adm]['app_password'] = $app_password;
-        $arr_app_user_admin[$adm]['drive_key'] = $drive_key;
-        $arr_app_user_admin[$adm]['user_id'] = $user_id;
-        $arr_app_user_admin[$adm]['if_shared'] = $if_shared;
-        $arr_app_user_admin[$adm]['share_status'] = $share_status;
-        $arr_app_user_admin[$adm]['uid'] = $uid;
-        $arr_app_user_admin[$adm]['pid'] = $pid;
-        $arr_app_user_admin[$adm]['drive_name'] = $drive_name;
-        $adm++;
-    }
-}
+                    $arr_app_user_admin[$adm]['drive_path'] = $drive_path;
+                    $arr_app_user_admin[$adm]['app_user_id'] = $app_user_id;
+                    $arr_app_user_admin[$adm]['app_password'] = $app_password;
+                    $arr_app_user_admin[$adm]['drive_key'] = $drive_key;
+                    $arr_app_user_admin[$adm]['user_id'] = $user_id;
+                    $arr_app_user_admin[$adm]['if_shared'] = $if_shared;
+                    $arr_app_user_admin[$adm]['share_status'] = $share_status;
+                    $arr_app_user_admin[$adm]['uid'] = $uid;
+                    $arr_app_user_admin[$adm]['pid'] = $pid;
+                    $arr_app_user_admin[$adm]['drive_name'] = $drive_name;
+                    $adm++;
+                }
+            }
 
-if (count($arr_app_user_admin) > 0) {
-    // echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
-    $logged_username =  Yii::$app->user->identity->username;
-    $email = Yii::$app->user->identity->email;
-    ?>
+            if (count($arr_app_user_admin) > 0) {
+                // echo "Here implement Drive add form ".count($arr_app_user_detail_with_no_share);
+                $logged_username =  Yii::$app->user->identity->username;
+                $email = Yii::$app->user->identity->email;
+                ?>
 
 
-    <div class="box gray">
-        <?php
-        // Tooltip message
-        $tooltip_connected_drives = Yii::t('OnlinedrivesModule.new', 'Please click here to view connected drives and select contents from them. The selected contents will be open to all members in the table below.');
-        ?>
-        <!-- Tooltip -->
-        <span style="margin-top: 0px; margin-bottom: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top"
-              data-original-title="<?=$tooltip_connected_drives?>">
+                <div class="box gray" style="position: relative">
+                    <?php
+                    // Tooltip message
+                    $tooltip_connected_drives = Yii::t('OnlinedrivesModule.new', 'Please click here to view connected drives and select contents from them. The selected contents will be open to all members in the table below.');
+                    ?>
+                    <!-- Tooltip -->
+                    <span style="margin-top: 0px; margin-bottom: 0px; display:inline-block;" class="tt" data-toggle="tooltip" data-placement="top"
+                          data-original-title="<?=$tooltip_connected_drives?>">
                     <i data-target="globalModal"></i>
         <span class="glyphicon glyphicon-check"></span>
         <span class="pointer">
@@ -1707,8 +1710,8 @@ if (count($arr_app_user_admin) > 0) {
                             getElementById(\'connected_drives_arrow\').className = \'glyphicon glyphicon-chevron-down\';
                         }
             ">' . Yii::t('OnlinedrivesModule.new', 'Connected drives') . '</span></span>'.
-            // Arrow
-            '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
+                // Arrow
+                '<span id="connected_drives_arrow" class="glyphicon glyphicon-chevron-down" style="margin-left: 5px; font-size: 10px;"
                 onclick="
                     getElementById(\'connected_drives_table\').classList.toggle(\'showblock\');
 
@@ -1722,96 +1725,98 @@ if (count($arr_app_user_admin) > 0) {
             ?>
         </span>
         </span>
+                    <!-- Login menu icon -->
+                    <span id="login_menu_icon" class="glyphicon glyphicon-menu-hamburger" style="position: absolute; right: 10px; top: 10px" onclick="getElementById('login_menu').style.display = 'block';"></span>
 
-        <div id="connected_drives_table" class="shownone" style="margin-top: 20px;">
+                    <div id="connected_drives_table" class="shownone" style="margin-top: 20px;">
 
-            <div class="container" style="margin-left: 20px;">
-                <?php
-                for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j) (2)
-                    $drive_path = $arr_app_user_admin[$j]['drive_path'];
-                    $app_user_id = $arr_app_user_admin[$j]['app_user_id'];
-                    $app_password = $arr_app_user_admin[$j]['app_password'];
-                    $drive_key = $arr_app_user_admin[$j]['drive_key'];
-                    $username = $arr_app_user_admin[$j]['user_id'];
-                    $if_shared = $arr_app_user_admin[$j]['if_shared'];
-                    $share_status = $arr_app_user_admin[$j]['share_status'];
-                    $uid = $arr_app_user_admin[$j]['uid'];
-                    $pid = $arr_app_user_admin[$j]['pid'];
-                    $drive_name = $arr_app_user_admin[$j]['drive_name'];
+                        <div class="container" style="margin-left: 20px;">
+                            <?php
+                            for ($j = 0; $j < count($arr_app_user_admin); $j++) { // Start of for loop (j) (2)
+                                $drive_path = $arr_app_user_admin[$j]['drive_path'];
+                                $app_user_id = $arr_app_user_admin[$j]['app_user_id'];
+                                $app_password = $arr_app_user_admin[$j]['app_password'];
+                                $drive_key = $arr_app_user_admin[$j]['drive_key'];
+                                $username = $arr_app_user_admin[$j]['user_id'];
+                                $if_shared = $arr_app_user_admin[$j]['if_shared'];
+                                $share_status = $arr_app_user_admin[$j]['share_status'];
+                                $uid = $arr_app_user_admin[$j]['uid'];
+                                $pid = $arr_app_user_admin[$j]['pid'];
+                                $drive_name = $arr_app_user_admin[$j]['drive_name'];
 
-                    if ($username == $logged_username && $if_shared != 'D' && $if_shared != 'T') {
-                        ?>
-                        <div class="row" style="margin-bottom: 8px; margin-top: 8px;">
-                            <div class="col-sm-3">
+                                if ($username == $logged_username && $if_shared != 'D' && $if_shared != 'T') {
+                                    ?>
+                                    <div class="row" style="margin-bottom: 8px; margin-top: 8px;">
+                                        <div class="col-sm-3">
 
-                                <?php
-                                // Output Sciebo icon in navigation
-                                if ($drive_name == 'sciebo') {
-                                    $ref = 'https://uni-siegen.sciebo.de/login';
-                                }
-                                elseif ($drive_name == 'gd') {
-                                    $ref = 'https://accounts.google.com/ServiceLogin';
-                                }
-                                $src = $bundle->baseUrl . '/images/'.$drive_name.'20.png';
-                                echo '<a href="'.$ref.'" target="_blank">
+                                            <?php
+                                            // Output Sciebo icon in navigation
+                                            if ($drive_name == 'sciebo') {
+                                                $ref = 'https://uni-siegen.sciebo.de/login';
+                                            }
+                                            elseif ($drive_name == 'gd') {
+                                                $ref = 'https://accounts.google.com/ServiceLogin';
+                                            }
+                                            $src = $bundle->baseUrl . '/images/'.$drive_name.'20.png';
+                                            echo '<a href="'.$ref.'" target="_blank">
                                         <img src="'.$src.'" style="position: relative; top: -2px;" title="Sciebo" />
                                     </a>';
-                                ?>
+                                            ?>
 
-                                <?php echo $app_user_id; ?>
+                                            <?php echo $app_user_id; ?>
 
-                            </div>
-                            <div class="col-sm-6">
-                                <?php
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <?php
 
-                                if(Yii::$app->urlManager->enablePrettyUrl == true){
-                                    $url_select_files = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&sciebo_path=&app_detail_id='.$uid;
-                                    $url_disable_account = $home_url.'/onlinedrives/browse/index/?'.$guid.'&op=disable&app_detail_id='.$uid;
-                                }
-                                else{
-                                    $url_select_files = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid;
-                                    $url_disable_account = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid;
-                                }
+                                            if(Yii::$app->urlManager->enablePrettyUrl == true){
+                                                $url_select_files = $home_url.'/onlinedrives/browse/addfiles/?'.$guid.'&sciebo_path=&app_detail_id='.$uid;
+                                                $url_disable_account = $home_url.'/onlinedrives/browse/index/?'.$guid.'&op=disable&app_detail_id='.$uid;
+                                            }
+                                            else{
+                                                $url_select_files = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Faddfiles&'.$guid.'&sciebo_path=&app_detail_id='.$uid;
+                                                $url_disable_account = $home_url.'/index.php?r=onlinedrives%2Fbrowse%2Findex&'.$guid.'&op=disable&app_detail_id='.$uid;
+                                            }
 
-                                ?>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="location.href='<?=$url_select_files?>'">
+                                            ?>
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="location.href='<?=$url_select_files?>'">
+                                                <?php
+                                                echo Yii::t('OnlinedrivesModule.new', 'Select files');
+                                                ?>
+                                                <span class="glyphicon glyphicon-edit"></span>
+                                            </button>
+                                            &nbsp; &nbsp;
+
+                                            <?php
+
+                                            if ($if_shared != 'D') {
+                                                ?>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="location.href='<?=$url_disable_account?>'">
+                                                    <?php
+                                                    echo Yii::t('OnlinedrivesModule.new', 'Disable');
+                                                    ?>
+                                                    <span class="glyphicon glyphicon-remove"></span>
+                                                </button>
+
+
+                                                <?php
+                                            }
+                                            ?>
+                                        </div>
+                                    </div>
                                     <?php
-                                    echo Yii::t('OnlinedrivesModule.new', 'Select files');
-                                    ?>
-                                    <span class="glyphicon glyphicon-edit"></span>
-                                </button>
-                                &nbsp; &nbsp;
-
-                                <?php
-
-                                if ($if_shared != 'D') {
-                                    ?>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="location.href='<?=$url_disable_account?>'">
-                                    <?php
-                                    echo Yii::t('OnlinedrivesModule.new', 'Disable');
-                                    ?>
-                                    <span class="glyphicon glyphicon-remove"></span>
-                                </button>
-
-
-                                   <?php
-                                   }
-                                ?>
-                            </div>
+                                }
+                            } // End of for loop (j) (2)
+                            ?>
                         </div>
-                        <?php
-                    }
-                } // End of for loop (j) (2)
-                ?>
-            </div>
 
-            <!--/// table chilo ekhane.-->
-        </div>
-    </div>
-<?php
-}
-?>
-
+                        <!--/// table chilo ekhane.-->
+                    </div>
+                </div>
+                <?php
+            }
+            // connected device bar ends
+            ?>
 
 <!-- Login menu -->
 <div id="login_menu">
@@ -2182,6 +2187,11 @@ echo '</div>';
     ">
 	    <div class="upcr_label">Name</div>
         <?php echo $form->field($model, 'new_folder_name'); ?>
+
+        <?php
+        echo $form->field($model, 'post_stream_cr_folder')->checkboxList([
+        'cr_folder_post' => 'Post Stream',
+        ] ); ?>
     </div>
 
     <div id="create_file_name" class="shownone"
@@ -2312,7 +2322,12 @@ echo '</div>';
         ?>
 
         <div class="upcr_label">Name</div>
-        <?php echo $form->field($model, 'new_file_name'); ?>
+        <?php echo $form->field($model, 'new_file_name');
+        echo $form->field($model, 'post_stream_cr_file')->checkboxList([
+            'cr_file_post' => 'Post Stream',
+        ] ); ?>
+
+
     </div>
 
     <div id="create_btn" class="form-group shownone">

@@ -72,7 +72,7 @@ return array (
     'gd_guide_h' => 'How to connect with your Google Drive account',
 
     // Guide for Sciebo
-    'sciebo_guide_txt1' => 'Step1: Open <a class="u" href="https://sciebo.de/de/login/index.html" target="_blank">https://sciebo.de/de/login/index.html</a> and click on the link of your university.<br />Log in. Click on your name and on “Settings” in the menu that opens (see orange circle in the screenshot).',
+    'sciebo_guide_txt1' => 'Step1: Open <a class="u" href="https://uni-siegen.sciebo.de/login" target="_blank">https://uni-siegen.sciebo.de/login</a> and click on the link of your university.<br />Log in. Click on your name and on “Settings” in the menu that opens (see orange circle in the screenshot).',
     'sciebo_guide_txt2' => 'Step 2: The overview of your settings will open. Click on “Security” (see orange box in the screenshot).',
     'sciebo_guide_txt3' => 'Step 3: At the bottom of your security settings you will see the item “App passwords / tokens” (see orange circle in the screenshot). In the “App name” space, create a passcode for HumHub by entering “HumHub” (as the example below) and then click “Create new app passcode”.<br />
     Note: The app passcode assigned here isn’t the login credential of your Sciebo account. It is a passcode which allows Research-Hub to connect to your Sciebo account. You can set specific rights to which content gets accessable from Research-Hub. These rights can be adjusted in the further course of the setup.',
