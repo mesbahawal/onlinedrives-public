@@ -17,6 +17,7 @@ use humhub\modules\onlinedrives\models\forms\LoginFormGDClient;
 use humhub\modules\onlinedrives\models\forms\CreateFileForm;
 use humhub\modules\onlinedrives\models\forms\UploadFileForm;
 use humhub\modules\onlinedrives\models\forms\DeleteFileForm;
+use function Sabre\HTTP\encodePath;
 
 
 // DB connection
@@ -1210,6 +1211,7 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
             $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $drive_path);
         }
         elseif ($get_sciebo_path != '' && strpos($drive_path, $db_drive_path) === false){
+//            echo 'sciebo path-'.$get_sciebo_path.'--drivepath--'.$drive_path.'--db_drive_path--'.$db_drive_path;
             // Error msg
             $error_msg = Yii::t('OnlinedrivesModule.new', 'User access permission for the requested content is not granted.');
         }// disable parent folder access if not shared.
@@ -2192,9 +2194,9 @@ echo '</div>';
         <?php echo $form->field($model, 'new_folder_name'); ?>
 
         <?php
-        echo $form->field($model, 'post_stream_cr_folder')->checkboxList([
-        'cr_folder_post' => 'Post Stream',
-        ] ); ?>
+        /* echo $form->field($model, 'post_stream_cr_folder')->checkboxList([
+        'cr_folder_post' => 'Post Stream(under construction)',
+        ] );*/ ?>
     </div>
 
     <div id="create_file_name" class="shownone"
@@ -2326,9 +2328,9 @@ echo '</div>';
 
         <div class="upcr_label">Name</div>
         <?php echo $form->field($model, 'new_file_name');
-        echo $form->field($model, 'post_stream_cr_file')->checkboxList([
-            'cr_file_post' => 'Post Stream',
-        ] ); ?>
+        /*echo $form->field($model, 'post_stream_cr_file')->checkboxList([
+            'cr_file_post' => 'Post Stream(under construction)',
+        ] );*/ ?>
 
 
     </div>
@@ -2928,7 +2930,7 @@ else {
                                         </span>
                                     
                                     </div>';
-
+                        $content_comments_data_count_str = '';
                         if ($cloud == 'sciebo') {
 
                                 if($content_id<>''){
