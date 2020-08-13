@@ -3590,6 +3590,7 @@ else {
                                           </span>
                                     </div>';
 
+                        $content_comments_data_count_str = '';
                         if ($cloud == 'sciebo') {
 
                             if($content_id<>''){
