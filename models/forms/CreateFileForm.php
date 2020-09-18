@@ -26,8 +26,8 @@ class CreateFileForm extends \yii\base\Model
             [['selected_cloud'], 'required'],
             ['create', 'string'],
             ['new_folder_name', 'string'],
-            [['post_stream_cr_folder'], 'string'],
-            [['post_stream_cr_file'], 'string'],
+            ['post_stream_cr_folder', 'string'],
+            ['post_stream_cr_file', 'string'],
             ['new_file_name', 'string'],
             ['new_file_type', 'string'],
         ];

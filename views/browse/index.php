@@ -927,259 +927,102 @@ $sql = $db->createCommand('SELECT s.`id`, s.`name`,s.`guid` FROM `space` s, `use
     /**
      * Rework form
     */
-
-    // Create folder, create file
-    if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
-        $cloud = $model->selected_cloud;
-        $do = $model->create;
-        // Folder name
-        if (!empty($model->new_folder_name)) {
-            $name = $model->new_folder_name;
-        }
-        // File name
-        else {
-            $name = $model->new_file_name;
-        }
-
-        // Check for validate name
-        $name = trim($name);
-        if (substr($name, 0, 1) != '.') {
-            // Sciebo
-            if ($cloud == 'sciebo') {
-
-                // get information from db to validate permission for creating content or duplicating content.
-                $db_connected_user_id = '';
-                $db_app_user_id = '';
-                $permission_pos = false;
-                $sciebo_content = array();
-                $upload_list = str_replace(' ', '%20', $name);
-
-                if ($get_drive_key != '') {
-                    $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
-                            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
-                            ON d.id = p.onlinedrives_app_detail_id
-                            WHERE drive_key = :drive_key', [
-                        ':drive_key' => $get_drive_key,
-                    ])->queryAll();
-
-                    foreach ($sql as $value) {
-                        $db_connected_user_id = $value['user_id'];
-                        $db_app_user_id = $value['app_user_id'];
-                        $db_drive_key = $value['drive_key'];
-                        $db_permission = $value['permission'];
-                        $permission_pos = strpos($db_permission, 'U'); // 'U' is for both Upload file and Create Folder
-                    }
-                }
-
-                if ($do == 'create_folder') {
-                    // http://sabre.io/dav/davclient
-
-                    //Check flag
-                    $check_same_folder = '';
-                    $flag_create_folder = 0;
-
-
-                    $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$upload_list;
-
-                    //echo "<br>get-dk-$get_drive_key-$db_app_user_id-$app_user_id-dk-$drive_key-dpath-$drive_path-get sciebo path-$get_sciebo_path";
-
-                    // Folder upload duplicate checking
-                    if ($get_sciebo_path != '') {
-                        if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                            $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
-                        }
-
-                        $keys = array_keys((array)$sciebo_content);
-
-                        foreach ($keys as $values) {
-                            // echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
-
-                            $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
-
-                            $new_folder_path = $get_sciebo_path.$upload_list.'/';
-
-                            // echo '--new folder path='.$new_folder_path;
-
-                            if ($existing_folder_path === $new_folder_path)                 {
-                                // set the below flag for checking if the folder is duplicating.
-                                $check_same_folder = 'y';
-                                continue;
-                            }
-
-                            $check_same_folder .= $check_same_folder;
-                        }
-
-                        if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                            $flag_same_folder = strpos($check_same_folder,'y');
-
-                            //echo "<br>checksome=".$check_same_folder."bool =".$flag_same_folder;
-
-                            if (($db_connected_user_id ==  $username || $permission_pos !== false) && $flag_same_folder === false) {
-                                // echo "<br>--I am creating folder".$path_to_dir;
-
-                                $response = $sciebo_client->request('MKCOL', $path_to_dir); // For creating folder only
-
-                                $check_same_folder = '';
-                               // Success message
-                                $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Sciebo.');
-                            }
-                            elseif ( $flag_same_folder !== false){
-                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Folder already exist. Please rename.');
-                            }
-                            else {
-                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
-                            }
-                        }
-                        $check_same_folder = '';
-                    }
-                    else {
-                        echo "handle for landing page. dpath=".$drive_path;
-                    }
-                }
-                elseif ($do == 'create_file') {
-                    //initialize flags
-                    $flag_same_file = '';
-
-                    // Check for correct type
-                    $pos = strrpos($name, '.');
-                    $type = substr($name, $pos);
-                    if ($type == '.txt' || $type == '.docx' || $type == '.xlsx' || $type == '.pptx' || $type == '.odt') {
-                        $name = str_replace(' ', '%20', $name);
-
-                        $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/' . $app_user_id . '/' . $get_sciebo_path . '/' . $name;
-
-                        // File upload duplicate checking
-                        if ($get_sciebo_path != '') {
-                            if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                                $sciebo_content = getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
-                            }
-
-                            $keys = array_keys((array)$sciebo_content);
-
-                            foreach ($keys as $values) {
-
-                                $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
-
-                                $new_folder_path = $get_sciebo_path.$upload_list;
-
-                                 if ($existing_folder_path === $new_folder_path)                 {
-                                    // set the below flag for checking if the file is same. Check before file 'PUT' request
-                                    $flag_same_file = 'y';
-                                    continue;
-                                }
-
-                                $flag_same_file .= $flag_same_file;
-                            }
-
-                        }else {
-                            echo "handle for landing page. dpath=".$drive_path;
-                        }
-
-                        if ($get_drive_key == '' || ($db_app_user_id == $app_user_id && $drive_key == $get_drive_key)) {
-                            $check_duplicate_file = strpos($flag_same_file, 'y');
-                            $content = '';
-
-                            if (($db_connected_user_id ==  $username || $permission_pos !== false) && $check_duplicate_file === false) {
-                                // create file
-                                $response = $sciebo_client->request('PUT', $path_to_dir, $content);
-
-                                // unset flag
-                                $flag_same_file = '';
-
-                                // Success message
-                                $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Sciebo.');
-                            }
-                            elseif ( $check_duplicate_file !== false){
-                                $error_msg = Yii::t('OnlinedrivesModule.new', 'File already exist. Please rename.');
-                            }else {
-                                $error_msg = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
-                            }
-                        }
-                    }
-                    else{
-                        $error_msg = Yii::t('OnlinedrivesModule.new', 'File type is not supported');
-                    }
-                }
+        // Create folder, create file
+        if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
+            $cloud = $model->selected_cloud;
+            $do = $model->create;
+            // Folder name
+            if (!empty($model->new_folder_name)) {
+                $name = $model->new_folder_name;
             }
-            // Google Drive
-            elseif ($cloud == 'gd') {
-                if ($do == 'upload_file') {
-                    // TODO Google Drive UPLOAD file function
+            // File name
+            else {
+                $name = $model->new_file_name;
+            }
 
-                    /*
-                    $content = file_get_contents('files/'.$upload);
+            // Check for validate name
+            $name = trim($name);
+            if (substr($name, 0, 1) != '.') {
+                // Sciebo functions moved to browseController. Couldn't move google functions
 
-                    $file_metadata = new Google_Service_Drive_DriveFile(array(
-                        'data' => $content,
-                        'name' => '22.txt',
-                        'mimeType' => 'text/plain'));
+                // Google Drive
+                if ($cloud == 'gd') {
+                    if ($do == 'upload_file') {
+                        // TODO Google Drive UPLOAD file function
 
-                    // Parent folder ID
-                    if ($get_gd_folder_id == '') {
-                    	$gd_parent_id = $gd_root_id;
-                    }
-                    else {
-                	   $gd_parent_id = $get_gd_folder_id;
-                    }
-                    $file_metadata->setParents(array($gd_parent_id));
+                        /*
+                        $content = file_get_contents('files/'.$upload);
 
-                    $file = $gd_service->files->create($file_metadata, array(
-                        'fields' => 'id'));
-                    */
-                }
-                elseif ($do == 'create_folder') {
-                    $file_metadata = new Google_Service_Drive_DriveFile(array(
-                        'name' => $name,
-                        'mimeType' => 'application/vnd.google-apps.folder'));
-
-                    // Parent folder ID
-                    if ($get_gd_folder_id == '') {
-                    	$gd_parent_id = $gd_root_id;
-                    }
-                    else {
-                	   $gd_parent_id = $get_gd_folder_id;
-                    }
-                    $file_metadata->setParents(array($gd_parent_id));
-
-                    $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
-
-                    // Success message
-                    $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Google Drive.');
-
-                    break;
-                }
-                elseif ($do == 'create_file') {
-                    // https://stackoverflow.com/questions/26919709/google-drive-php-api-insert-file-to-drive
-
-                    // Check for correct type
-                    $pos = strrpos($name, '.');
-                    $type = substr($name, $pos);
-                    if ($type == '.txt' || $type == '.docx' || $type == '.xlsx' || $type == '.pptx' || $type == '.odt') {
                         $file_metadata = new Google_Service_Drive_DriveFile(array(
-                        'name' => $name,
-                        'title' => 'My document',           // Doesn't work?
-                        'description' => 'A test document', // Works
-                        'mimeType' => 'text/plain'));
+                            'data' => $content,
+                            'name' => '22.txt',
+                            'mimeType' => 'text/plain'));
 
-                        // Parent folder ID.
+                        // Parent folder ID
                         if ($get_gd_folder_id == '') {
-                        	$gd_parent_id = $gd_root_id;
+                            $gd_parent_id = $gd_root_id;
                         }
                         else {
-                        	$gd_parent_id = $get_gd_folder_id;
+                           $gd_parent_id = $get_gd_folder_id;
+                        }
+                        $file_metadata->setParents(array($gd_parent_id));
+
+                        $file = $gd_service->files->create($file_metadata, array(
+                            'fields' => 'id'));
+                        */
+                    }
+                    elseif ($do == 'create_folder') {
+                        $file_metadata = new Google_Service_Drive_DriveFile(array(
+                            'name' => $name,
+                            'mimeType' => 'application/vnd.google-apps.folder'));
+
+                        // Parent folder ID
+                        if ($get_gd_folder_id == '') {
+                            $gd_parent_id = $gd_root_id;
+                        }
+                        else {
+                            $gd_parent_id = $get_gd_folder_id;
                         }
                         $file_metadata->setParents(array($gd_parent_id));
 
                         $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
 
                         // Success message
-                        $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Google Drive.');
+                        $success_msg = Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Google Drive.');
+
+                        break;
+                    }
+                    elseif ($do == 'create_file') {
+                        // https://stackoverflow.com/questions/26919709/google-drive-php-api-insert-file-to-drive
+
+                        // Check for correct type
+                        $pos = strrpos($name, '.');
+                        $type = substr($name, $pos);
+                        if ($type == '.txt' || $type == '.docx' || $type == '.xlsx' || $type == '.pptx' || $type == '.odt') {
+                            $file_metadata = new Google_Service_Drive_DriveFile(array(
+                                'name' => $name,
+                                'title' => 'My document',           // Doesn't work?
+                                'description' => 'A test document', // Works
+                                'mimeType' => 'text/plain'));
+
+                            // Parent folder ID.
+                            if ($get_gd_folder_id == '') {
+                                $gd_parent_id = $gd_root_id;
+                            }
+                            else {
+                                $gd_parent_id = $get_gd_folder_id;
+                            }
+                            $file_metadata->setParents(array($gd_parent_id));
+
+                            $file = $gd_service->files->create($file_metadata, array('fields' => 'id'));
+
+                            // Success message
+                            $success_msg = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Google Drive.');
+                        }
                     }
                 }
             }
         }
-    }
-
 
     /**
      * Get Sciebo files
@@ -2194,9 +2037,8 @@ echo '</div>';
         <?php echo $form->field($model, 'new_folder_name'); ?>
 
         <?php
-        /* echo $form->field($model, 'post_stream_cr_folder')->checkboxList([
-        'cr_folder_post' => 'Post Stream(under construction)',
-        ] );*/ ?>
+         echo $form->field($model, 'post_stream_cr_folder')->checkboxList([$get_sciebo_path => 'Post into stream',
+        ] ); ?>
     </div>
 
     <div id="create_file_name" class="shownone"
@@ -2328,9 +2170,9 @@ echo '</div>';
 
         <div class="upcr_label">Name</div>
         <?php echo $form->field($model, 'new_file_name');
-        /*echo $form->field($model, 'post_stream_cr_file')->checkboxList([
-            'cr_file_post' => 'Post Stream(under construction)',
-        ] );*/ ?>
+        echo $form->field($model, 'post_stream_cr_file')->checkboxList([
+            $get_sciebo_path => 'Post into stream',
+        ] ); ?>
 
 
     </div>
@@ -3992,13 +3834,15 @@ else {
  * Sciebo and Google Drive guide
  */
 $sciebo_guide_link = '<a href="#sciebo_guide">' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_h') . '</a>';
-$gd_guide_link = '<a href="#gd_guide">' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</a>';
+$gd_guide_link = '<a href="#gd_guide">' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</a>
+                    <i style="color: #f0b332">(Under construction!! Some features might not work properly)</i>';
 
 $sciebo_guide_a = '<a name="sciebo_guide"></a>';
 $gd_guide_a = '<a name="gd_guide"></a>';
 
 $sciebo_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'sciebo_guide_h') . '</b></h1>';
-$gd_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') . '</b></h1>';
+$gd_guide_h = '<h1><b>' . Yii::t('OnlinedrivesModule.new', 'gd_guide_h') .
+                ' </b> </h1>';
 
 $count_guide_sciebo = 7;
 $count_guide_gd = 27;
@@ -4075,7 +3919,8 @@ echo '<br />'.
 $gd_guide_a.
 
 // Output Google Drive output
-'<p>'.$gd_guide_h.'</p><br />';
+'<p>'.$gd_guide_h.'</p><br />
+<br /><br /> <div class="alert alert-warning" role="alert" align="center"><b>(Under construction!! Some features might not work properly)</b></div>';
 
 for ($i = 1; $i <= $count_guide_gd; $i++) {
     $pic = '<img src="'. $bundle->baseUrl .'/images/guide/gd/'.$i.$lang.'.png" />';

@@ -27,11 +27,48 @@ use humhub\modules\onlinedrives\models\forms\AddFilesForm;
 
 use app\models\UploadForm;
 use yii\web\UploadedFile;
+use Sabre\DAV\Client;
 
 class BrowseController extends BaseController
 {
 
-    public function postMsgStream($mime_type, $space_id, $drive_path, $drive_key, $drive_name){
+    public function getScieboClient($userid,$password) {
+
+        $settings = array(
+            'baseUri' => 'https://uni-siegen.sciebo.de/remote.php/dav/',
+            'userName' => $userid,
+            'password' => $password,
+        );
+        $client = new Client($settings);
+
+        return $client;
+    }
+
+    public function getScieboFiles($client, $app_user_id, $drive_path) {
+        $folder_content = false;
+        try {
+            $folder_content = $client->propFind('https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$drive_path, array(
+                '{http://owncloud.org/ns}fileid', // ID
+                '{DAV:}getetag', //TODO doesn't work
+                '{DAV:}creationdate', //TODO doesn't work
+                '{DAV:}getlastmodified',
+                '{DAV:}getcontenttype',
+                '{DAV:}getcontentlength',
+                '{DAV:}getcontentname', //TODO doesn't work
+                '{http://owncloud.org/ns}favorite',
+                '{http://owncloud.org/ns}share-types',
+                '{http://owncloud.org/ns}owner-display-name',
+                '{http://owncloud.org/ns}comments-count',
+            ), 1);
+
+            return $folder_content;
+        }
+        catch ( Sabre\HTTP\ClientHttpException $e) {
+            Yii::warning($e);
+        }
+    }
+
+    public function postMsgStream($actionType, $mime_type, $space_id, $drive_path, $drive_key, $drive_name){
         // initialize variables
         $post_target_content_name = '';
         $post_msg_url = '';
@@ -42,10 +79,10 @@ class BrowseController extends BaseController
         if($drive_name == 'sciebo' && $mime_type=='folder'){
             // Folder content url
             if(Yii::$app->urlManager->enablePrettyUrl == true){
-                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id.'&sciebo_path='.$drive_path.'&dk='.$drive_key;
+                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id.'&sciebo_path='.urlencode($drive_path).'&dk='.$drive_key;
             }
             else{
-                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&sciebo_path='.$drive_path.'&dk='.$drive_key;
+                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&sciebo_path='.urlencode($drive_path).'&dk='.$drive_key;
             }
 
             // Folder content name
@@ -55,18 +92,25 @@ class BrowseController extends BaseController
             $post_target_content_name = urldecode($target_foldername);
         }
         elseif ($drive_name == 'sciebo' && $mime_type=='file'){
-            // File content url
-            if(Yii::$app->urlManager->enablePrettyUrl == true){
-                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id;
-            }
-            else{
-                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
-            }
-
             // File content name
             $list_foldernames = explode('/',$drive_path);
             $target_foldername = end($list_foldernames);
             $post_target_content_name = urldecode($target_foldername);
+            $file_dir = str_replace($post_target_content_name,'',$drive_path);
+
+            // File content url
+            if(Yii::$app->urlManager->enablePrettyUrl == true && $actionType == 'Published'){
+                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id;
+            }
+            elseif(Yii::$app->urlManager->enablePrettyUrl == true && $actionType == 'Created'){
+                $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id.'&sciebo_path='.urlencode($file_dir).'&dk='.$drive_key;
+            }
+            elseif(Yii::$app->urlManager->enablePrettyUrl != true && $actionType == 'Created'){
+                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&sciebo_path='.urlencode($file_dir).'&dk='.$drive_key;
+            }
+            else{
+                $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id;
+            }
         }
         else if($drive_name == 'gd' && $mime_type=='folder'){
             // Folder content url
@@ -89,14 +133,13 @@ class BrowseController extends BaseController
                 $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&gd_folder_id='.$drive_path.'&dk='.$drive_key;
             }
 
-
             // Folder content name
             $post_target_content_name = 'New File';
         }
 
         // build post message
         $drive_name_desc = ($drive_name=='sciebo') ? 'Sciebo':'Google Drive';
-        $post_msg_description_start = 'Published new '.$drive_name_desc.' '.$mime_type.' - ';
+        $post_msg_description_start = $actionType.' new '.$drive_name_desc.' '.$mime_type.' - ';
         $post_msg_description_end = ' in OnlineDrives module';
         $post_msg = $post_msg_description_start.' ['.$post_target_content_name.']('.$post_msg_url.' "'.$post_target_content_name.'")'.$post_msg_description_end;
 
@@ -111,8 +154,14 @@ class BrowseController extends BaseController
         return $post_content_id;
     }
 
+
     public function actionIndex()
     {
+        // DB connection
+        include_once __DIR__ . '/../models/dbconnect.php';
+        $db = dbconnect();
+        $db->open();
+
         // Sciebo params
         $get_sciebo_path = '';
 
@@ -165,9 +214,7 @@ class BrowseController extends BaseController
                 // https://www.yiiframework.com/doc/guide/2.0/en/db-dao
                 // https://www.yiiframework.com/doc/api/2.0/yii-db-connection
                 // https://www.yiiframework.com/doc/guide/2.0/en/security-passwords
-                include_once __DIR__ . '/../models/dbconnect.php';
-                $db = dbconnect();
-                $db->open();
+
 
                 // Check path is already exist in share
 
@@ -229,11 +276,6 @@ class BrowseController extends BaseController
 
             $username = Yii::$app->user->identity->username;
             $email = Yii::$app->user->identity->email;
-
-            // DB connection
-            include_once __DIR__ . '/../models/dbconnect.php';
-            $db = dbconnect();
-            $db->open();
 
             // Check path is already exist in share
             $sql = $db->createCommand('SELECT * FROM onlinedrives_app_detail WHERE app_user_id = :app_user_id AND if_shared <> \'D\'', [
@@ -309,6 +351,8 @@ class BrowseController extends BaseController
             ]);
         }
 
+
+
         // Upload model
         if ($model_u->load(Yii::$app->request->post())) {
 
@@ -334,9 +378,6 @@ class BrowseController extends BaseController
                 $db_connected_user_id = '';
                 $permission_pos = false;
 
-
-                include_once __DIR__ . '/../models/dbconnect.php';
-                $db = dbconnect();
                 $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
                     FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p 
                     ON d.id = p.onlinedrives_app_detail_id
@@ -392,7 +433,7 @@ class BrowseController extends BaseController
                         }
                         $check_duplicate_file = strpos($flag_same_file, 'y');
 
-                        // Check if access for drive path is given
+                        // Check if access for drive path is given uuu
                         if ($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false) {
 
                             if ($check_duplicate_file !== false){
@@ -422,6 +463,7 @@ class BrowseController extends BaseController
 
                                         // Success msg
                                         $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'File is successfuly uploaded in Sciebo.');
+
                                     }else{
                                         // Error msg
                                         $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Failed to transfer file to Sciebo.');
@@ -450,15 +492,278 @@ class BrowseController extends BaseController
             }
         }
 
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            // Valid data received in $model_gd_create
+        // Create folder/file model
+        if ($model->load(Yii::$app->request->post())) {
+            // Valid data received in $model
+            $username = Yii::$app->user->identity->username;
+            $email = Yii::$app->user->identity->email;
+
+            // Get params
+            $cloud = $model->selected_cloud;
+            $do = $model->create;
+            $post_stream_cr_folder = $model->post_stream_cr_folder;
+            $post_stream_cr_file = $model->post_stream_cr_file;
+            $new_folder_name = $model->new_folder_name;
+            $new_file_name = $model->new_file_name;
+            $new_file_type = $model->new_file_type;
+
+            $post_content_id  = '';
+            $post_folder_path ='';
+            $post_file_path ='';
+            $get_dk ='';
+            $space_id = '';
+            $drive_path = '';
+            $app_user_id = '';
+            $app_password = '';
+
+            $actionType = 'Created';
+
+            if (!empty($_GET['cguid'])) {
+                $space_id = $_GET['cguid'];
+            }
+
+            if (!empty($_GET['dk'])) {
+                $get_dk = $_GET['dk'];
+            }
+
+            // Perform create action - folder/file
+            if (!empty($model->new_folder_name) || !empty($model->new_file_name)) {
+                // Folder name
+                if (!empty($model->new_folder_name)) {
+                    $name = $model->new_folder_name;
+                } // File name
+                else {
+                    $name = $model->new_file_name;
+                }
+
+                // Check for validate name
+                $name = trim($name);
+                if (substr($name, 0, 1) != '.') {
+                    // Sciebo
+                    if ($cloud == 'sciebo') {
+
+                        // get information from db to validate permission for creating content or duplicating content.
+                        $db_connected_user_id = '';
+                        $db_app_user_id = '';
+                        $permission_pos = false;
+                        $sciebo_content = array();
+                        $upload_list = str_replace(' ', '%20', $name);
+
+                        if ($get_dk != '') {
+                            $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
+                            FROM onlinedrives_app_detail d LEFT OUTER JOIN onlinedrives_app_drive_path_detail p
+                            ON d.id = p.onlinedrives_app_detail_id
+                            WHERE drive_key = :drive_key', [
+                                ':drive_key' => $get_dk,
+                            ])->queryAll();
+
+                            foreach ($sql as $value) {
+                                $db_connected_user_id = $value['user_id'];
+                                $drive_path = $value['drive_path'];
+                                $app_user_id = $value['app_user_id'];
+                                $app_password = $value['app_password'];
+                                $db_drive_key = $value['drive_key'];
+                                $db_permission = $value['permission'];
+                                $permission_pos = strpos($db_permission, 'U'); // 'U' is for both Upload file and Create Folder
+                            }
+                        }
+
+                        // Initiate client
+                        $sciebo_client = $this->getScieboClient($app_user_id, $app_password);
+                        $sciebo_path_to_replace = '/remote.php/dav/files/' . $app_user_id . '/';
+
+                        if ($do == 'create_folder') {
+                            // http://sabre.io/dav/davclient
+
+                            //Check flag
+                            $check_same_folder = '';
+                            $flag_create_folder = 0;
+
+                            $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/'.$app_user_id.'/'.$get_sciebo_path.$upload_list;
+
+                            // Folder upload duplicate checking
+                            if ($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false) {
+
+                                $sciebo_content = $this->getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
+
+                                $keys = array_keys((array)$sciebo_content);
+
+                                foreach ($keys as $values) {
+                                    // echo '<br>Existing path='.str_replace($sciebo_path_to_replace, '', $values);
+
+                                    $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
+
+                                    $new_folder_path = $get_sciebo_path . $upload_list . '/';
+
+                                    if ($existing_folder_path === $new_folder_path) {
+                                        // set the below flag for checking if the folder is duplicating.
+                                        $check_same_folder = 'y';
+                                        continue;
+                                    }
+
+                                    $check_same_folder .= $check_same_folder;
+                                }
+                            }
+
+                            if ($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false) {
+                                $flag_same_folder = strpos($check_same_folder,'y');
+                                //echo "<br>checksome=".$check_same_folder."bool =".$flag_same_folder; mmm
+
+                                if (($db_connected_user_id ==  $username || $permission_pos !== false) && $flag_same_folder === false) {
+                                    //echo "<br>--I am creating folder".$path_to_dir;
+
+                                    $response = $sciebo_client->request('MKCOL', $path_to_dir); // For creating folder only
+
+                                    $check_same_folder = '';
+                                    // Success message
+                                    $_REQUEST['success_msg']= Yii::t('OnlinedrivesModule.new', 'Folder is successfuly created in Sciebo.');
+
+                                }
+                                elseif ( $flag_same_folder !== false){
+                                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Folder already exist. Please rename.');
+                                }
+                                else {
+                                    $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
+                                }
+
+                                $check_same_folder = '';
+                            }
+                            else {
+                                echo "handle for landing page. dpath=".$drive_path;
+                            }
+                        }
+                        elseif ($do == 'create_file') {
+                            //initialize flags
+                            $flag_same_file = '';
+
+                            // Check for correct type
+                            $pos = strrpos($name, '.');
+                            $type = substr($name, $pos);
+                            if ($type == '.txt' || $type == '.docx' || $type == '.xlsx' || $type == '.pptx' || $type == '.odt') {
+                                $name = str_replace(' ', '%20', $name);
+
+                                $path_to_dir = 'https://uni-siegen.sciebo.de/remote.php/dav/files/' . $app_user_id . '/' . $get_sciebo_path . '/' . $name;
+
+                                // File upload duplicate checking
+                                if ($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false) {
+
+                                    $sciebo_content = $this->getScieboFiles($sciebo_client, $app_user_id, $get_sciebo_path);
+
+                                    $keys = array_keys((array)$sciebo_content);
+
+                                    foreach ($keys as $values) {
+
+                                        $existing_folder_path = str_replace($sciebo_path_to_replace, '', $values);
+
+                                        $new_folder_path = $get_sciebo_path.$upload_list;
+
+                                        if ($existing_folder_path === $new_folder_path)                 {
+                                            // set the below flag for checking if the file is same. Check before file 'PUT' request
+                                            $flag_same_file = 'y';
+                                            continue;
+                                        }
+
+                                        $flag_same_file .= $flag_same_file;
+                                    }
+
+                                }else {
+                                    echo "handle for landing page. dpath=".$drive_path;
+                                }
+
+                                if ($get_sciebo_path != '' && strpos($get_sciebo_path, $drive_path) !== false) {
+                                    $check_duplicate_file = strpos($flag_same_file, 'y');
+                                    $content = '';
+
+                                    if (($db_connected_user_id ==  $username || $permission_pos !== false) && $check_duplicate_file === false) {
+                                        // create file
+                                        $response = $sciebo_client->request('PUT', $path_to_dir, $content);
+
+                                        // unset flag
+                                        $flag_same_file = '';
+
+                                        // Success message
+                                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'File is successfuly created in Sciebo.');
+                                    }
+                                    elseif ( $check_duplicate_file !== false){
+                                        $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'File already exist. Please rename.');
+                                    }else {
+                                        $_REQUEST['error_msg'] = Yii::t('OnlinedrivesModule.new', 'Insufficient user privilege.');
+                                    }
+                                }
+                            }
+                            else{
+                                $error_msg = Yii::t('OnlinedrivesModule.new', 'File type is not supported');
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Post to stream - folder
+            if(isset($post_stream_cr_folder) && !empty($post_stream_cr_folder)){
+                for ($i = 0; $i < count($post_stream_cr_folder); $i++) {
+                    $key = key($post_stream_cr_folder);
+                    $val = $post_stream_cr_folder[$key];
+
+                    if ($val <> '') {
+                        $post_folder_path= $val.$new_folder_name.'/';
+                        $mime_type = 'folder';
+
+                        //echo $mime_type.'--'. $space_id.'--'. $post_folder_path.'--'. $get_dk.'--'. $cloud;
+
+                        $post_content_id = $this-> postMsgStream($actionType, $mime_type, $space_id, $post_folder_path, $get_dk, $cloud);
+
+                        // Redirection Url
+                        if (Yii::$app->urlManager->enablePrettyUrl == true){
+                            $redirect_url = $home_url.'/onlinedrives/browse/?'.$guid.'&sciebo_path='.urlencode($get_sciebo_path).'&dk='.$get_dk;
+                        }
+                        else{
+                            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.urlencode($get_sciebo_path).'&dk='.$get_dk;
+                        }
+
+                        (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+
+                    }
+                    next($post_stream_cr_folder);
+                }
+            }
+
+            // Post to stream - file
+            if(isset($post_stream_cr_file) && !empty($post_stream_cr_file)){
+                for ($i = 0; $i < count($post_stream_cr_file); $i++) {
+                    $key = key($post_stream_cr_file);
+                    $val = $post_stream_cr_file[$key];
+
+                    if ($val <> '') {
+                        $post_file_path= $val.$new_file_name;
+                        //todo: call postStreamFunc
+                        $mime_type = 'file';
+
+                        $post_content_id = $this-> postMsgStream($actionType, $mime_type, $space_id, $post_file_path, $get_dk, $cloud);
+
+                        // Redirection Url
+                        if (Yii::$app->urlManager->enablePrettyUrl == true){
+                            $redirect_url = $home_url.'/onlinedrives/browse/?'.$guid.'&sciebo_path='.urlencode($get_sciebo_path).'&dk='.$get_dk;
+                        }
+                        else{
+                            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.urlencode($get_sciebo_path).'&dk='.$get_dk;
+                        }
+
+                        (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+                    }
+                    next($post_stream_cr_file);
+                }
+            }
+
             return $this->render('index', [
                 'contentContainer' => $this->contentContainer,
                 'folder' => $currentFolder,
                 'canWrite' => $this->canWrite(),
                 'model' => $model,
             ]);
+
         }
+
         // Unshare file
         elseif ($model_gd_delete->load(Yii::$app->request->post()) && $model_gd_delete->validate()) {
             // Get params
@@ -471,10 +776,6 @@ class BrowseController extends BaseController
             elseif ($model_gd_delete->dk != '') {
                 $get_dk = $model_gd_delete->dk;
             }
-
-            // DB connection
-            include_once __DIR__ . '/../models/dbconnect.php';
-            $db = dbconnect();
 
             $sql = $db->createCommand('SELECT d.id AS uid, p.id AS pid, d.*, p.*
                 FROM onlinedrives_app_detail d
@@ -583,6 +884,11 @@ class BrowseController extends BaseController
 
     public function actionAddfiles()
     {
+        // DB connection
+        include_once __DIR__ . '/../models/dbconnect.php';
+        $db = dbconnect();
+        $db->open();
+
         $home_url = Url::base(true);
 
         // Sciebo params
@@ -624,10 +930,7 @@ class BrowseController extends BaseController
             $model_addfiles = new AddFilesForm();
 
             if ($model_addfiles->load(Yii::$app->request->post())) {
-                // DB connection
-                include_once __DIR__ . '/../models/dbconnect.php';
-                $db = dbconnect();
-                $db->open();
+
 
                 if ($model_addfiles->validate()) {
                     $i = 0;
@@ -652,6 +955,7 @@ class BrowseController extends BaseController
                     // initialize variables
                     $post_content_id = '';
                     $drive_name = '';
+                    $actionType = 'Published';
 
                     if (isset($_GET['sciebo_path'])) {
                         $get_sciebo_path = $_GET['sciebo_path'];
@@ -738,7 +1042,7 @@ class BrowseController extends BaseController
                                 $new_dk = md5(microtime());
 
                                 // stream post id - after post msg to stream
-                                $post_content_id = $this->postMsgStream($mime_type, $space_id, $drive_path, $new_dk, $drive_name);
+                                $post_content_id = $this->postMsgStream($actionType, $mime_type, $space_id, $drive_path, $new_dk, $drive_name);
 
                                 // Insert new drive content
                                 $db->createCommand('INSERT INTO `onlinedrives_app_drive_path_detail`
@@ -768,7 +1072,7 @@ class BrowseController extends BaseController
 
                                         if (count($sql) == 0){
                                             // stream post id - after posting new msg to stream (because the old post might be deleted)
-                                            $post_content_id = $this->postMsgStream($mime_type, $space_id, $drive_path, $db_drive_key, $drive_name);
+                                            $post_content_id = $this->postMsgStream($actionType, $mime_type, $space_id, $drive_path, $db_drive_key, $drive_name);
                                         }
                                         else{
                                             // stream post id - which is already exist
@@ -777,7 +1081,7 @@ class BrowseController extends BaseController
                                     }
                                     else{
                                         // stream post id - after posting new msg to stream
-                                        $post_content_id = $this->postMsgStream($mime_type, $space_id, $drive_path, $db_drive_key, $drive_name);
+                                        $post_content_id = $this->postMsgStream($actionType, $mime_type, $space_id, $drive_path, $db_drive_key, $drive_name);
                                     }
 
                                     // Debug update query

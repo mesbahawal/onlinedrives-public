@@ -3,33 +3,34 @@ Module Drivemanager
 Module for managing drives inside spaces and on profiles.
 
 ## Description:
-This module will allow you to manage files in a filesystem like structure.
-- upload, download, move, delete files
-- create, delete, move, edit folders
-- automatically create/extract a folder structure from a ZIP file (optional, configurable)
-- download files as a zip file (optional, configurable)
-- see an overview of all files that were posted to the user/space stream
-- see details of files like creator, editor, creation date, ...
+Features of OnlineDrives:
+1.	Connect to Sciebo from space,
+2.	Connect to google drive from space,
+3.	Disable OnlineDrives account (e.g.- Sciebo account linked to space),
+4.	Select contents to share in the space from connected drives,
+5.	Choose user permissions for specific access rights to the content,
+6.	Update/Change user permissions against shared content,
+7.	Un-share contents,
+8.	Upload files,
+9.	Create Folder,
+10.	Create files,
+11.	Download files,
+12.	Display favourites, Shared status, Comment Status, Owner information for Shared contents,
+13.	Share content directly to the other spaces where the user has membership,
+14. Post to the stream when any file/folder shared to the space, or created new from the space,
+15.	Access configuration guideline in two languages (German and English)
+
 
 ## Setup Instructions:
-After installation and activiation from the Marketplace you can deactivate the ZIP functionality if you want. In the profile and space views (.../space/manage/module | .../user/account/edit-modules) you can now activate the module for the designated space or user. A new navigation link will show up that leads you to the module view.
+Install HumHub open source social networking platform from: https://docs.humhub.org/docs/admin/installation/
+After the successful installation, follow below instruction to enable OnineDrives.
 
-__Installation (German):__
-Gdriver ist im Verzeichnis „protected/modules“ der HumHub-Installation abzulegen.
+__Installation OnlineDrives:__
+- put the extracted module as - "/protected/module/onlinedrives" inside HumHub project workspace
+- Open HumHub from the browser and Go to Administration -> Modules option. You will see OnlineDrives module in the list. Activate the module from "Modules directory -> Installed" tabs.
+- Select any space, for example- "Welcome Space".
+- Inside the space, go to Settings icon -> Modules. Enable OnlineDrives from the Space Module list.
+- The module will appear on the left side Space menu.
 
-Die Dateien client_secret.json und token.json fehlen im Git Repository:
-- Um client_secret.json individuell zu erstellen, sind folgende Schritte nötig:
-    - https://console.developers.google.com/apis/credentials aufrufen.
-    - Ein neues Projekt zu erstellen.
-    - Anmeldedaten für OAuth-Client-ID erstellen
-        - Webanwendung auswählen
-        - Unter „Autorisierte Weiterleitungs-URIs“ sind folgende 2 URIs einzutragen:
-            - Auf einem lokeln Test-System:
-                - http://localhost/[PATH]/index.php?r=gdriver%2Fgdriver
-                - http://localhost/[PATH]/index.php?r=gdriver%2Fspace
-                - [PATH] könnte „humhub-1.2.1“ sein.
-            - Auf einem produktiven Server mit entsprechender Domain statt localhost
-            - Es ist darauf zu achten, unmittelbar nach der Eingabe Enter zu drücken, um sicherzustellen, dass die Eingabe gespeichert bleibt.
-        - Anschließend öffnet sich das Dialogfenster „OAuth-Client“, welches die Client-ID und den Clientschlüssel bereithält. Es darf geschlossen werden.
-        - Unter dem Punkt „OAuth 2.0-Client-IDs“ ist nun ein neuer Eintrag vorhanden, an dessen Ende sich ein Download-Symbol befindet, womit sich die benötigte JSON-Datei herunterladen lässt. Diese sollte in client_secret.json umbenannt und im Wurzelverzeichnis von Gdriver abgelegt werden.
-- token.json wird automatisch erstellt, insofern client_secret.json bei Aufruf von Gdriver korrekt vorliegt. Dabei wird der Nutzer durch den Anmeldeprozess zu Google geführt, an dessen Ende token.json erstellt wird.
+After successful installation of OnlineDrives Module, follow the Access Configuration Guide to connect to Sciebo or Google Drive.
+   
