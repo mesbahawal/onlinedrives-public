@@ -1,4 +1,4 @@
-Module Drivemanager
+Module OnlineDrives
 =================
 Module for managing drives inside spaces and on profiles.
 
