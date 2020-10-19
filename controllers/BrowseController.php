@@ -102,10 +102,10 @@ class BrowseController extends BaseController
             if(Yii::$app->urlManager->enablePrettyUrl == true && $actionType == 'Published'){
                 $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id;
             }
-            elseif(Yii::$app->urlManager->enablePrettyUrl == true && $actionType == 'Created'){
+            elseif(Yii::$app->urlManager->enablePrettyUrl == true && ($actionType == 'Created' || $actionType == 'Uploaded')){
                 $post_msg_url = $home_url.'/onlinedrives/browse/?cguid='.$space_id.'&sciebo_path='.urlencode($file_dir).'&dk='.$drive_key;
             }
-            elseif(Yii::$app->urlManager->enablePrettyUrl != true && $actionType == 'Created'){
+            elseif(Yii::$app->urlManager->enablePrettyUrl != true && ($actionType == 'Created' || $actionType == 'Uploaded')){
                 $post_msg_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&cguid='.$space_id.'&sciebo_path='.urlencode($file_dir).'&dk='.$drive_key;
             }
             else{
@@ -355,8 +355,15 @@ class BrowseController extends BaseController
 
         // Upload model
         if ($model_u->load(Yii::$app->request->post())) {
+            // space guid
+            if (!empty($_GET['cguid'])) {
+                $space_id = $_GET['cguid'];
+            }
+
+            $actionType = 'Uploaded';
 
             $image = \yii\web\UploadedFile::getInstance($model_u, 'upload');
+
             if (!is_null($image)) {
                 $model_u->image_src_filename = $image->name;
                 $tmp = explode('.', $image->name);
@@ -461,8 +468,25 @@ class BrowseController extends BaseController
                                     if ($client->request('PUT', $path_to_dir, $content)) {
                                         unlink($path);
 
+                                        // Post to the stream
+                                        $post_file_path = $get_sciebo_path.$realname;
+
+                                        $mime_type = 'file';
+
+                                        $post_content_id = $this-> postMsgStream($actionType, $mime_type, $space_id, $post_file_path, $get_dk, $cloud);
+
+                                        // Redirection Url
+                                        if (Yii::$app->urlManager->enablePrettyUrl == true){
+                                            $redirect_url = $home_url.'/onlinedrives/browse/?'.$guid.'&sciebo_path='.urlencode($get_sciebo_path).'&dk='.$get_dk;
+                                        }
+                                        else{
+                                            $redirect_url = $home_url.'/index.php?r=onlinedrives%2Fbrowse&'.$guid.'&sciebo_path='.urlencode($get_sciebo_path).'&dk='.$get_dk;
+                                        }
+
+                                        (new yii\web\Controller('1', 'onlinedrives'))->redirect($redirect_url);
+
                                         // Success msg
-                                        $_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'File is successfuly uploaded in Sciebo.');
+                                        //$_REQUEST['success_msg'] = Yii::t('OnlinedrivesModule.new', 'File is successfuly uploaded in Sciebo.');
 
                                     }else{
                                         // Error msg
@@ -736,7 +760,7 @@ class BrowseController extends BaseController
 
                     if ($val <> '') {
                         $post_file_path= $val.$new_file_name;
-                        //todo: call postStreamFunc
+
                         $mime_type = 'file';
 
                         $post_content_id = $this-> postMsgStream($actionType, $mime_type, $space_id, $post_file_path, $get_dk, $cloud);
